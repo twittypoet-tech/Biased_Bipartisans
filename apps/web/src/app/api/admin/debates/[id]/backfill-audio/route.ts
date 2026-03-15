@@ -1,41 +1,24 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import OpenAI from 'openai'
 
 const BUCKET = 'debate-audio'
 const SAMPLE_RATE = 24000
 
-/** Voice frequencies for different archetypes (placeholder tones) */
-const ARCHETYPE_FREQ: Record<string, number> = {
-  hawk: 165,
-  dove: 392,
-  technocrat: 262,
-  populist: 330,
-  cynic: 440,
-  conspiracist: 294,
-  institutionalist: 247,
-  libertarian: 196,
-  moderator: 220,
+/** Maps archetypes to OpenAI TTS voices */
+const VOICE_MAP: Record<string, string> = {
+  hawk: 'onyx',
+  dove: 'nova',
+  technocrat: 'echo',
+  populist: 'fable',
+  cynic: 'shimmer',
+  conspiracist: 'fable',
+  institutionalist: 'echo',
+  libertarian: 'onyx',
+  moderator: 'alloy',
 }
 
-/** Generate a sine-wave PCM buffer as placeholder audio */
-function generatePlaceholderPcm(text: string, archetype: string): Buffer {
-  const wordCount = text.split(/\s+/).length
-  const durationMs = Math.max(500, Math.min(wordCount * 100, 5000))
-  const totalSamples = Math.round((durationMs / 1000) * SAMPLE_RATE)
-  const freq = ARCHETYPE_FREQ[archetype] ?? 300
-
-  const buf = Buffer.alloc(totalSamples * 2)
-  for (let i = 0; i < totalSamples; i++) {
-    const t = i / SAMPLE_RATE
-    const fadeIn = Math.min(1, (i / SAMPLE_RATE) / 0.05)
-    const fadeOut = Math.min(1, ((totalSamples - i) / SAMPLE_RATE) / 0.05)
-    const sample = Math.round(8000 * fadeIn * fadeOut * Math.sin(2 * Math.PI * freq * t))
-    buf.writeInt16LE(Math.max(-32768, Math.min(32767, sample)), i * 2)
-  }
-  return buf
-}
-
-/** Encode raw PCM as WAV (44-byte header) */
+/** Encode raw PCM as WAV (44-byte header, 24kHz 16-bit mono) */
 function encodeWav(pcm: Buffer): Buffer {
   const byteRate = SAMPLE_RATE * 2
   const wav = Buffer.alloc(44 + pcm.length)
@@ -59,8 +42,8 @@ function encodeWav(pcm: Buffer): Buffer {
 /**
  * POST /api/admin/debates/[id]/backfill-audio
  *
- * Generates placeholder audio for all turns in a debate that lack audio URLs.
- * For real AI voices, set OPENAI_API_KEY in the agents service and run new debates.
+ * Generates TTS audio (OpenAI) for all turns in a debate that lack audio URLs.
+ * Requires OPENAI_API_KEY to be set.
  */
 export async function POST(
   _request: Request,
@@ -68,6 +51,12 @@ export async function POST(
 ) {
   const { id: debateId } = await params
   const db = createServerClient()
+
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'OPENAI_API_KEY is not configured' }, { status: 500 })
+  }
+
+  const openai = new OpenAI()
 
   // Verify debate exists
   const { data: debate, error: debateErr } = await db
@@ -108,7 +97,16 @@ export async function POST(
       const slug = speakerName.toLowerCase().replace(/\s+/g, '-')
       const path = `${debateId}/${String(turn.turn_index).padStart(4, '0')}-${slug}.wav`
 
-      const pcm = generatePlaceholderPcm(turn.transcript, archetype)
+      // Call OpenAI TTS
+      const voice = (VOICE_MAP[archetype] ?? 'alloy') as 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'
+      const response = await openai.audio.speech.create({
+        model: 'tts-1',
+        voice,
+        input: turn.transcript,
+        response_format: 'pcm',
+      })
+
+      const pcm = Buffer.from(await response.arrayBuffer())
       const wav = encodeWav(pcm)
 
       const { error: uploadErr } = await db.storage

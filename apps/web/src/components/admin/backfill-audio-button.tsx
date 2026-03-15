@@ -56,8 +56,7 @@ export function BackfillAudioButton({ debateId, turnsWithoutAudio, totalTurns }:
         <p className={`text-xs ${result.failed > 0 ? 'text-amber-400' : 'text-green-400'}`}>
           Generated {result.generated} audio files
           {result.failed > 0 && `, ${result.failed} failed`}
-          {result.voiceMode === 'placeholder' && ' (placeholder tones — set OPENAI_API_KEY for real voices)'}
-          {result.voiceMode === 'openai' && ' (OpenAI TTS)'}
+          {result.voiceMode === 'error' && ' — check server logs'}
         </p>
       )}
     </div>
