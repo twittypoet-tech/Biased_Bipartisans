@@ -41,11 +41,11 @@ jobs:
           EOF
 
       - name: Deploy agent
-        env:
-          LIVEKIT_CLOUD_TOKEN: ${{ secrets.LIVEKIT_CLOUD_TOKEN }}
         run: |
           lk agent deploy . \
             --subdomain biased-bipartisans-rfx3zywb \
+            --api-key ${{ secrets.LIVEKIT_API_KEY }} \
+            --api-secret ${{ secrets.LIVEKIT_API_SECRET }} \
             --secrets-file /tmp/agent-secrets.env \
             --silent \
             --ignore-empty-secrets
