@@ -56,6 +56,9 @@ importers:
       openai:
         specifier: ^4.80.0
         version: 4.104.0(ws@8.19.0)(zod@3.25.76)
+      retell-sdk:
+        specifier: ^5.9.0
+        version: 5.9.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -3509,6 +3512,9 @@ packages:
     resolution: {integrity: sha512-3JmVl5hMGtJ3kMmB3zi3DL25KfkCEyy3Tw7Gmw7z5w8M9WlwoPFnIvwChzu1+cF3iaK3sp18hhPz8ANeimdJfA==}
     engines: {node: '>= 0.4'}
     hasBin: true
+
+  retell-sdk@5.9.0:
+    resolution: {integrity: sha512-tdk9vUa2Mqajdp8eK3aWroNEu/pvGuPi8sXVh8DjQGAu6hK7ug2CZ4pMgKvEIuRxAj/OC0HvSZ3vKXOKNjjGqg==}
 
   reusify@1.1.0:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
@@ -7639,6 +7645,8 @@ snapshots:
       object-keys: 1.1.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
+
+  retell-sdk@5.9.0: {}
 
   reusify@1.1.0: {}
 
