@@ -11,6 +11,8 @@
     "start:scheduler": "node dist/index.js",
     "worker:dev": "tsx src/workers/debate-worker.ts dev",
     "worker:start": "node dist/workers/debate-worker.js start",
+    "worker:live:dev": "tsx src/workers/live-debate-worker.ts dev",
+    "worker:live:start": "node dist/workers/live-debate-worker.js start",
     "typecheck": "tsc --noEmit",
     "lint": "echo 'no lint configured yet'"
   },
