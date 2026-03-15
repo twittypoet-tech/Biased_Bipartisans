@@ -109,14 +109,14 @@ INSERT INTO debate_turns (id, debate_id, speaker_type, speaker_id, round_phase, 
 VALUES
   ('40000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000001', 'closing', 10,
    'Here is the choice: act now when the problem is solvable, or wait until it is not. My opponent offers a world where deterrence manages a nuclear Iran. I offer a world where Iran never gets the bomb. Both carry risks. But one risk is reversible — diplomatic fallout from strikes can be repaired over years. A nuclear Iran cannot be un-done. I trust the judgment of the American military to execute a limited operation. I do not trust the Iranian regime to negotiate in good faith without the credible threat of force on the table. Strength is the precondition for peace. It always has been.',
-   'narrative');
+   'narrative_rhetoric');
 
 -- CLOSING — Dove
 INSERT INTO debate_turns (id, debate_id, speaker_type, speaker_id, round_phase, turn_index, transcript, claim_tier)
 VALUES
   ('40000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000002', 'closing', 11,
    'My opponent says the diplomatic fallout from strikes can be repaired over years. Tell that to the families in Baghdad. Tell that to the million Iraqis who died after we were told the same thing in 2003. We have been here before. The intelligence was certain. The strikes were supposed to be limited. The war was supposed to be short. I am not arguing for passivity. I am arguing for the discipline to pursue every diplomatic avenue before we send missiles. Because once they fly, we do not control what happens next. The people who pay the price of escalation are never the ones who authorize it. Restraint is not cowardice. It is the hardest form of strength — the strength to resist the seductive certainty that this time, bombing will solve it.',
-   'narrative');
+   'narrative_rhetoric');
 
 -- CLOSING — Moderator final
 INSERT INTO debate_turns (id, debate_id, speaker_type, speaker_id, round_phase, turn_index, transcript, claim_tier)

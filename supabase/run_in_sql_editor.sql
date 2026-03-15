@@ -1529,10 +1529,10 @@ VALUES
    'Both made important concessions under pressure. Closing statements — one minute each.', NULL),
 
   ('40000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000001', 'closing', 10,
-   'Here is the choice: act now when the problem is solvable, or wait until it is not. Strikes carry risks — but a nuclear Iran cannot be un-done. Diplomatic fallout from strikes can be repaired over years. Strength is the precondition for peace. It always has been.', 'narrative'),
+   'Here is the choice: act now when the problem is solvable, or wait until it is not. Strikes carry risks — but a nuclear Iran cannot be un-done. Diplomatic fallout from strikes can be repaired over years. Strength is the precondition for peace. It always has been.', 'narrative_rhetoric'),
 
   ('40000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000002', 'closing', 11,
-   'We have been here before. The intelligence was certain. The strikes were supposed to be limited. The war was supposed to be short. I am not arguing for passivity — I am arguing for the discipline to pursue every diplomatic avenue before we send missiles. Because once they fly, we do not control what happens next. Restraint is not cowardice. It is the hardest form of strength.', 'narrative'),
+   'We have been here before. The intelligence was certain. The strikes were supposed to be limited. The war was supposed to be short. I am not arguing for passivity — I am arguing for the discipline to pursue every diplomatic avenue before we send missiles. Because once they fly, we do not control what happens next. Restraint is not cowardice. It is the hardest form of strength.', 'narrative_rhetoric'),
 
   ('40000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000001', 'moderator', '10000000-0000-0000-0000-000000000005', 'closing', 12,
    'A substantive exchange. The Hawk argues that credible force is the prerequisite for meaningful diplomacy. The Dove argues that the costs of military action are systematically underestimated and that diplomacy remains undertested. The audience will decide which risks they find more acceptable. Thank you both.', NULL)
