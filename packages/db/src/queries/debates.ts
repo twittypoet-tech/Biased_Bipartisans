@@ -1,0 +1,110 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type {
+  Debate,
+  DebateFormatDefinition,
+  DebateParticipant,
+  DebateTurn,
+  DebateVote,
+  UUID,
+} from '@bipi/shared'
+
+export async function getDebate(db: SupabaseClient, debateId: UUID): Promise<Debate | null> {
+  const { data, error } = await db.from('debates').select('*').eq('id', debateId).single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data
+}
+
+export async function getDebateBySlug(db: SupabaseClient, slug: string): Promise<Debate | null> {
+  const { data, error } = await db.from('debates').select('*').eq('slug', slug).single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data
+}
+
+export async function listDebates(
+  db: SupabaseClient,
+  filters?: { status?: string },
+): Promise<Debate[]> {
+  let query = db.from('debates').select('*').order('scheduled_at', { ascending: false })
+  if (filters?.status) query = query.eq('status', filters.status)
+  const { data, error } = await query
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getDebateFormat(
+  db: SupabaseClient,
+  formatId: UUID,
+): Promise<DebateFormatDefinition | null> {
+  const { data, error } = await db
+    .from('debate_format_definitions')
+    .select('*')
+    .eq('id', formatId)
+    .single()
+  if (error && error.code !== 'PGRST116') throw error
+  return data
+}
+
+export async function listDebateFormats(
+  db: SupabaseClient,
+): Promise<DebateFormatDefinition[]> {
+  const { data, error } = await db.from('debate_format_definitions').select('*').order('name')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getDebateParticipants(
+  db: SupabaseClient,
+  debateId: UUID,
+): Promise<DebateParticipant[]> {
+  const { data, error } = await db
+    .from('debate_participants')
+    .select('*, agents(*)')
+    .eq('debate_id', debateId)
+    .order('speaking_order')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getDebateTurns(
+  db: SupabaseClient,
+  debateId: UUID,
+): Promise<DebateTurn[]> {
+  const { data, error } = await db
+    .from('debate_turns')
+    .select('*')
+    .eq('debate_id', debateId)
+    .order('turn_index')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function insertDebateTurn(
+  db: SupabaseClient,
+  turn: Omit<DebateTurn, 'id' | 'created_at'>,
+): Promise<DebateTurn> {
+  const { data, error } = await db.from('debate_turns').insert(turn).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function getDebateVotes(
+  db: SupabaseClient,
+  debateId: UUID,
+  filters?: { vote_type?: string; round_phase?: string },
+): Promise<DebateVote[]> {
+  let query = db.from('debate_votes').select('*').eq('debate_id', debateId)
+  if (filters?.vote_type) query = query.eq('vote_type', filters.vote_type)
+  if (filters?.round_phase) query = query.eq('round_phase', filters.round_phase)
+  const { data, error } = await query
+  if (error) throw error
+  return data ?? []
+}
+
+export async function insertDebateVote(
+  db: SupabaseClient,
+  vote: Omit<DebateVote, 'id' | 'created_at'>,
+): Promise<DebateVote> {
+  const { data, error } = await db.from('debate_votes').insert(vote).select().single()
+  if (error) throw error
+  return data
+}
