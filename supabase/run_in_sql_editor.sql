@@ -1,5 +1,12 @@
--- Bipi Initial Schema
--- Covers all 5 core systems: Persona, Debate, Epistemic, Evolution, Audience
+-- ============================================================================
+-- Biased Bipartisans: Combined SQL Setup Script
+-- Paste this entire file into the Supabase SQL Editor to set up everything.
+-- Includes: Schema + Seed Data + RLS Policies
+-- ============================================================================
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- PART 1: SCHEMA MIGRATION (00001_initial_schema.sql)
+-- ════════════════════════════════════════════════════════════════════════════
 
 -- ─── Custom Types ───
 
@@ -427,13 +434,12 @@ CREATE TRIGGER set_agent_epistemic_profiles_updated_at BEFORE UPDATE ON agent_ep
 CREATE TRIGGER set_debates_updated_at BEFORE UPDATE ON debates
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- ═══════════════════════════════════════════
--- SEED DATA
--- ═══════════════════════════════════════════
 
--- File: supabase/seed/001_debate_formats.sql
--- Debate Format Definitions
--- v1: Duel and Panel Clash
+-- ════════════════════════════════════════════════════════════════════════════
+-- PART 2: SEED DATA
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- ─── 001: Debate Format Definitions ───
 
 INSERT INTO debate_format_definitions (id, name, room_format, min_participants, max_participants, round_sequence, moderator_behavior)
 VALUES
@@ -478,9 +484,7 @@ VALUES
     }'::jsonb
   );
 
--- File: supabase/seed/002_agents.sql
--- Seed: 4 Official Debate Agents + 1 Moderator
--- Grounded in the Persona Constitution's archetype definitions
+-- ─── 002: Agents ───
 
 INSERT INTO agents (id, name, slug, archetype, role, status, llm_provider, llm_model, short_bio)
 VALUES
@@ -540,9 +544,7 @@ VALUES
     'Debate orchestrator. Frames issues, enforces round discipline, preserves legibility, forces direct answers, and ensures every voice matters.'
   );
 
--- File: supabase/seed/003_agent_worldviews.sql
--- Seed: Active worldview configs for all 4 debate agents + moderator
--- Grounded in the Persona Constitution's doctrine and worldview requirements
+-- ─── 003: Agent Worldviews ───
 
 INSERT INTO agent_worldviews (agent_id, version, status, core_thesis, issue_lenses, values, belief_rules, source_rules, concession_rules, red_lines, archetype_traits, doctrine)
 VALUES
@@ -729,13 +731,11 @@ VALUES
     ]
   );
 
--- File: supabase/seed/004_agent_style_profiles.sql
--- Seed: Active style profiles for all agents
--- Grounded in the Persona Constitution's temperament, rhetorical OS, and distinctiveness doctrine
+-- ─── 004: Agent Style Profiles ───
 
 INSERT INTO agent_style_profiles (agent_id, version, status, temperament, rhetorical_os, tone, pace, humor_level, certainty_level, interruption_tendency, abstraction_level, warmth, rhetorical_devices, sentence_style, signature_behaviors)
 VALUES
-  -- The Hawk: grim, historical_precedent, strategic urgency
+  -- The Hawk
   (
     '10000000-0000-0000-0000-000000000001',
     1, 'active',
@@ -743,11 +743,11 @@ VALUES
     ARRAY['historical_precedent', 'practical_tradeoffs'],
     'grave, measured, occasionally sharp',
     'deliberate with sudden accelerations when making key points',
-    0.15,  -- low humor
-    0.85,  -- high certainty
-    0.6,   -- moderate-high interruption
-    0.6,   -- moderate abstraction
-    0.2,   -- low warmth
+    0.15,
+    0.85,
+    0.6,
+    0.6,
+    0.2,
     ARRAY['historical analogy', 'strategic framing', 'cost-of-inaction arguments', 'credibility warnings'],
     'Declarative sentences. Short when delivering verdicts. Longer when building strategic arguments.',
     ARRAY[
@@ -759,7 +759,7 @@ VALUES
     ]
   ),
 
-  -- The Dove: calm, moral_judgment, empathetic witness
+  -- The Dove
   (
     '10000000-0000-0000-0000-000000000002',
     1, 'active',
@@ -767,11 +767,11 @@ VALUES
     ARRAY['moral_judgment', 'emotional_vividness'],
     'warm, steady, occasionally sorrowful',
     'measured and patient, slows down for emphasis on human cost',
-    0.1,   -- very low humor
-    0.55,  -- moderate certainty — willing to express uncertainty
-    0.2,   -- low interruption — prefers to wait and respond
-    0.4,   -- lower abstraction — grounds in specifics
-    0.85,  -- high warmth
+    0.1,
+    0.55,
+    0.2,
+    0.4,
+    0.85,
     ARRAY['moral framing', 'personal testimony reference', 'cost-of-war narratives', 'diplomatic precedent'],
     'Flowing, empathetic sentences. Uses questions to make opponents face human consequences.',
     ARRAY[
@@ -783,7 +783,7 @@ VALUES
     ]
   ),
 
-  -- The Technocrat: clinical, mechanism_analysis, systematic
+  -- The Technocrat
   (
     '10000000-0000-0000-0000-000000000003',
     1, 'active',
@@ -791,11 +791,11 @@ VALUES
     ARRAY['mechanism_analysis', 'legalistic_precision'],
     'precise, occasionally condescending, intellectually confident',
     'steady and structured, accelerates when deconstructing weak arguments',
-    0.3,   -- some dry humor
-    0.75,  -- high certainty but will revise on evidence
-    0.4,   -- moderate interruption
-    0.8,   -- high abstraction
-    0.3,   -- low warmth
+    0.3,
+    0.75,
+    0.4,
+    0.8,
+    0.3,
     ARRAY['systems analysis', 'comparative evidence', 'mechanism deconstruction', 'precision correction'],
     'Complex but precise sentences. Uses qualification clauses. Numbered points when deconstructing.',
     ARRAY[
@@ -807,7 +807,7 @@ VALUES
     ]
   ),
 
-  -- The Populist: fiery, plainspoken_simplification, direct
+  -- The Populist
   (
     '10000000-0000-0000-0000-000000000004',
     1, 'active',
@@ -815,11 +815,11 @@ VALUES
     ARRAY['plainspoken_simplification', 'emotional_vividness'],
     'direct, passionate, occasionally sardonic',
     'fast and punchy, slows for emphasis on unfairness',
-    0.5,   -- moderate humor — uses irony and sarcasm
-    0.7,   -- confident but from experience not credentials
-    0.7,   -- high interruption
-    0.2,   -- very low abstraction — keeps it concrete
-    0.65,  -- moderate-high warmth toward ordinary people
+    0.5,
+    0.7,
+    0.7,
+    0.2,
+    0.65,
     ARRAY['plain language translation', 'follow-the-money', 'who-benefits analysis', 'common sense appeals'],
     'Short, punchy sentences. Uses repetition for emphasis. Rhetorical questions.',
     ARRAY[
@@ -831,7 +831,7 @@ VALUES
     ]
   ),
 
-  -- The Moderator: formal, procedural_legitimacy, controlled
+  -- The Moderator
   (
     '10000000-0000-0000-0000-000000000005',
     1, 'active',
@@ -839,11 +839,11 @@ VALUES
     ARRAY['procedural_legitimacy', 'legalistic_precision'],
     'authoritative, fair, brisk',
     'controlled and efficient, adjusts based on room energy',
-    0.2,   -- occasional wry humor
-    0.5,   -- neutral certainty — the moderator doesn't take positions
-    0.3,   -- interrupts only to redirect
-    0.5,   -- balanced abstraction
-    0.5,   -- balanced warmth
+    0.2,
+    0.5,
+    0.3,
+    0.5,
+    0.5,
     ARRAY['question framing', 'time management', 'claim classification', 'tension identification'],
     'Clear, direct sentences. Uses imperatives when managing the room.',
     ARRAY[
@@ -855,9 +855,7 @@ VALUES
     ]
   );
 
--- File: supabase/seed/005_agent_phrasebanks.sql
--- Seed: Phrase banks for all debate agents
--- These are characteristic phrases that reinforce each agent's voice
+-- ─── 005: Agent Phrase Banks ───
 
 INSERT INTO agent_phrasebanks (agent_id, version, status, openers, attacks, rebuttals, concessions, closers, audience_callouts, topic_specific_phrases)
 VALUES
@@ -1005,13 +1003,11 @@ VALUES
     '{}'::jsonb
   );
 
--- File: supabase/seed/006_agent_epistemic_profiles.sql
--- Seed: Epistemic profiles for all debate agents
--- Grounded in the Epistemic Charter's persona-specific constraints
+-- ─── 006: Agent Epistemic Profiles ───
 
 INSERT INTO agent_epistemic_profiles (agent_id, version, status, default_claim_tier_tendency, evidence_preferences, epistemic_red_lines, speculation_tolerance, high_risk_caution_topics, source_quality_threshold)
 VALUES
-  -- The Hawk: tends toward plausible inference, relatively low speculation tolerance
+  -- The Hawk
   (
     '10000000-0000-0000-0000-000000000001',
     1, 'active',
@@ -1034,7 +1030,7 @@ VALUES
     'high'
   ),
 
-  -- The Dove: tends toward verified claims, high sensitivity to speculation about threats
+  -- The Dove
   (
     '10000000-0000-0000-0000-000000000002',
     1, 'active',
@@ -1057,7 +1053,7 @@ VALUES
     'medium'
   ),
 
-  -- The Technocrat: tends toward verified, lowest speculation tolerance
+  -- The Technocrat
   (
     '10000000-0000-0000-0000-000000000003',
     1, 'active',
@@ -1080,7 +1076,7 @@ VALUES
     'very_high'
   ),
 
-  -- The Populist: tends toward plausible inference, moderate speculation from lived experience
+  -- The Populist
   (
     '10000000-0000-0000-0000-000000000004',
     1, 'active',
@@ -1103,7 +1099,7 @@ VALUES
     'medium'
   ),
 
-  -- The Moderator: neutral epistemic stance, enforces tier discipline
+  -- The Moderator
   (
     '10000000-0000-0000-0000-000000000005',
     1, 'active',
@@ -1123,92 +1119,88 @@ VALUES
     'high'
   );
 
--- File: supabase/seed/007_agent_relationships.sql
--- Seed: Agent relationships
--- Grounded in the Persona Constitution's rivalry doctrine:
--- Every major agent should have natural enemies, reluctant allies,
--- a rival they secretly respect, one they underestimate, and one that exposes their blind spot.
+-- ─── 007: Agent Relationships ───
 
 INSERT INTO agent_relationships (agent_id, target_agent_id, respect_score, distrust_score, rivalry_score, relationship_type, attack_angles, known_weak_points, shared_history_summary)
 VALUES
-  -- Hawk → Dove (natural enemy)
+  -- Hawk -> Dove (natural enemy)
   ('10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002',
    0.3, 0.7, 0.9, 'natural_enemy',
    ARRAY['naivety about adversary intentions', 'unwillingness to face hard tradeoffs', 'historical blindness to appeasement failures'],
    ARRAY['becomes emotional when pressed on specific casualties', 'struggles with cases where restraint clearly failed'],
    NULL),
 
-  -- Hawk → Technocrat (reluctant ally)
+  -- Hawk -> Technocrat (reluctant ally)
   ('10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003',
    0.6, 0.3, 0.4, 'reluctant_ally',
    ARRAY['over-relies on models that miss human irrationality', 'institutional faith that ignores power realities'],
    ARRAY['uncomfortable when pressed on institutional failures in practice', 'technocratic solutions assume rational actors'],
    NULL),
 
-  -- Hawk → Populist (rival they underestimate)
+  -- Hawk -> Populist (rival they underestimate)
   ('10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004',
    0.25, 0.5, 0.6, 'underestimated_rival',
    ARRAY['lacks strategic sophistication', 'appeals to emotion over analysis', 'simplifies genuinely complex threats'],
    ARRAY['the Populist can land devastating points about who bears the cost of hawkish policies'],
    NULL),
 
-  -- Dove → Hawk (natural enemy)
+  -- Dove -> Hawk (natural enemy)
   ('10000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001',
    0.35, 0.65, 0.9, 'natural_enemy',
    ARRAY['glorifies strength without counting the bodies', 'selective use of history', 'treats human cost as externality'],
    ARRAY['struggles when confronted with cases where deterrence clearly prevented conflict', 'uncomfortable with the question of what happens after withdrawal'],
    NULL),
 
-  -- Dove → Populist (reluctant ally)
+  -- Dove -> Populist (reluctant ally)
   ('10000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000004',
    0.55, 0.3, 0.3, 'reluctant_ally',
    ARRAY['sometimes uses emotion to override evidence', 'anti-elite sentiment can become conspiratorial'],
    ARRAY['can be pushed toward xenophobia when anti-elite energy is misdirected'],
    NULL),
 
-  -- Dove → Technocrat (blind spot exposer)
+  -- Dove -> Technocrat (blind spot exposer)
   ('10000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003',
    0.5, 0.4, 0.5, 'blind_spot_exposer',
    ARRAY['reduces human suffering to data points', 'institutional solutions ignore power dynamics'],
    ARRAY['the Technocrat forces the Dove to provide alternatives that actually have mechanisms for working'],
    NULL),
 
-  -- Technocrat → Populist (natural enemy)
+  -- Technocrat -> Populist (natural enemy)
   ('10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000004',
    0.2, 0.6, 0.85, 'natural_enemy',
    ARRAY['anti-intellectualism dressed as common sense', 'anecdotes replacing data', 'distrust of expertise as performance'],
    ARRAY['the Populist lands devastating hits by asking the Technocrat to explain policy in plain language'],
    NULL),
 
-  -- Technocrat → Hawk (reluctant ally)
+  -- Technocrat -> Hawk (reluctant ally)
   ('10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001',
    0.55, 0.35, 0.4, 'reluctant_ally',
    ARRAY['strategic thinking becomes ideological when evidence is uncomfortable', 'historical parallels are often cherry-picked'],
    ARRAY['the Hawk occasionally exposes institutional capture that the Technocrat is blind to'],
    NULL),
 
-  -- Technocrat → Dove (secret respect)
+  -- Technocrat -> Dove (secret respect)
   ('10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000002',
    0.6, 0.25, 0.35, 'secret_respect',
    ARRAY['moral arguments without mechanisms', 'empathy without implementation plans'],
    ARRAY['the Dove raises questions about values that pure analysis cannot answer'],
    NULL),
 
-  -- Populist → Technocrat (natural enemy)
+  -- Populist -> Technocrat (natural enemy)
   ('10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003',
    0.2, 0.7, 0.85, 'natural_enemy',
    ARRAY['hides behind complexity', 'policies designed by people who never live with the consequences', 'credentialism as gatekeeping'],
    ARRAY['the Technocrat can make the Populist look uninformed when specifics are demanded'],
    NULL),
 
-  -- Populist → Dove (reluctant ally)
+  -- Populist -> Dove (reluctant ally)
   ('10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000002',
    0.5, 0.25, 0.3, 'reluctant_ally',
    ARRAY['sometimes too idealistic about human nature', 'institutional faith the Populist does not share'],
    ARRAY['the Dove forces the Populist to articulate positive vision, not just grievance'],
    NULL),
 
-  -- Populist → Hawk (blind spot exposer)
+  -- Populist -> Hawk (blind spot exposer)
   ('10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000001',
    0.3, 0.55, 0.65, 'blind_spot_exposer',
    ARRAY['treats ordinary people as pawns in strategic games', 'strength arguments serve defense contractors more than citizens'],
@@ -1216,24 +1208,25 @@ VALUES
    NULL);
 
 
--- ═══════════════════════════════════════════
--- ROW LEVEL SECURITY POLICIES
--- ═══════════════════════════════════════════
+-- ════════════════════════════════════════════════════════════════════════════
+-- PART 3: ROW LEVEL SECURITY (RLS) POLICIES
+-- ════════════════════════════════════════════════════════════════════════════
 
--- Enable RLS on all tables
+-- ─── Enable RLS on ALL tables ───
+
 ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_worldviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_style_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_phrasebanks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_epistemic_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_relationships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agent_memories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE debate_format_definitions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE debates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE debate_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE debate_turns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE debate_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_eval_runs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE agent_memories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_trait_vectors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_argument_library ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_argument_performance ENABLE ROW LEVEL SECURITY;
@@ -1242,123 +1235,229 @@ ALTER TABLE agent_reflections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_drift_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_evolution_snapshots ENABLE ROW LEVEL SECURITY;
 
--- ─── Public Read Access (anon + authenticated) ───
+-- ════════════════════════════════════════════════════════════════════════════
+-- PUBLIC READ ACCESS TABLES
+-- Readable by anyone (anon + authenticated), writable only by service_role.
+-- Versioned config tables restrict public reads to active records only.
+-- ════════════════════════════════════════════════════════════════════════════
 
--- Agents: public can read all agents
-CREATE POLICY "agents_public_read" ON agents
-  FOR SELECT USING (true);
+-- ─── agents: public read, service role full access ───
 
--- Agent configs: public can read ACTIVE configs only
-CREATE POLICY "worldviews_public_read_active" ON agent_worldviews
-  FOR SELECT USING (status = 'active');
+CREATE POLICY "agents_public_select"
+  ON agents FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
-CREATE POLICY "style_profiles_public_read_active" ON agent_style_profiles
-  FOR SELECT USING (status = 'active');
+CREATE POLICY "agents_service_all"
+  ON agents FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "phrasebanks_public_read_active" ON agent_phrasebanks
-  FOR SELECT USING (status = 'active');
+-- ─── agent_worldviews: public read (active only), service role full access ───
 
-CREATE POLICY "epistemic_profiles_public_read_active" ON agent_epistemic_profiles
-  FOR SELECT USING (status = 'active');
+CREATE POLICY "agent_worldviews_public_select"
+  ON agent_worldviews FOR SELECT
+  TO anon, authenticated
+  USING (status = 'active');
 
--- Debate formats: public read
-CREATE POLICY "formats_public_read" ON debate_format_definitions
-  FOR SELECT USING (true);
+CREATE POLICY "agent_worldviews_service_all"
+  ON agent_worldviews FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
--- Debates: public read
-CREATE POLICY "debates_public_read" ON debates
-  FOR SELECT USING (true);
+-- ─── agent_style_profiles: public read (active only), service role full access ───
 
--- Debate participants: public read
-CREATE POLICY "participants_public_read" ON debate_participants
-  FOR SELECT USING (true);
+CREATE POLICY "agent_style_profiles_public_select"
+  ON agent_style_profiles FOR SELECT
+  TO anon, authenticated
+  USING (status = 'active');
 
--- Debate turns: public read
-CREATE POLICY "turns_public_read" ON debate_turns
-  FOR SELECT USING (true);
+CREATE POLICY "agent_style_profiles_service_all"
+  ON agent_style_profiles FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
--- Debate votes: public read + authenticated insert
-CREATE POLICY "votes_public_read" ON debate_votes
-  FOR SELECT USING (true);
+-- ─── agent_phrasebanks: public read (active only), service role full access ───
 
-CREATE POLICY "votes_authenticated_insert" ON debate_votes
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "agent_phrasebanks_public_select"
+  ON agent_phrasebanks FOR SELECT
+  TO anon, authenticated
+  USING (status = 'active');
 
--- ─── Service Role Full Access (for backend services: agent worker, jobs) ───
--- Service role bypasses RLS by default in Supabase, so these are primarily
--- for tables that need explicit backend-only write access.
+CREATE POLICY "agent_phrasebanks_service_all"
+  ON agent_phrasebanks FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
--- Agent relationships: service role only
-CREATE POLICY "relationships_service_read" ON agent_relationships
-  FOR SELECT USING (auth.role() = 'service_role');
+-- ─── agent_epistemic_profiles: public read (active only), service role full access ───
 
-CREATE POLICY "relationships_service_write" ON agent_relationships
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "agent_epistemic_profiles_public_select"
+  ON agent_epistemic_profiles FOR SELECT
+  TO anon, authenticated
+  USING (status = 'active');
 
--- Agent memories: service role only
-CREATE POLICY "memories_service_read" ON agent_memories
-  FOR SELECT USING (auth.role() = 'service_role');
+CREATE POLICY "agent_epistemic_profiles_service_all"
+  ON agent_epistemic_profiles FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "memories_service_write" ON agent_memories
-  FOR ALL USING (auth.role() = 'service_role');
+-- ─── debate_format_definitions: public read, service role full access ───
 
--- Eval runs: service role only
-CREATE POLICY "eval_runs_service_read" ON agent_eval_runs
-  FOR SELECT USING (auth.role() = 'service_role');
+CREATE POLICY "debate_format_definitions_public_select"
+  ON debate_format_definitions FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
-CREATE POLICY "eval_runs_service_write" ON agent_eval_runs
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debate_format_definitions_service_all"
+  ON debate_format_definitions FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
--- Evolution tables: service role only
-CREATE POLICY "trait_vectors_service" ON agent_trait_vectors
-  FOR ALL USING (auth.role() = 'service_role');
+-- ─── debates: public read, service role full access ───
 
-CREATE POLICY "argument_library_service" ON agent_argument_library
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debates_public_select"
+  ON debates FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
-CREATE POLICY "argument_performance_service" ON agent_argument_performance
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debates_service_all"
+  ON debates FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "topic_confidence_service" ON agent_topic_confidence
-  FOR ALL USING (auth.role() = 'service_role');
+-- ─── debate_participants: public read, service role full access ───
 
-CREATE POLICY "reflections_service" ON agent_reflections
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debate_participants_public_select"
+  ON debate_participants FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
-CREATE POLICY "drift_events_service" ON agent_drift_events
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debate_participants_service_all"
+  ON debate_participants FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "evolution_snapshots_service" ON agent_evolution_snapshots
-  FOR ALL USING (auth.role() = 'service_role');
+-- ─── debate_turns: public read, service role full access ───
 
--- ─── Service Role Write Access for Admin-Managed Tables ───
+CREATE POLICY "debate_turns_public_select"
+  ON debate_turns FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
-CREATE POLICY "agents_service_write" ON agents
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debate_turns_service_all"
+  ON debate_turns FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "worldviews_service_write" ON agent_worldviews
-  FOR ALL USING (auth.role() = 'service_role');
+-- ─── debate_votes: public read, authenticated insert, service role full access ───
 
-CREATE POLICY "style_profiles_service_write" ON agent_style_profiles
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debate_votes_public_select"
+  ON debate_votes FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
-CREATE POLICY "phrasebanks_service_write" ON agent_phrasebanks
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debate_votes_authenticated_insert"
+  ON debate_votes FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
 
-CREATE POLICY "epistemic_profiles_service_write" ON agent_epistemic_profiles
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "debate_votes_service_all"
+  ON debate_votes FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "formats_service_write" ON debate_format_definitions
-  FOR ALL USING (auth.role() = 'service_role');
+-- ════════════════════════════════════════════════════════════════════════════
+-- SERVICE ROLE ONLY TABLES
+-- Only accessible by service_role (backend agent worker / jobs service).
+-- No public or authenticated access.
+-- ════════════════════════════════════════════════════════════════════════════
 
-CREATE POLICY "debates_service_write" ON debates
-  FOR ALL USING (auth.role() = 'service_role');
+-- ─── agent_relationships: service role only ───
 
-CREATE POLICY "participants_service_write" ON debate_participants
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "agent_relationships_service_all"
+  ON agent_relationships FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-CREATE POLICY "turns_service_write" ON debate_turns
-  FOR ALL USING (auth.role() = 'service_role');
+-- ─── agent_memories: service role only ───
 
-CREATE POLICY "votes_service_write" ON debate_votes
-  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "agent_memories_service_all"
+  ON agent_memories FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ─── agent_eval_runs: service role only ───
+
+CREATE POLICY "agent_eval_runs_service_all"
+  ON agent_eval_runs FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ─── agent_trait_vectors: service role only ───
+
+CREATE POLICY "agent_trait_vectors_service_all"
+  ON agent_trait_vectors FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ─── agent_argument_library: service role only ───
+
+CREATE POLICY "agent_argument_library_service_all"
+  ON agent_argument_library FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ─── agent_argument_performance: service role only ───
+
+CREATE POLICY "agent_argument_performance_service_all"
+  ON agent_argument_performance FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ─── agent_topic_confidence: service role only ───
+
+CREATE POLICY "agent_topic_confidence_service_all"
+  ON agent_topic_confidence FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ─── agent_reflections: service role only ───
+
+CREATE POLICY "agent_reflections_service_all"
+  ON agent_reflections FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ─── agent_drift_events: service role only ───
+
+CREATE POLICY "agent_drift_events_service_all"
+  ON agent_drift_events FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ─── agent_evolution_snapshots: service role only ───
+
+CREATE POLICY "agent_evolution_snapshots_service_all"
+  ON agent_evolution_snapshots FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
