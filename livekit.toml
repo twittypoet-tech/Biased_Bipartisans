@@ -1,17 +1,6 @@
-# LiveKit Cloud Agent Configuration
-#
-# HOW TO SET THIS UP:
-#   1. Install the LiveKit CLI: https://docs.livekit.io/home/cli/cli-setup/
-#   2. Authenticate:       lk cloud auth
-#   3. Register the agent: lk agent create
-#      → This replaces the placeholder values below with your real agent ID.
-#   4. Deploy updates:     lk agent deploy .
-#
-# The agent ID and project subdomain are assigned by LiveKit Cloud.
-# Commit this file once the real values are filled in.
-
 [project]
-subdomain = "your-project-subdomain"   # e.g. "my-app" from wss://my-app.livekit.cloud
+subdomain = "biased-bipartisans-rfx3zywb"
 
 [agent]
-id = "your-agent-id"                   # assigned by `lk agent create`
+# Filled in by `lk agent create` — run that once, then commit this file
+id = ""

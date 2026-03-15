@@ -1,0 +1,51 @@
+name: Deploy Debate Agent to LiveKit Cloud
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/agents/**'
+      - 'packages/**'
+      - 'Dockerfile'
+      - 'livekit.toml'
+      - '.dockerignore'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to LiveKit Cloud
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LiveKit CLI
+        run: |
+          curl -sSL https://get.livekit.io/cli | bash
+          sudo mv lk /usr/local/bin/lk
+          lk --version
+
+      - name: Write secrets file
+        run: |
+          cat > /tmp/agent-secrets.env << EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LIVEKIT_URL=${{ secrets.LIVEKIT_URL }}
+          LIVEKIT_API_KEY=${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET=${{ secrets.LIVEKIT_API_SECRET }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}
+          TAVILY_API_KEY=${{ secrets.TAVILY_API_KEY }}
+          EOF
+
+      - name: Deploy agent
+        env:
+          LIVEKIT_CLOUD_TOKEN: ${{ secrets.LIVEKIT_CLOUD_TOKEN }}
+        run: |
+          lk agent deploy . \
+            --subdomain biased-bipartisans-rfx3zywb \
+            --secrets-file /tmp/agent-secrets.env \
+            --silent \
+            --ignore-empty-secrets

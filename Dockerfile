@@ -38,5 +38,5 @@ COPY --from=build /app/apps/agents/package.json ./apps/agents/
 COPY --from=build /app/packages ./packages
 
 ENV NODE_ENV=production
-# Start the LiveKit debate worker (registers with LiveKit Cloud, accepts job dispatch)
-CMD ["node", "apps/agents/dist/workers/debate-worker.js", "start"]
+# Start the live reactive debate worker (LiveConversation + ElevenLabs TTS)
+CMD ["node", "apps/agents/dist/workers/live-debate-worker.js", "start"]
