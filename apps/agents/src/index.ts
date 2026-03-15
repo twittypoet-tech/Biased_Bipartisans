@@ -16,6 +16,8 @@ export type { LLMProvider, LLMMessage, LLMCompletionRequest, LLMCompletionRespon
 // Services
 export { DebateStateManager, type DebateParticipantInfo, type DebateSummary } from './services/debate-state.js'
 export { persistTurn, extractClaimTier, buildRoundSummary } from './services/turn-persistence.js'
+export { VoiceSynthesizer, type SynthesizedTurn } from './services/voice-synthesizer.js'
+export { uploadTurnAudio } from './services/audio-storage.js'
 
 // Tools
 export type { AgentTool, AgentToolResult } from './tools/types.js'
@@ -70,14 +72,15 @@ async function main() {
     log.info(`Health check on port ${healthPort}`)
   })
 
-  // Set up voice provider (automatic when OPENAI_API_KEY is available)
-  let voiceProvider = undefined
+  // Set up voice provider — OpenAI TTS when available, placeholder tones otherwise
+  const { getVoiceProvider } = await import('./voice/index.js')
+  let voiceProvider
   if (process.env.OPENAI_API_KEY) {
-    const { getVoiceProvider } = await import('./voice/index.js')
     voiceProvider = getVoiceProvider('openai')
     log.info('Voice mode: OpenAI TTS enabled')
   } else {
-    log.info('Voice mode: disabled (no OPENAI_API_KEY)')
+    voiceProvider = getVoiceProvider('placeholder')
+    log.info('Voice mode: placeholder tones (set OPENAI_API_KEY for real voices)')
   }
 
   // Start the debate scheduler

@@ -43,18 +43,30 @@ export function DebatePlayer({
 }: DebatePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTurnIdx, setCurrentTurnIdx] = useState(0)
-  const [audioProgress, setAudioProgress] = useState(0) // 0-1 within current turn
+  const [audioProgress, setAudioProgress] = useState(0)
   const [hasAudio, setHasAudio] = useState(false)
 
   const audioRef = useRef<HTMLAudioElement>(null)
-  const transcriptRef = useRef<HTMLDivElement>(null)
+
+  // Use refs for values that callbacks need without stale closures
+  const isPlayingRef = useRef(false)
+  const currentTurnIdxRef = useRef(0)
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentTurn = turns[currentTurnIdx] ?? null
 
-  // Check if any turns have audio
   useEffect(() => {
     setHasAudio(turns.some((t) => t.audioUrl))
   }, [turns])
+
+  // Keep refs in sync
+  useEffect(() => {
+    isPlayingRef.current = isPlaying
+  }, [isPlaying])
+
+  useEffect(() => {
+    currentTurnIdxRef.current = currentTurnIdx
+  }, [currentTurnIdx])
 
   // Auto-scroll transcript to current turn
   useEffect(() => {
@@ -62,60 +74,94 @@ export function DebatePlayer({
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [currentTurnIdx])
 
+  // Cleanup advance timer on unmount
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current)
+    }
+  }, [])
+
   const playTurn = useCallback((idx: number) => {
+    // Clear any pending advance timer
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current)
+      advanceTimerRef.current = null
+    }
+
     if (idx >= turns.length) {
       setIsPlaying(false)
+      isPlayingRef.current = false
       setCurrentTurnIdx(0)
+      currentTurnIdxRef.current = 0
       setAudioProgress(0)
       return
     }
 
     const turn = turns[idx]!
     setCurrentTurnIdx(idx)
+    currentTurnIdxRef.current = idx
     setAudioProgress(0)
 
     if (turn.audioUrl && audioRef.current) {
       audioRef.current.src = turn.audioUrl
-      audioRef.current.play().catch(() => {})
+      audioRef.current.play().catch((err) => {
+        console.warn('Audio play failed:', err)
+        // If audio fails to play, auto-advance
+        scheduleAdvance(idx, turn.transcript.length)
+      })
     } else {
-      // No audio for this turn — auto-advance after a reading delay
-      const readingTimeMs = Math.max(2000, turn.transcript.length * 30)
-      const timer = setTimeout(() => {
-        if (isPlaying) playTurn(idx + 1)
-      }, readingTimeMs)
-      return () => clearTimeout(timer)
+      // No audio — auto-advance after a reading delay
+      scheduleAdvance(idx, turn.transcript.length)
     }
-  }, [turns, isPlaying])
+  }, [turns])
 
-  // Handle play/pause
+  /** Schedule auto-advance to next turn for text-only turns */
+  const scheduleAdvance = useCallback((idx: number, textLength: number) => {
+    const readingTimeMs = Math.max(2000, textLength * 30)
+    advanceTimerRef.current = setTimeout(() => {
+      if (isPlayingRef.current) {
+        playTurn(idx + 1)
+      }
+    }, readingTimeMs)
+  }, [playTurn])
+
   const togglePlayback = () => {
     if (isPlaying) {
       setIsPlaying(false)
+      isPlayingRef.current = false
       audioRef.current?.pause()
+      if (advanceTimerRef.current) {
+        clearTimeout(advanceTimerRef.current)
+        advanceTimerRef.current = null
+      }
     } else {
       setIsPlaying(true)
-      playTurn(currentTurnIdx)
+      isPlayingRef.current = true
+      playTurn(currentTurnIdxRef.current)
     }
   }
 
-  // When audio ends, advance to next turn
   const handleAudioEnded = () => {
-    if (isPlaying) {
-      playTurn(currentTurnIdx + 1)
+    if (isPlayingRef.current) {
+      playTurn(currentTurnIdxRef.current + 1)
     }
   }
 
-  // Track audio progress
   const handleTimeUpdate = () => {
     if (audioRef.current && audioRef.current.duration) {
       setAudioProgress(audioRef.current.currentTime / audioRef.current.duration)
     }
   }
 
-  // Skip to a specific turn
   const skipTo = (idx: number) => {
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current)
+      advanceTimerRef.current = null
+    }
     setCurrentTurnIdx(idx)
-    if (isPlaying) {
+    currentTurnIdxRef.current = idx
+    setAudioProgress(0)
+    if (isPlayingRef.current) {
       playTurn(idx)
     }
   }
@@ -123,7 +169,6 @@ export function DebatePlayer({
   const skipPrev = () => skipTo(Math.max(0, currentTurnIdx - 1))
   const skipNext = () => skipTo(Math.min(turns.length - 1, currentTurnIdx + 1))
 
-  // Overall progress through the debate
   const overallProgress = turns.length > 0 ? (currentTurnIdx + audioProgress) / turns.length : 0
 
   return (
@@ -133,7 +178,7 @@ export function DebatePlayer({
         ref={audioRef}
         onEnded={handleAudioEnded}
         onTimeUpdate={handleTimeUpdate}
-        preload="none"
+        preload="auto"
       />
 
       {/* Player controls */}
@@ -152,7 +197,8 @@ export function DebatePlayer({
         </div>
 
         {/* Overall progress bar */}
-        <div className="mb-4 h-1.5 w-full cursor-pointer rounded-full bg-neutral-800"
+        <div
+          className="mb-4 h-1.5 w-full cursor-pointer rounded-full bg-neutral-800"
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             const pct = (e.clientX - rect.left) / rect.width
@@ -237,7 +283,7 @@ export function DebatePlayer({
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
           Transcript
         </h2>
-        <div ref={transcriptRef} className="debate-transcript space-y-1 overflow-y-auto max-h-[60vh] pr-1 scroll-smooth">
+        <div className="debate-transcript space-y-1 overflow-y-auto max-h-[60vh] pr-1 scroll-smooth">
           {turns.map((turn, i) => {
             const showPhaseHeader = i === 0 || turn.roundPhase !== turns[i - 1]!.roundPhase
             const isCurrent = i === currentTurnIdx && isPlaying
@@ -268,7 +314,6 @@ export function DebatePlayer({
                   } hover:brightness-110`}
                 >
                   <div className="flex items-center gap-2">
-                    {/* Audio indicator */}
                     {turn.audioUrl ? (
                       <span className={`inline-block h-2 w-2 rounded-full ${isCurrent ? 'bg-green-400 animate-pulse' : 'bg-neutral-600'}`} />
                     ) : (
