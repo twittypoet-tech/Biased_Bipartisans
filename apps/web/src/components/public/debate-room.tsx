@@ -32,68 +32,19 @@ export function DebateRoom({
   const [audioMuted, setAudioMuted] = useState(false)
   const [audienceCount, setAudienceCount] = useState(1)
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
-  const [livekitAudioActive, setLivekitAudioActive] = useState(false)
 
   const roomRef = useRef<unknown>(null)
   const audioContainerRef = useRef<HTMLDivElement>(null)
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map())
   const mutedRef = useRef(audioMuted)
-  // Queue for URL-based audio playback (fallback when LiveKit tracks aren't available)
-  const urlAudioRef = useRef<HTMLAudioElement | null>(null)
-  const audioQueueRef = useRef<string[]>([])
-  const isPlayingUrlAudioRef = useRef(false)
 
-  // Keep muted ref in sync
+  // Keep muted ref in sync with all audio elements
   useEffect(() => {
     mutedRef.current = audioMuted
     for (const audioEl of audioElementsRef.current.values()) {
       audioEl.muted = audioMuted
     }
-    if (urlAudioRef.current) {
-      urlAudioRef.current.muted = audioMuted
-    }
   }, [audioMuted])
-
-  // Initialize URL-based audio element for fallback playback
-  useEffect(() => {
-    const audio = new Audio()
-    audio.addEventListener('ended', () => {
-      isPlayingUrlAudioRef.current = false
-      playNextFromQueue()
-    })
-    audio.addEventListener('error', () => {
-      isPlayingUrlAudioRef.current = false
-      playNextFromQueue()
-    })
-    urlAudioRef.current = audio
-    return () => {
-      audio.pause()
-      audio.src = ''
-    }
-  }, [])
-
-  /** Play the next audio URL from the queue */
-  const playNextFromQueue = useCallback(() => {
-    if (audioQueueRef.current.length === 0 || !urlAudioRef.current) return
-    const nextUrl = audioQueueRef.current.shift()!
-    urlAudioRef.current.muted = mutedRef.current
-    urlAudioRef.current.src = nextUrl
-    urlAudioRef.current.play().then(() => {
-      isPlayingUrlAudioRef.current = true
-    }).catch(() => {
-      setAutoplayBlocked(true)
-      isPlayingUrlAudioRef.current = false
-    })
-  }, [])
-
-  /** Enqueue an audio URL for playback (used when LiveKit tracks aren't delivering audio) */
-  const enqueueAudioUrl = useCallback((url: string) => {
-    if (livekitAudioActive) return // LiveKit tracks are handling audio
-    audioQueueRef.current.push(url)
-    if (!isPlayingUrlAudioRef.current) {
-      playNextFromQueue()
-    }
-  }, [livekitAudioActive, playNextFromQueue])
 
   // Map participant identity strings back to participant IDs
   const identityToId = useCallback(
@@ -114,16 +65,48 @@ export function DebateRoom({
     audioEl.style.display = 'none'
     audioContainerRef.current?.appendChild(audioEl)
     audioElementsRef.current.set(identity, audioEl)
-    setLivekitAudioActive(true)
     audioEl.play().catch(() => {
       setAutoplayBlocked(true)
     })
   }, [])
 
+  /** Handle incoming data messages from the LiveKit room */
+  const handleDataMessage = useCallback((payload: Uint8Array) => {
+    try {
+      const text = new TextDecoder().decode(payload)
+      const data = JSON.parse(text)
+
+      if (data.type === 'turn') {
+        const newTurn: LiveTurnEntry = {
+          id: `live-${Date.now()}-${data.turnIndex}`,
+          speakerName: data.speakerName,
+          speakerId: data.speakerId,
+          archetype: data.archetype ?? 'unknown',
+          roundPhase: data.roundPhase,
+          turnIndex: data.turnIndex,
+          transcript: data.transcript,
+          isModerator: data.isModerator ?? false,
+          isNew: true,
+        }
+        setTurns((prev) => [...prev, newTurn])
+        setCurrentPhase(data.roundPhase)
+        setActiveSpeakerId(data.speakerId)
+        // Audio arrives directly via LiveKit agent tracks — no URL needed
+      } else if (data.type === 'round_complete') {
+        setCurrentPhase(data.phase)
+        setActiveSpeakerId(null)
+      } else if (data.type === 'debate_complete') {
+        setConnectionStatus('ended')
+        setActiveSpeakerId(null)
+      }
+    } catch {
+      // Ignore malformed messages
+    }
+  }, [])
+
   const connect = useCallback(async () => {
     const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL
 
-    // If LiveKit isn't configured, go straight to URL-based audio mode
     if (!livekitUrl) {
       setConnectionStatus('connected')
       return
@@ -141,7 +124,6 @@ export function DebateRoom({
       })
 
       if (!res.ok) {
-        // LiveKit token failed — fall back to URL-based audio
         setConnectionStatus('connected')
         return
       }
@@ -221,58 +203,16 @@ export function DebateRoom({
         room.disconnect()
       }
     } catch (err) {
-      console.error('LiveKit connection error (falling back to URL audio):', err)
-      // Don't show error — just use URL-based audio
+      console.error('LiveKit connection error:', err)
       setConnectionStatus('connected')
     }
-  }, [debateId, roomName, identityToId, attachAudio])
+  }, [debateId, roomName, identityToId, attachAudio, handleDataMessage])
 
-  /** Handle incoming data messages (works with or without LiveKit) */
-  const handleDataMessage = useCallback((payload: Uint8Array) => {
-    try {
-      const text = new TextDecoder().decode(payload)
-      const data = JSON.parse(text)
-
-      if (data.type === 'turn') {
-        const newTurn: LiveTurnEntry = {
-          id: `live-${Date.now()}-${data.turnIndex}`,
-          speakerName: data.speakerName,
-          speakerId: data.speakerId,
-          archetype: data.archetype ?? 'unknown',
-          roundPhase: data.roundPhase,
-          turnIndex: data.turnIndex,
-          transcript: data.transcript,
-          isModerator: data.isModerator ?? false,
-          isNew: true,
-        }
-        setTurns((prev) => [...prev, newTurn])
-        setCurrentPhase(data.roundPhase)
-        setActiveSpeakerId(data.speakerId)
-
-        // Play audio from URL if available (fallback when no LiveKit audio tracks)
-        if (data.audioUrl) {
-          enqueueAudioUrl(data.audioUrl)
-        }
-      } else if (data.type === 'round_complete') {
-        setCurrentPhase(data.phase)
-        setActiveSpeakerId(null)
-      } else if (data.type === 'debate_complete') {
-        setConnectionStatus('ended')
-        setActiveSpeakerId(null)
-      }
-    } catch {
-      // Ignore malformed messages
-    }
-  }, [enqueueAudioUrl])
-
-  // Also set up SSE/polling fallback for when LiveKit data channel isn't available
+  // Polling fallback for transcript turns (when LiveKit data channel isn't available)
   useEffect(() => {
     if (connectionStatus !== 'connected') return
-
-    // Poll for new turns every 5 seconds as a fallback
-    // (when LiveKit isn't available, we won't get data messages)
     const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL
-    if (livekitUrl) return // LiveKit handles data messages
+    if (livekitUrl) return // LiveKit data channel handles turn delivery
 
     const interval = setInterval(async () => {
       try {
@@ -298,10 +238,6 @@ export function DebateRoom({
             })
             setCurrentPhase(t.roundPhase)
             setActiveSpeakerId(t.speakerId)
-
-            if (t.audioUrl) {
-              enqueueAudioUrl(t.audioUrl)
-            }
           }
         }
       } catch {
@@ -310,31 +246,20 @@ export function DebateRoom({
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [connectionStatus, debateId, turns.length, enqueueAudioUrl])
+  }, [connectionStatus, debateId, turns.length])
 
   useEffect(() => {
     let cleanup: (() => void) | undefined
-
     connect().then((fn) => {
       if (fn) cleanup = fn
     })
-
-    return () => {
-      cleanup?.()
-    }
+    return () => { cleanup?.() }
   }, [connect])
 
   const handleEnableAudio = () => {
     setAutoplayBlocked(false)
-    // Retry LiveKit audio
     for (const audioEl of audioElementsRef.current.values()) {
       audioEl.play().catch(() => {})
-    }
-    // Retry URL-based audio
-    if (urlAudioRef.current && urlAudioRef.current.src) {
-      urlAudioRef.current.play().catch(() => {})
-    } else {
-      playNextFromQueue()
     }
   }
 

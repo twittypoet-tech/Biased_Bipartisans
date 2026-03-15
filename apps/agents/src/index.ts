@@ -5,7 +5,8 @@ import { DebateScheduler } from './scheduler.js'
 const log = createLogger('agents')
 
 // Debate engine
-export { DebateOrchestrator, type DebateOrchestratorConfig, type TurnResult, type DebateCompleteSummary } from './debate/orchestrator.js'
+export { DebateOrchestrator, type DebateOrchestratorConfig, type TurnResult as OrchestratorTurnResult, type DebateCompleteSummary } from './debate/orchestrator.js'
+export { TurnController, type TurnResult, type TurnControllerConfig, type DebateCompleteSummary as TurnControllerSummary } from './debate/turn-controller.js'
 export { AgentRunner } from './debate/agent-runner.js'
 export { ModeratorRunner, type ModeratorParticipant } from './debate/moderator-runner.js'
 
@@ -55,9 +56,10 @@ export {
  *
  * Starts a health check server and the debate scheduler.
  * The scheduler polls for debates with status='scheduled' that are due,
- * then runs the full orchestrator + voice pipeline automatically.
+ * then runs the full TurnController + streaming voice pipeline automatically.
  *
- * Voice is enabled automatically when OPENAI_API_KEY is set.
+ * Voice uses ElevenLabs streaming TTS when ELEVENLABS_API_KEY is set.
+ * LiveKit audio publishing enabled when LIVEKIT_URL is configured.
  */
 async function main() {
   validateEnv(AGENTS_ENV, 'agents')
@@ -72,19 +74,11 @@ async function main() {
     log.info(`Health check on port ${healthPort}`)
   })
 
-  // Set up voice provider — OpenAI TTS when available, placeholder tones otherwise
-  const { getVoiceProvider } = await import('./voice/index.js')
-  let voiceProvider
-  if (process.env.OPENAI_API_KEY) {
-    voiceProvider = getVoiceProvider('openai')
-    log.info('Voice mode: OpenAI TTS enabled')
-  } else {
-    voiceProvider = getVoiceProvider('placeholder')
-    log.info('Voice mode: placeholder tones (set OPENAI_API_KEY for real voices)')
-  }
+  const ttsMode = process.env.ELEVENLABS_API_KEY ? 'elevenlabs-streaming' : 'disabled (set ELEVENLABS_API_KEY)'
+  log.info(`Voice mode: ${ttsMode}`)
 
   // Start the debate scheduler
-  const scheduler = new DebateScheduler(voiceProvider)
+  const scheduler = new DebateScheduler()
   scheduler.start()
 
   log.info('Agents service ready — scheduler polling for due debates')

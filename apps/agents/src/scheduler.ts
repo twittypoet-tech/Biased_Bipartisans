@@ -1,40 +1,40 @@
 import { createLogger } from '@bipi/shared'
-import { getSupabaseClient, getScheduledDebatesDue, getDebateParticipants, updateDebateStatus, updateTurnAudioUrl } from '@bipi/db'
-import { DebateOrchestrator } from './debate/orchestrator.js'
-import { DebateRoomBridge } from './livekit/debate-room.js'
+import { getSupabaseClient, getScheduledDebatesDue, getDebateParticipants, updateDebateStatus } from '@bipi/db'
 import { LiveKitRoomManager } from './livekit/room-manager.js'
-import { VoiceSynthesizer } from './services/voice-synthesizer.js'
-import type { VoiceProvider } from './voice/types.js'
+import { TurnController } from './debate/turn-controller.js'
+import { AudioPublisher } from './livekit/audio-publisher.js'
+import { createTTSPublishers } from './workers/streaming-tts.js'
 
 const log = createLogger('agents:scheduler')
 
 const POLL_INTERVAL_MS = 30_000 // 30 seconds
 
 /**
- * DebateScheduler polls for scheduled debates that are due to start,
- * then runs the full DebateOrchestrator + voice pipeline for each.
+ * DebateScheduler polls for scheduled debates that are due to start.
  *
- * Voice (TTS + storage) works independently of LiveKit.
- * LiveKit is optional — only used for live streaming when configured.
+ * When the debate-worker is running as a LiveKit Worker (registered via
+ * `cli.runApp`), this scheduler simply creates the LiveKit room — LiveKit
+ * automatically dispatches the job to the registered worker process.
+ *
+ * When running without a separate worker (standalone mode, e.g. development),
+ * the scheduler runs the TurnController directly in-process using the new
+ * streaming TTS pipeline.
+ *
+ * Either way, voice synthesis now uses ElevenLabs streaming TTS (sentence-level
+ * streaming via WebSocket) instead of the old batch OpenAI TTS + Supabase upload.
  */
 export class DebateScheduler {
   private running = false
   private activeDebates = new Set<string>()
-  private voiceProvider: VoiceProvider | null = null
   private timer: ReturnType<typeof setInterval> | null = null
-
-  constructor(voiceProvider?: VoiceProvider) {
-    this.voiceProvider = voiceProvider ?? null
-  }
 
   start(): void {
     if (this.running) return
     this.running = true
 
     const livekitStatus = LiveKitRoomManager.isConfigured() ? 'enabled' : 'disabled'
-    log.info(
-      `Scheduler started (poll every ${POLL_INTERVAL_MS / 1000}s, voice: ${this.voiceProvider ? 'enabled' : 'disabled'}, livekit: ${livekitStatus})`,
-    )
+    const ttsStatus = process.env.ELEVENLABS_API_KEY ? 'elevenlabs-streaming' : 'disabled'
+    log.info(`Scheduler started (poll every ${POLL_INTERVAL_MS / 1000}s, livekit: ${livekitStatus}, tts: ${ttsStatus})`)
 
     this.poll()
     this.timer = setInterval(() => this.poll(), POLL_INTERVAL_MS)
@@ -68,7 +68,8 @@ export class DebateScheduler {
 
         this.activeDebates.add(debate.id)
         log.info(`Starting debate: ${debate.title} (${debate.id})`)
-        this.runDebate(debate.id).catch((err) => {
+
+        this.runDebate(debate.id, debate.room_name, participants).catch((err) => {
           log.error(`Debate ${debate.id} failed`, { error: String(err) })
         })
       }
@@ -77,115 +78,85 @@ export class DebateScheduler {
     }
   }
 
-  private async runDebate(debateId: string): Promise<void> {
-    let bridge: DebateRoomBridge | null = null
-    let synthesizer: VoiceSynthesizer | null = null
+  private async runDebate(
+    debateId: string,
+    roomName: string,
+    participants: Array<{ agent_id: string; role: string; agents?: unknown }>,
+  ): Promise<void> {
+    const audioPublishers = new Map<string, AudioPublisher>()
+    const ttsPublishers = (() => {
+      if (!process.env.ELEVENLABS_API_KEY) return new Map()
+      const meta = participants.map((p) => {
+        const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
+        return {
+          agentId: p.agent_id,
+          archetype: (agent?.archetype as string) ?? 'moderator',
+          voiceId: null,
+        }
+      })
+      return createTTSPublishers(meta)
+    })()
 
     try {
-      // --- Voice synthesizer (works without LiveKit) ---
-      if (this.voiceProvider) {
-        synthesizer = new VoiceSynthesizer(this.voiceProvider)
-        log.info(`Voice synthesizer ready for debate ${debateId}`)
-      }
+      // Create LiveKit room — if using separate worker process, this triggers job dispatch
+      const roomManager = LiveKitRoomManager.isConfigured() ? new LiveKitRoomManager() : null
 
-      // --- LiveKit bridge (optional, for live streaming) ---
-      if (LiveKitRoomManager.isConfigured()) {
+      if (roomManager) {
         try {
-          bridge = new DebateRoomBridge()
-          await bridge.connect(`debate-${debateId}`)
-          log.info(`LiveKit room created for debate ${debateId}`)
+          await roomManager.createRoom(roomName)
+          log.info(`LiveKit room created: ${roomName}`)
         } catch (err) {
-          log.warn(`LiveKit room creation failed, continuing without live streaming`, { error: String(err) })
-          bridge = null
+          log.warn(`Failed to create LiveKit room, continuing without live streaming`, { error: String(err) })
+        }
+
+        // Connect audio publishers (one LiveKit participant per agent)
+        const livekitUrl = process.env.LIVEKIT_URL!
+        for (const p of participants) {
+          const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
+          const name = (agent?.name as string) ?? 'Unknown'
+          const publisher = new AudioPublisher(name)
+          const token = await roomManager.generateToken(
+            roomName,
+            name,
+            `agent-${name.toLowerCase().replace(/\s+/g, '-')}`,
+            'publisher',
+          )
+
+          try {
+            await publisher.connect(livekitUrl, token)
+            audioPublishers.set(p.agent_id, publisher)
+          } catch (err) {
+            log.warn(`Failed to connect audio publisher for ${name}`, { error: String(err) })
+          }
         }
       }
 
-      const orchestrator = new DebateOrchestrator({
+      // Run the debate with streaming TTS pipeline
+      const controller = new TurnController({
         debateId,
-        onTurnComplete: async (turn) => {
-          const label = turn.isModerator ? '[MOD]' : `[${turn.archetype.toUpperCase()}]`
-          log.info(`${label} ${turn.speakerName}: ${turn.transcript.slice(0, 120)}...`)
-
-          let audioUrl: string | null = null
-
-          // 1. Synthesize TTS + save to storage (independent of LiveKit)
-          if (synthesizer) {
-            const result = await synthesizer.synthesizeTurn(
-              debateId,
-              turn.speakerId,
-              turn.speakerName,
-              turn.turnIndex,
-              turn.transcript,
-            )
-            audioUrl = result.audioUrl
-
-            // 2. Optionally stream live audio via LiveKit
-            if (bridge && result.pcmBuffer && result.pcmBuffer.length > 0) {
-              await bridge.publishAudio(turn.speakerId, result.pcmBuffer)
-            }
-          }
-
-          // 3. Persist audio URL to the turn row
-          if (audioUrl) {
-            try {
-              const db = getSupabaseClient()
-              await updateTurnAudioUrl(db, debateId, turn.turnIndex, audioUrl)
-            } catch (err) {
-              log.warn(`Failed to save audio URL for turn ${turn.turnIndex}`, { error: String(err) })
-            }
-          }
-
-          // 4. Broadcast turn data via LiveKit (text + audio URL)
-          if (bridge) {
-            await bridge.broadcastTurnData(turn, audioUrl)
-          }
-        },
-        onRoundComplete: async (phase, summary) => {
-          log.info(`Round complete: ${phase}`)
-          if (bridge) {
-            await bridge.publishRoundComplete(phase, summary)
-          }
-        },
+        ttsPublishers,
+        audioPublishers,
+        roomManager: roomManager ?? undefined,
+        roomName,
         onDebateComplete: async (summary) => {
           log.info(`Debate complete: ${debateId}`, {
             turns: summary.totalTurns,
             rounds: summary.roundsCompleted,
             durationMs: summary.durationMs,
           })
-          if (bridge) {
-            await bridge.disconnect()
+
+          if (roomManager) {
+            await roomManager.sendData(roomName, {
+              type: 'debate_complete',
+              timestamp: new Date().toISOString(),
+            }).catch(() => {})
+            await roomManager.deleteRoom(roomName).catch(() => {})
           }
         },
       })
 
-      await orchestrator.initialize()
-
-      // Register voice agents with the synthesizer
-      if (synthesizer) {
-        const participants = orchestrator.getParticipants()
-        synthesizer.registerAgents(
-          participants.map((p) => ({
-            agentId: p.agentId,
-            archetype: p.archetype,
-            voiceId: null,
-          })),
-        )
-      }
-
-      // Set up LiveKit audio publishers (only if LiveKit is running)
-      if (bridge) {
-        const participants = orchestrator.getParticipants()
-        await bridge.setupVoicePublishers(
-          participants.map((p) => ({
-            agentId: p.agentId,
-            name: p.name,
-            archetype: p.archetype,
-            voiceId: null,
-          })),
-        )
-      }
-
-      await orchestrator.run()
+      await controller.initialize()
+      await controller.run()
 
       log.info(`Debate ${debateId} finished successfully`)
     } catch (err) {
@@ -197,15 +168,14 @@ export class DebateScheduler {
       } catch {
         // best effort
       }
-
-      if (bridge) {
-        try {
-          await bridge.disconnect()
-        } catch {
-          // best effort cleanup
-        }
-      }
     } finally {
+      // Cleanup
+      for (const [, publisher] of audioPublishers) {
+        await publisher.disconnect().catch(() => {})
+      }
+      for (const [, tts] of ttsPublishers) {
+        await tts.close().catch(() => {})
+      }
       this.activeDebates.delete(debateId)
     }
   }

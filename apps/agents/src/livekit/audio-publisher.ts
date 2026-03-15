@@ -17,7 +17,7 @@ const SAMPLES_PER_FRAME = 480
  */
 export class AudioPublisher {
   private room: Room
-  private audioSource: AudioSource | null = null
+  private _audioSource: AudioSource | null = null
   private track: LocalAudioTrack | null = null
   private connected = false
   private identity: string
@@ -37,8 +37,8 @@ export class AudioPublisher {
     log.info(`${this.agentName} connected to room as ${this.identity}`)
 
     // Create audio source and track
-    this.audioSource = new AudioSource(TTS_SAMPLE_RATE, TTS_NUM_CHANNELS)
-    this.track = LocalAudioTrack.createAudioTrack(`voice-${this.identity}`, this.audioSource)
+    this._audioSource = new AudioSource(TTS_SAMPLE_RATE, TTS_NUM_CHANNELS)
+    this.track = LocalAudioTrack.createAudioTrack(`voice-${this.identity}`, this._audioSource)
 
     // Publish the audio track
     const options = new TrackPublishOptions()
@@ -49,6 +49,14 @@ export class AudioPublisher {
   }
 
   /**
+   * Expose the AudioSource so StreamingTTSPublisher can push frames directly,
+   * enabling real-time frame-by-frame publishing as ElevenLabs synthesizes audio.
+   */
+  get audioSource(): AudioSource | null {
+    return this._audioSource
+  }
+
+  /**
    * Push a PCM audio buffer to the LiveKit room.
    * The buffer should be 24kHz, 16-bit signed LE, mono PCM data
    * (as returned by OpenAI TTS with response_format='pcm').
@@ -56,7 +64,7 @@ export class AudioPublisher {
    * Splits the buffer into 20ms frames and pushes them sequentially.
    */
   async publishAudio(pcmBuffer: Buffer): Promise<void> {
-    if (!this.audioSource) {
+    if (!this._audioSource) {
       log.warn(`${this.agentName}: Cannot publish audio — not connected`)
       return
     }
@@ -78,11 +86,11 @@ export class AudioPublisher {
       frameData.set(int16Data.subarray(offset, offset + chunkSize))
 
       const frame = new AudioFrame(frameData, TTS_SAMPLE_RATE, TTS_NUM_CHANNELS, chunkSize)
-      await this.audioSource.captureFrame(frame)
+      await this._audioSource.captureFrame(frame)
     }
 
     // Wait for all audio to finish playing
-    await this.audioSource.waitForPlayout()
+    await this._audioSource.waitForPlayout()
   }
 
   /**
@@ -97,7 +105,7 @@ export class AudioPublisher {
       log.warn(`Error disconnecting ${this.agentName}`, { error: String(err) })
     }
 
-    this.audioSource = null
+    this._audioSource = null
     this.track = null
     this.connected = false
     log.info(`${this.agentName} disconnected`)
