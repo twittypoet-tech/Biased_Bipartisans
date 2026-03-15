@@ -53,10 +53,10 @@ async function main() {
 
   // ── 3. Try server-side LiveKit connection ──────────────────────────────────
   // The room URL may be embedded in the token or we try known Retell endpoints.
+  // URL sourced from retell-client-js-sdk/src/index.ts const hostUrl
   const candidates = [
     lkUrl,
-    'wss://retell-ai.livekit.cloud',
-    'wss://retellai.livekit.cloud',
+    'wss://retell-ai-4ihahnq7.livekit.cloud',
   ].filter(Boolean) as string[];
 
   console.log('\n[3] Attempting server-side LiveKit connection...');
