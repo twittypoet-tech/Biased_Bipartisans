@@ -16,6 +16,8 @@ export type { LLMProvider, LLMMessage, LLMCompletionRequest, LLMCompletionRespon
 // Services
 export { DebateStateManager, type DebateParticipantInfo, type DebateSummary } from './services/debate-state.js'
 export { persistTurn, extractClaimTier, buildRoundSummary } from './services/turn-persistence.js'
+export { VoiceSynthesizer, type SynthesizedTurn } from './services/voice-synthesizer.js'
+export { uploadTurnAudio } from './services/audio-storage.js'
 
 // Tools
 export type { AgentTool, AgentToolResult } from './tools/types.js'
