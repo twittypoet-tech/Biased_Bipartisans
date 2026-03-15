@@ -13,6 +13,7 @@ export interface PersistTurnInput {
   claimTags?: string[]
   evidenceMetadata?: Record<string, unknown> | null
   durationMs?: number | null
+  audioUrl?: string | null
 }
 
 /**
@@ -30,6 +31,7 @@ export async function persistTurn(db: SupabaseClient, input: PersistTurnInput) {
     claim_tags: input.claimTags ?? [],
     evidence_metadata: input.evidenceMetadata ?? null,
     duration_ms: input.durationMs ?? null,
+    audio_url: input.audioUrl ?? null,
   })
 }
 

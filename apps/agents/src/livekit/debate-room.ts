@@ -4,6 +4,7 @@ import type { VoiceProvider } from '../voice/types.js'
 import { getVoiceId } from '../voice/voice-map.js'
 import { LiveKitRoomManager } from './room-manager.js'
 import { AudioPublisher } from './audio-publisher.js'
+import { uploadTurnAudio } from '../services/audio-storage.js'
 
 const log = createLogger('agents:debate-room')
 
@@ -83,12 +84,38 @@ export class DebateRoomBridge {
 
   /**
    * Publish a turn to all connected audience members.
-   * If voice is enabled, also synthesizes and publishes audio.
+   * If voice is enabled, synthesizes audio, publishes to LiveKit, and
+   * persists to Supabase Storage. Returns the audio URL if saved.
    */
-  async publishTurn(turn: TurnResult): Promise<void> {
-    if (!this.roomName) return
+  async publishTurn(turn: TurnResult, debateId: string): Promise<string | null> {
+    if (!this.roomName) return null
 
-    // Always send text data
+    let audioUrl: string | null = null
+
+    // Synthesize + publish audio if voice is enabled
+    if (this.voiceProvider) {
+      const publisher = this.publishers.get(turn.speakerId)
+      const voiceId = this.agentVoices.get(turn.speakerId)
+
+      if (voiceId) {
+        try {
+          const result = await this.voiceProvider.synthesize(turn.transcript, voiceId)
+
+          // Publish live to LiveKit room
+          if (publisher?.isConnected) {
+            await publisher.publishAudio(result.audio)
+            log.debug(`Published ${result.durationMs}ms audio for ${turn.speakerName}`)
+          }
+
+          // Persist to Supabase Storage for playback later
+          audioUrl = await uploadTurnAudio(debateId, turn.turnIndex, turn.speakerName, result.audio)
+        } catch (err) {
+          log.warn(`TTS failed for ${turn.speakerName}, text-only fallback`, { error: String(err) })
+        }
+      }
+    }
+
+    // Send text data (include audioUrl so late-joining clients can fetch it)
     await this.roomManager.sendData(this.roomName, {
       type: 'turn',
       speakerName: turn.speakerName,
@@ -98,24 +125,11 @@ export class DebateRoomBridge {
       turnIndex: turn.turnIndex,
       transcript: turn.transcript,
       isModerator: turn.isModerator,
+      audioUrl,
       timestamp: new Date().toISOString(),
     })
 
-    // Synthesize + publish audio if voice is enabled
-    if (this.voiceProvider) {
-      const publisher = this.publishers.get(turn.speakerId)
-      const voiceId = this.agentVoices.get(turn.speakerId)
-
-      if (publisher?.isConnected && voiceId) {
-        try {
-          const result = await this.voiceProvider.synthesize(turn.transcript, voiceId)
-          await publisher.publishAudio(result.audio)
-          log.debug(`Published ${result.durationMs}ms audio for ${turn.speakerName}`)
-        } catch (err) {
-          log.warn(`TTS failed for ${turn.speakerName}, text-only fallback`, { error: String(err) })
-        }
-      }
-    }
+    return audioUrl
   }
 
   /**
