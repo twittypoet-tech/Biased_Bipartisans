@@ -469,6 +469,14 @@ export class DebateOrchestrator {
     }
   }
 
+  /**
+   * Get participant info for voice setup.
+   * Call after initialize().
+   */
+  getParticipants(): DebateParticipantInfo[] {
+    return [...this.participantInfo]
+  }
+
   private async emitTurn(turn: TurnResult): Promise<void> {
     await this.config.onTurnComplete?.(turn)
   }

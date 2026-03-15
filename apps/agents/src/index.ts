@@ -23,10 +23,12 @@ export { VoteStateTool } from './tools/vote-state.js'
 
 // Voice
 export type { VoiceProvider, Voice, SynthesisResult } from './voice/types.js'
+export { OpenAITTSProvider } from './voice/openai-tts.js'
 export { PlaceholderVoiceProvider } from './voice/placeholder-provider.js'
+export { getVoiceProvider, ARCHETYPE_VOICE_MAP, getVoiceId } from './voice/index.js'
 
 // LiveKit
-export { LiveKitRoomManager, DebateRoomBridge } from './livekit/index.js'
+export { LiveKitRoomManager, DebateRoomBridge, AudioPublisher, type VoiceAgent } from './livekit/index.js'
 
 // Research tool
 export { ResearchTool } from './tools/research.js'
@@ -46,6 +48,9 @@ export {
  * Quick-start: run a debate from the command line.
  *
  *   DEBATE_ID=<uuid> pnpm --filter @bipi/agents dev
+ *
+ * Enable voice (agents speak via OpenAI TTS in LiveKit):
+ *   DEBATE_ID=<uuid> ENABLE_VOICE=true pnpm --filter @bipi/agents dev
  */
 async function main() {
   validateEnv(AGENTS_ENV, 'agents')
@@ -66,28 +71,71 @@ async function main() {
     return
   }
 
-  log.info(`Starting debate: ${debateId}`)
+  const enableVoice = process.env.ENABLE_VOICE === 'true'
+  log.info(`Starting debate: ${debateId}${enableVoice ? ' (voice enabled)' : ''}`)
+
+  // Set up LiveKit room bridge (with optional voice)
+  const { DebateRoomBridge } = await import('./livekit/debate-room.js')
+  const { LiveKitRoomManager } = await import('./livekit/room-manager.js')
+  let bridge: InstanceType<typeof DebateRoomBridge> | null = null
+
+  if (LiveKitRoomManager.isConfigured()) {
+    let voiceProvider = undefined
+    if (enableVoice) {
+      const { getVoiceProvider } = await import('./voice/index.js')
+      voiceProvider = getVoiceProvider('openai')
+      log.info('Voice mode: OpenAI TTS enabled')
+    }
+
+    bridge = new DebateRoomBridge(voiceProvider)
+    await bridge.connect(`debate-${debateId}`)
+  }
 
   const { DebateOrchestrator: Orchestrator } = await import('./debate/orchestrator.js')
   const orchestrator = new Orchestrator({
     debateId,
-    onTurnComplete: (turn) => {
+    onTurnComplete: async (turn) => {
       const label = turn.isModerator ? '[MOD]' : `[${turn.archetype.toUpperCase()}]`
       log.info(`${label} ${turn.speakerName}: ${turn.transcript.slice(0, 120)}...`)
+
+      // Publish turn to LiveKit room (with voice synthesis if enabled)
+      if (bridge) {
+        await bridge.publishTurn(turn)
+      }
     },
-    onRoundComplete: (phase, summary) => {
+    onRoundComplete: async (phase, summary) => {
       log.info(`Round complete: ${phase}`, { summary: summary.slice(0, 200) })
+      if (bridge) {
+        await bridge.publishRoundComplete(phase, summary)
+      }
     },
-    onDebateComplete: (summary) => {
+    onDebateComplete: async (summary) => {
       log.info('Debate complete', {
         turns: summary.totalTurns,
         rounds: summary.roundsCompleted,
         durationMs: summary.durationMs,
       })
+      if (bridge) {
+        await bridge.disconnect()
+      }
     },
   })
 
   await orchestrator.initialize()
+
+  // Set up voice agents after initialization (we need participant info)
+  if (bridge?.voiceEnabled) {
+    const participants = orchestrator.getParticipants()
+    await bridge.setupVoiceAgents(
+      participants.map((p) => ({
+        agentId: p.agentId,
+        name: p.name,
+        archetype: p.archetype,
+        voiceId: null, // Will fall back to archetype mapping
+      })),
+    )
+  }
+
   await orchestrator.run()
 }
 
