@@ -7,6 +7,7 @@ import { getDebateBySlug, getDebateFormat, getDebateParticipants, getDebateTurns
 import { statusColors, getArchetypeColor } from '@/lib/agent-colors'
 import { ConfigSection, DataList } from '@/components/admin/config-section'
 import { ParticipantManager } from '@/components/admin/participant-manager'
+import { BackfillAudioButton } from '@/components/admin/backfill-audio-button'
 
 export default async function DebateDetailPage({
   params,
@@ -149,6 +150,17 @@ export default async function DebateDetailPage({
           moderatorId={moderatorAgent?.id ?? null}
         />
       </ConfigSection>
+
+      {/* Audio Backfill */}
+      {turns.length > 0 && (
+        <ConfigSection title="Audio" defaultOpen>
+          <BackfillAudioButton
+            debateId={debate.id}
+            turnsWithoutAudio={turns.filter((t) => !t.audio_url).length}
+            totalTurns={turns.length}
+          />
+        </ConfigSection>
+      )}
 
       {/* Transcript */}
       {turns.length > 0 && (
