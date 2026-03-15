@@ -1,0 +1,5 @@
+[project]
+subdomain = "biased-bipartisans-rfx3zywb"
+
+[agent]
+id = ""  # filled in automatically by lk agent deploy on first run
