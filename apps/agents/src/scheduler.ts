@@ -1,7 +1,7 @@
 import { createLogger } from '@bipi/shared'
 import { getSupabaseClient, getScheduledDebatesDue, getDebateParticipants, updateDebateStatus } from '@bipi/db'
 import { LiveKitRoomManager } from './livekit/room-manager.js'
-import { TurnController } from './debate/turn-controller.js'
+import { LiveConversation } from './debate/live-conversation.js'
 import { AudioPublisher } from './livekit/audio-publisher.js'
 import { createTTSPublishers } from './workers/streaming-tts.js'
 
@@ -17,7 +17,7 @@ const POLL_INTERVAL_MS = 30_000 // 30 seconds
  * automatically dispatches the job to the registered worker process.
  *
  * When running without a separate worker (standalone mode, e.g. development),
- * the scheduler runs the TurnController directly in-process using the new
+ * the scheduler runs LiveConversation directly in-process using the
  * streaming TTS pipeline.
  *
  * Either way, voice synthesis now uses ElevenLabs streaming TTS (sentence-level
@@ -131,9 +131,11 @@ export class DebateScheduler {
         }
       }
 
-      // Run the debate with streaming TTS pipeline
-      const controller = new TurnController({
+      // Run the live reactive conversation
+      const conversation = new LiveConversation({
         debateId,
+        maxExchanges: 10,
+        audienceCheckInterval: 3,
         ttsPublishers,
         audioPublishers,
         roomManager: roomManager ?? undefined,
@@ -141,22 +143,13 @@ export class DebateScheduler {
         onDebateComplete: async (summary) => {
           log.info(`Debate complete: ${debateId}`, {
             turns: summary.totalTurns,
-            rounds: summary.roundsCompleted,
             durationMs: summary.durationMs,
           })
-
-          if (roomManager) {
-            await roomManager.sendData(roomName, {
-              type: 'debate_complete',
-              timestamp: new Date().toISOString(),
-            }).catch(() => {})
-            await roomManager.deleteRoom(roomName).catch(() => {})
-          }
         },
       })
 
-      await controller.initialize()
-      await controller.run()
+      await conversation.initialize()
+      await conversation.run()
 
       log.info(`Debate ${debateId} finished successfully`)
     } catch (err) {

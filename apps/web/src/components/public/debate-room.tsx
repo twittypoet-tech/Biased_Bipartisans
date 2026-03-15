@@ -5,6 +5,7 @@ import { SpeakerStage, type StageParticipant } from './speaker-stage'
 import { LiveTranscript, type LiveTurnEntry } from './live-transcript'
 import { DebateTimer } from './debate-timer'
 import { AudienceQA } from './audience-qa'
+import { FactCheckFeed } from './fact-check-feed'
 
 interface DebateRoomProps {
   debateId: string
@@ -350,7 +351,7 @@ export function DebateRoom({
         currentPhase={currentPhase}
       />
 
-      {/* Live transcript + Q&A side by side on large screens */}
+      {/* Live transcript, Q&A, and Oracle feed */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
@@ -359,8 +360,12 @@ export function DebateRoom({
           <LiveTranscript turns={turns} activeSpeakerId={activeSpeakerId} />
         </div>
 
-        <div>
+        <div className="space-y-6">
           <AudienceQA
+            debateId={debateId}
+            isLive={connectionStatus === 'connected'}
+          />
+          <FactCheckFeed
             debateId={debateId}
             isLive={connectionStatus === 'connected'}
           />

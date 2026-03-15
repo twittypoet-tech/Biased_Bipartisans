@@ -11,6 +11,7 @@ import { streamAnthropicResponse, completeAnthropicResponse } from '../workers/a
 import type { StreamingTTSPublisher } from '../workers/streaming-tts.js'
 import type { AudioPublisher } from '../livekit/audio-publisher.js'
 import { LiveKitRoomManager } from '../livekit/room-manager.js'
+import { TavilyOracle } from '../tools/tavily-oracle.js'
 
 const log = createLogger('agents:live-conversation')
 
@@ -32,7 +33,7 @@ export interface LiveConversationConfig {
   debateId: string
   /** Max back-and-forth exchanges before closing statements (default: 8) */
   maxExchanges?: number
-  /** How often to check for audience questions, in exchanges (default: every 2) */
+  /** How often to offer audience questions to the moderator, in exchanges (default: every 3) */
   audienceCheckInterval?: number
   ttsPublishers?: Map<string, StreamingTTSPublisher>
   audioPublishers?: Map<string, AudioPublisher>
@@ -45,19 +46,15 @@ export interface LiveConversationConfig {
 // ─── LiveConversation ─────────────────────────────────────────────────────────
 
 /**
- * LiveConversation replaces the scripted TurnController with a fully reactive
- * conversation engine. Instead of following a predetermined round sequence,
- * each agent always responds to exactly what the other agent just said.
+ * LiveConversation — fully reactive conversation engine.
  *
- * Key differences from TurnController:
- *  - No fixed round sequence — dynamic flow: openings → exchanges → closings
- *  - Every turn after the first is a direct reaction to the prior speech
- *  - Audience questions are injected naturally between exchanges
- *  - Soft interrupt: any turn can be cut short at sentence boundary
- *  - Both agents hear the full shared transcript at all times
- *
- * The conversation feels like a live argument because the agents ARE arguing
- * with each other — not reading from a script.
+ * Features:
+ *  - No fixed round sequence: openings → reactive exchanges → closings
+ *  - Every turn reacts to exactly what the prior speaker said
+ *  - Moderator sees audience questions and decides when to interject
+ *  - TavilyOracle runs background searches + supports on-demand fact-checks
+ *  - Sentence-boundary interrupt: any turn can be cut short at a natural break
+ *  - Full LiveKit audio streaming via ElevenLabs TTS
  */
 export class LiveConversation {
   private config: LiveConversationConfig
@@ -84,6 +81,9 @@ export class LiveConversation {
   private startTime = 0
   private interruptPending: string | null = null  // agentId requesting floor
   private stateManager: DebateStateManager | null = null
+
+  // Oracle
+  private oracle: TavilyOracle | null = null
 
   constructor(config: LiveConversationConfig) {
     this.config = config
@@ -182,6 +182,13 @@ export class LiveConversation {
     const phases = ['opening', 'rebuttal', 'closing'] as const
     this.stateManager = new DebateStateManager(phases as unknown as import('@bipi/shared').RoundPhase[])
 
+    // Initialize Tavily Oracle
+    this.oracle = new TavilyOracle(debateId, this.db)
+    await this.oracle.loadExisting()
+    if (TavilyOracle.isConfigured()) {
+      log.info('TavilyOracle active — live fact-checking enabled')
+    }
+
     await this.db.from('debates').update({
       status: 'live',
       started_at: new Date().toISOString(),
@@ -199,7 +206,7 @@ export class LiveConversation {
 
     this.startTime = Date.now()
     const maxExchanges = this.config.maxExchanges ?? 8
-    const audienceInterval = this.config.audienceCheckInterval ?? 2
+    const audienceInterval = this.config.audienceCheckInterval ?? 3
 
     // ── Phase 1: Moderator opens ─────────────────────────────────────────
     await this.moderatorOpen()
@@ -213,24 +220,27 @@ export class LiveConversation {
     let lastSpeakerId = this.debaters[this.debaters.length - 1]!.agentId
 
     while (this.exchangeCount < maxExchanges) {
-      // Check for audience question at regular intervals
-      if (this.exchangeCount > 0 && this.exchangeCount % audienceInterval === 0) {
-        const questions = await getTopAudienceQuestions(this.db, this.config.debateId, 1)
-        if (questions.length > 0) {
-          await this.handleAudienceQuestion(questions[0]!)
-          continue  // don't count as an exchange, just continue the loop
-        }
-      }
-
       // Alternate speakers
       const nextDebater = this.getNextDebater(lastSpeakerId)
-      await this.speakReactive(nextDebater, lastSpeakerId)
+      const transcript = await this.speakReactive(nextDebater, lastSpeakerId)
 
       lastSpeakerId = nextDebater.agentId
       this.exchangeCount++
+
+      // Background oracle search after each exchange
+      if (this.oracle && transcript) {
+        this.oracle.backgroundSearch(transcript).catch((err) =>
+          log.warn('Oracle background search error', err),
+        )
+      }
+
+      // Offer audience questions to moderator at regular intervals
+      if (this.exchangeCount > 0 && this.exchangeCount % audienceInterval === 0) {
+        await this.offerAudienceQuestionToModerator()
+      }
     }
 
-    // ── Phase 4: Closing statements (same order as openings) ─────────────
+    // ── Phase 4: Closing statements ──────────────────────────────────────
     await this.moderatorTransitionToClosing()
 
     for (const debater of this.debaters) {
@@ -246,8 +256,19 @@ export class LiveConversation {
       ended_at: new Date().toISOString(),
     }).eq('id', this.config.debateId)
 
+    // Broadcast debate_complete event
+    if (this.config.roomManager && this.config.roomName) {
+      await this.config.roomManager.sendData(this.config.roomName, {
+        type: 'debate_complete',
+        timestamp: new Date().toISOString(),
+      }).catch(() => {})
+      await this.config.roomManager.deleteRoom(this.config.roomName).catch(() => {})
+    }
+
     const durationMs = Date.now() - this.startTime
     await this.config.onDebateComplete?.({ totalTurns: this.turnIndex, durationMs })
+
+    log.info(`Debate complete — ${this.turnIndex} turns in ${Math.round(durationMs / 1000)}s`)
   }
 
   // ─── Speaking methods ─────────────────────────────────────────────────────
@@ -292,22 +313,69 @@ export class LiveConversation {
     this.injectIntoOtherAgents(debater.agentId, debater.name, transcript)
   }
 
-  private async speakReactive(debater: DebateParticipantInfo, prevSpeakerId: string): Promise<void> {
-    const prevSpeaker = this.sharedHistory.findLast((r) => r.speakerId === prevSpeakerId)
-    if (!prevSpeaker) return
+  /** Returns the transcript so caller can pass to oracle */
+  private async speakReactive(debater: DebateParticipantInfo, prevSpeakerId: string): Promise<string> {
+    const prevSpeaker = [...this.sharedHistory].reverse().find((r) => r.speakerId === prevSpeakerId)
+    if (!prevSpeaker) return ''
 
     const prompt = this.buildReactivePrompt(debater, prevSpeaker)
     const transcript = await this.generateAndSpeakWithPersist(debater, prompt, 'rebuttal')
     this.sharedHistory.push({ speakerId: debater.agentId, speakerName: debater.name, archetype: debater.archetype, transcript, isModerator: false })
     this.injectIntoOtherAgents(debater.agentId, debater.name, transcript)
+    return transcript
+  }
+
+  /**
+   * Moderator-controlled audience Q&A.
+   * Shows the moderator the top pending questions + oracle context, then asks
+   * whether to interject now. If yes, the moderator picks one and introduces it.
+   */
+  private async offerAudienceQuestionToModerator(): Promise<void> {
+    const questions = await getTopAudienceQuestions(this.db, this.config.debateId, 3)
+    if (questions.length === 0) return
+
+    const qList = questions
+      .map((q, i) => `${i + 1}. [${q.upvotes} votes] "${q.content}"`)
+      .join('\n')
+
+    const oracleContext = this.oracle?.getContextForModerator(3) ?? ''
+
+    const decisionPrompt = [
+      `You are moderating a live debate. Here are the top audience questions right now:`,
+      qList,
+      oracleContext,
+      ``,
+      `The debate has had ${this.exchangeCount} exchanges so far.`,
+      `Should you interrupt the debate now to address an audience question?`,
+      ``,
+      `Reply with EXACTLY one of these formats:`,
+      `YES: <question number> — if you want to interject now (pick one question)`,
+      `NO — if the debate momentum is more important right now`,
+    ].join('\n')
+
+    const decision = await this.generateModerator(decisionPrompt)
+    const yesMatch = decision.match(/^YES:\s*(\d)/i)
+
+    if (!yesMatch) {
+      log.info('[Moderator] Audience Q decided: not now')
+      return
+    }
+
+    const qIndex = parseInt(yesMatch[1]!, 10) - 1
+    const chosenQuestion = questions[qIndex] ?? questions[0]!
+    log.info(`[Moderator] Audience Q chosen: "${chosenQuestion.content}"`)
+
+    await this.handleAudienceQuestion(chosenQuestion)
   }
 
   private async handleAudienceQuestion(question: AudienceMessage): Promise<void> {
-    // Moderator reads the question
+    const oracleContext = this.oracle?.getContextForModerator(2) ?? ''
+
     const modPrompt = [
       `An audience member asks: "${question.content}"`,
       `Briefly introduce this question to both debaters. 1-2 sentences.`,
       `Then ask both ${this.debaters.map((d) => d.name).join(' and ')} to address it.`,
+      oracleContext,
     ].join('\n')
 
     const modTranscript = await this.generateModerator(modPrompt)
@@ -320,7 +388,6 @@ export class LiveConversation {
       phase: 'rebuttal',
     })
 
-    // Mark question addressed
     await markQuestionAddressed(this.db, question.id, turnId)
 
     // Inject the question into all agents as context
@@ -329,15 +396,25 @@ export class LiveConversation {
       history.push({ role: 'user', content: questionContext })
     }
 
-    // Each debater responds to the audience question
+    // Each debater responds
     for (const debater of this.debaters) {
+      const oracleFacts = this.oracle?.getContextForAgents(2) ?? ''
       const prompt = [
         `Address this audience question: "${question.content}"`,
         `Connect your answer to your core position. Be genuine and direct.`,
         `2-3 sentences.`,
+        oracleFacts,
       ].join('\n')
 
       const transcript = await this.generateAndSpeak(debater.agentId, prompt)
+      await this.persistAndBroadcast({
+        speakerId: debater.agentId,
+        speakerName: debater.name,
+        archetype: debater.archetype,
+        transcript,
+        isModerator: false,
+        phase: 'audience_evidence',
+      })
       this.sharedHistory.push({ speakerId: debater.agentId, speakerName: debater.name, archetype: debater.archetype, transcript, isModerator: false })
       this.injectIntoOtherAgents(debater.agentId, debater.name, transcript)
     }
@@ -374,10 +451,13 @@ export class LiveConversation {
       .map((r) => `${r.speakerName}: "${r.transcript.slice(0, 100)}..."`)
       .join('\n')
 
+    const oracleFacts = this.oracle?.getContextForAgents(2) ?? ''
+
     const prompt = [
       `Make your closing argument.`,
       `The debate covered:`,
       debateSummary,
+      oracleFacts,
       `What is the single most important thing you want the audience to walk away believing?`,
       `Be decisive and memorable. 3-4 sentences.`,
     ].join('\n')
@@ -393,9 +473,12 @@ export class LiveConversation {
       .map((r) => `${r.speakerName}: "${r.transcript.slice(0, 100)}..."`)
       .join('\n')
 
+    const oracleFindings = this.oracle?.getContextForModerator(4) ?? ''
+
     const prompt = [
       `Close the debate. Full exchange summary:`,
       allSummary,
+      oracleFindings,
       `Note the strongest argument from each side.`,
       `Identify what remains unresolved.`,
       `Do NOT declare a winner. Let the audience decide.`,
@@ -415,16 +498,14 @@ export class LiveConversation {
 
   // ─── Prompt builders ──────────────────────────────────────────────────────
 
-  /**
-   * The heart of the reactive conversation.
-   * Each agent responds to exactly what the other just said — no scripts.
-   */
   private buildReactivePrompt(debater: DebateParticipantInfo, prevSpeech: SpeechRecord): string {
     const recentOpponent = this.sharedHistory
       .filter((r) => r.speakerId !== debater.agentId && !r.isModerator)
       .slice(-2)
       .map((r) => `${r.speakerName}: "${r.transcript}"`)
       .join('\n')
+
+    const oracleFacts = this.oracle?.getContextForAgents(2) ?? ''
 
     return [
       `${prevSpeech.speakerName} just said:`,
@@ -435,10 +516,11 @@ export class LiveConversation {
       `- Expose a contradiction with something they said earlier`,
       `- Concede a point if they scored one, then immediately pivot to a stronger angle`,
       `- Escalate — push your core argument harder`,
+      oracleFacts,
       ``,
       `Be direct and conversational. 2-4 sentences unless you have a critical argument to make.`,
       recentOpponent ? `\n[Recent context]\n${recentOpponent}` : '',
-    ].join('\n')
+    ].filter(Boolean).join('\n')
   }
 
   // ─── LLM + TTS pipeline ───────────────────────────────────────────────────
@@ -457,7 +539,7 @@ export class LiveConversation {
 
     const textStream = streamAnthropicResponse(messages, {
       maxTokens,
-      temperature: 0.82,  // slightly higher — live conversation is more spontaneous
+      temperature: 0.82,
     })
 
     const ttsPublisher = this.config.ttsPublishers?.get(agentId)
@@ -484,7 +566,7 @@ export class LiveConversation {
   }
 
   /**
-   * Wraps a text stream with sentence-boundary interrupt detection.
+   * Sentence-boundary interrupt detection.
    * If another agent requests the floor mid-speech, generation stops
    * at the next sentence boundary (., !, ?).
    */
@@ -492,30 +574,22 @@ export class LiveConversation {
     source: AsyncIterable<string>,
     speakerId: string,
   ): AsyncGenerator<string> {
-    let sentenceBuffer = ''
     let sentenceCount = 0
-    const maxSentences = 6  // hard cap per turn in live conversation
+    const maxSentences = 6
 
     for await (const chunk of source) {
-      sentenceBuffer += chunk
       yield chunk
 
-      // Count sentence endings
       const endings = (chunk.match(/[.!?]+\s/g) ?? []).length
       sentenceCount += endings
 
-      // Check interrupt at sentence boundary
       if (endings > 0) {
-        // Another agent requested the floor
         if (this.interruptPending && this.interruptPending !== speakerId) {
-          log.info(`[INTERRUPT] ${speakerId} yielding floor to ${this.interruptPending}`)
+          log.info(`[INTERRUPT] ${speakerId} yields floor to ${this.interruptPending}`)
           this.interruptPending = null
           return
         }
-        // Enforce sentence cap
-        if (sentenceCount >= maxSentences) {
-          return
-        }
+        if (sentenceCount >= maxSentences) return
       }
     }
   }
@@ -553,7 +627,6 @@ export class LiveConversation {
       claimTier: args.isModerator ? undefined : extractClaimTier(args.transcript),
     })
 
-    // Broadcast to audience via LiveKit data channel
     if (this.config.roomManager && this.config.roomName) {
       await this.config.roomManager.sendData(this.config.roomName, {
         type: 'turn',
@@ -616,9 +689,14 @@ export class LiveConversation {
     return this.debaters[nextIdx]!
   }
 
-  /** Request an interrupt — the current speaker yields at the next sentence boundary */
+  /** Request an interrupt — current speaker yields at the next sentence boundary */
   requestInterrupt(fromAgentId: string): void {
     this.interruptPending = fromAgentId
     log.info(`Interrupt requested by ${fromAgentId}`)
+  }
+
+  /** Expose oracle for external fact-check requests (e.g. from agent tools) */
+  get tavilyOracle(): TavilyOracle | null {
+    return this.oracle
   }
 }
