@@ -1461,3 +1461,93 @@ CREATE POLICY "agent_evolution_snapshots_service_all"
   TO service_role
   USING (true)
   WITH CHECK (true);
+
+-- ═══════════════════════════════════════════════════════════════
+-- DEMO DEBATE SEED DATA
+-- A completed Hawk vs Dove debate for UI/UX testing
+-- ═══════════════════════════════════════════════════════════════
+
+INSERT INTO debates (id, title, slug, topic_framing, format_id, status, scheduled_at, started_at, ended_at, room_name)
+VALUES (
+  '20000000-0000-0000-0000-000000000001',
+  'Military Intervention vs. Diplomacy on Iran',
+  'iran-intervention-demo',
+  '{
+    "headline": "Should the US launch military strikes on Iran''s nuclear facilities?",
+    "conflict_description": "Iran is months from enriching enough uranium for a weapon. Hawks argue a credible military threat is the only language Tehran understands. Doves argue strikes would trigger a regional war, unite Iranians behind the regime, and only delay — not end — the program.",
+    "forced_tradeoff": "Accept the risk of a nuclear Iran, or accept the risk of a regional war with no guaranteed outcome.",
+    "moral_tension": "The right to self-defense vs. the catastrophic civilian cost of preemptive war.",
+    "strategic_tension": "Short-term disruption of the program vs. long-term radicalization and blowback.",
+    "identity_tension": "America as global security guarantor vs. America as a nation exhausted by Middle Eastern wars.",
+    "decision_surface": "Whether to authorize a limited military strike package against known Iranian enrichment sites."
+  }'::jsonb,
+  '00000000-0000-0000-0000-000000000001',
+  'ended',
+  '2026-03-14T20:00:00Z',
+  '2026-03-14T20:00:05Z',
+  '2026-03-14T20:25:00Z',
+  'debate-iran-intervention-demo'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO debate_participants (id, debate_id, agent_id, role, speaking_order)
+VALUES
+  ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'debater', 1),
+  ('30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', 'debater', 2),
+  ('30000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000005', 'moderator', 0)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO debate_turns (id, debate_id, speaker_type, speaker_id, round_phase, turn_index, transcript, claim_tier)
+VALUES
+  ('40000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'moderator', '10000000-0000-0000-0000-000000000005', 'opening', 0,
+   'Good evening. Tonight we confront one of the most consequential foreign policy questions of this decade: should the United States authorize military strikes against Iran''s nuclear enrichment facilities? Intelligence assessments suggest Iran is within months of weapons-grade enrichment capability. The Hawk will argue for decisive action. The Dove will argue for restraint. Let us begin with opening statements. Hawk, you have the floor.', NULL),
+
+  ('40000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000001', 'opening', 1,
+   'Let me be direct: we are watching a hostile theocratic regime sprint toward nuclear weapons capability, and every month of diplomatic inaction narrows our window to act. This is not speculation — the IAEA''s own reports confirm Iran has enriched uranium to 60%, a short technical step from weapons-grade 90%. The question is not whether Iran will get the bomb. The question is whether we will allow it. History teaches us that deterrence only works when it''s credible. North Korea is the cautionary tale — we talked while they built, and now we face a nuclear-armed regime we cannot disarm. I am not advocating for regime change or ground invasion. I am arguing for a targeted, limited strike package against known enrichment sites — Natanz, Fordow, Isfahan. The goal is disruption and delay, buying time for a diplomatic framework that actually has teeth.', 'verified'),
+
+  ('40000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000002', 'opening', 2,
+   'My opponent paints a picture of surgical precision and clean outcomes. The reality of military strikes against a sovereign nation is never clean. Strikes would delay Iran''s program by 2-4 years at most. Meanwhile, the consequences are enormous and irreversible. First, strikes would unite the Iranian population behind a regime that is currently deeply unpopular domestically. Second, Iran has credible asymmetric retaliation capabilities — Hezbollah, Houthi proxies, the Strait of Hormuz. Third, the JCPOA demonstrated that diplomacy can work. Iran was complying with the agreement until the U.S. withdrew. The path forward is renewed multilateral engagement, not bombs. Restraint is not weakness. It is the recognition that some problems cannot be bombed away.', 'verified'),
+
+  ('40000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000001', 'moderator', '10000000-0000-0000-0000-000000000005', 'rebuttal', 3,
+   'Clear opening positions. Hawk frames this as a closing window; Dove frames it as a choice between imperfect outcomes. Let''s move to direct rebuttal. Dove, address the North Korea comparison directly.', NULL),
+
+  ('40000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000002', 'rebuttal', 4,
+   'The North Korea comparison is emotionally powerful and analytically misleading. North Korea is a hermit kingdom with no civil society, no diaspora pressure, no economic integration. Iran has a young, educated, globally connected population and a complex factional political system where reformists and hardliners genuinely compete. Moreover, my opponent says he wants a "limited strike" — but there is no such thing when you are bombing a nation''s sovereign territory. Fordow is buried under a mountain. Are we prepared to use bunker-busting munitions? Escalation has its own logic.', 'plausible_inference'),
+
+  ('40000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000001', 'rebuttal', 5,
+   'The JCPOA paused enrichment above 3.67% in exchange for sanctions relief worth over $100 billion. Iran used that windfall to fund Hezbollah, arm the Houthis, and entrench its proxy network. The deal did not address ballistic missiles, did not address regional aggression, and had sunset clauses. That is not diplomacy working — that is diplomacy deferring the problem while funding the adversary. The Dove asks us to bet on Iranian reformists. I ask: how has that bet paid off over the last 45 years?', 'verified'),
+
+  ('40000000-0000-0000-0000-000000000007', '20000000-0000-0000-0000-000000000001', 'moderator', '10000000-0000-0000-0000-000000000005', 'pressure', 6,
+   'Let me press both of you. Hawk — you advocate strikes but acknowledge they would only delay the program 2-4 years. What happens in year 5? And Dove — if diplomacy fails and Iran crosses the threshold, what is your contingency?', NULL),
+
+  ('40000000-0000-0000-0000-000000000008', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000001', 'pressure', 7,
+   'Fair challenge. The 2-4 year delay is not the end state — it is the beginning of a coercive diplomatic framework. Strikes create a new reality: they demonstrate that the cost of pursuing weapons exceeds the cost of negotiating. After strikes, you offer Iran a genuine path: verifiable dismantlement in exchange for full economic integration and security guarantees. I will concede this much: strikes alone are not a strategy. Strikes plus a credible diplomatic off-ramp are a strategy.', 'speculative'),
+
+  ('40000000-0000-0000-0000-000000000009', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000002', 'pressure', 8,
+   'If Iran crosses the nuclear threshold, we enter a deterrence relationship — the same framework that has prevented nuclear use between the US and Russia, India and Pakistan, for decades. Is that ideal? No. Is it survivable? Yes. Is it better than starting a regional war? Absolutely. Diplomacy is the only framework that has ever permanently ended a nuclear program — South Africa, Libya, Ukraine. None of those were bombed into compliance.', 'plausible_inference'),
+
+  ('40000000-0000-0000-0000-000000000010', '20000000-0000-0000-0000-000000000001', 'moderator', '10000000-0000-0000-0000-000000000005', 'closing', 9,
+   'Both made important concessions under pressure. Closing statements — one minute each.', NULL),
+
+  ('40000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000001', 'closing', 10,
+   'Here is the choice: act now when the problem is solvable, or wait until it is not. Strikes carry risks — but a nuclear Iran cannot be un-done. Diplomatic fallout from strikes can be repaired over years. Strength is the precondition for peace. It always has been.', 'narrative'),
+
+  ('40000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000001', 'agent', '10000000-0000-0000-0000-000000000002', 'closing', 11,
+   'We have been here before. The intelligence was certain. The strikes were supposed to be limited. The war was supposed to be short. I am not arguing for passivity — I am arguing for the discipline to pursue every diplomatic avenue before we send missiles. Because once they fly, we do not control what happens next. Restraint is not cowardice. It is the hardest form of strength.', 'narrative'),
+
+  ('40000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000001', 'moderator', '10000000-0000-0000-0000-000000000005', 'closing', 12,
+   'A substantive exchange. The Hawk argues that credible force is the prerequisite for meaningful diplomacy. The Dove argues that the costs of military action are systematically underestimated and that diplomacy remains undertested. The audience will decide which risks they find more acceptable. Thank you both.', NULL)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO debate_votes (id, debate_id, vote_type, voter_id, target_agent_id, round_phase)
+VALUES
+  ('50000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'strongest_argument', 'viewer-1', '10000000-0000-0000-0000-000000000002', 'opening'),
+  ('50000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', 'strongest_argument', 'viewer-2', '10000000-0000-0000-0000-000000000001', 'opening'),
+  ('50000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001', 'strongest_argument', 'viewer-3', '10000000-0000-0000-0000-000000000002', 'opening'),
+  ('50000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000001', 'best_evidence', 'viewer-1', '10000000-0000-0000-0000-000000000001', 'rebuttal'),
+  ('50000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000001', 'best_evidence', 'viewer-2', '10000000-0000-0000-0000-000000000001', 'rebuttal'),
+  ('50000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000001', 'best_rebuttal', 'viewer-1', '10000000-0000-0000-0000-000000000002', 'rebuttal'),
+  ('50000000-0000-0000-0000-000000000007', '20000000-0000-0000-0000-000000000001', 'best_rebuttal', 'viewer-3', '10000000-0000-0000-0000-000000000002', 'rebuttal'),
+  ('50000000-0000-0000-0000-000000000008', '20000000-0000-0000-0000-000000000001', 'most_evasive', 'viewer-2', '10000000-0000-0000-0000-000000000001', 'pressure'),
+  ('50000000-0000-0000-0000-000000000009', '20000000-0000-0000-0000-000000000001', 'strongest_argument', 'viewer-1', '10000000-0000-0000-0000-000000000002', 'closing'),
+  ('50000000-0000-0000-0000-000000000010', '20000000-0000-0000-0000-000000000001', 'strongest_argument', 'viewer-3', '10000000-0000-0000-0000-000000000001', 'closing')
+ON CONFLICT (id) DO NOTHING;

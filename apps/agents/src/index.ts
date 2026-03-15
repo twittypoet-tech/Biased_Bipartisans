@@ -1,5 +1,6 @@
 import http from 'node:http'
 import { createLogger, validateEnv, AGENTS_ENV } from '@bipi/shared'
+import { DebateScheduler } from './scheduler.js'
 
 const log = createLogger('agents')
 
@@ -23,10 +24,15 @@ export { VoteStateTool } from './tools/vote-state.js'
 
 // Voice
 export type { VoiceProvider, Voice, SynthesisResult } from './voice/types.js'
+export { OpenAITTSProvider } from './voice/openai-tts.js'
 export { PlaceholderVoiceProvider } from './voice/placeholder-provider.js'
+export { getVoiceProvider, ARCHETYPE_VOICE_MAP, getVoiceId } from './voice/index.js'
 
 // LiveKit
-export { LiveKitRoomManager, DebateRoomBridge } from './livekit/index.js'
+export { LiveKitRoomManager, DebateRoomBridge, AudioPublisher, type VoiceAgent } from './livekit/index.js'
+
+// Scheduler
+export { DebateScheduler } from './scheduler.js'
 
 // Research tool
 export { ResearchTool } from './tools/research.js'
@@ -43,9 +49,13 @@ export {
 } from './debate/turn-prompt-builder.js'
 
 /**
- * Quick-start: run a debate from the command line.
+ * Main entry point for the agents service.
  *
- *   DEBATE_ID=<uuid> pnpm --filter @bipi/agents dev
+ * Starts a health check server and the debate scheduler.
+ * The scheduler polls for debates with status='scheduled' that are due,
+ * then runs the full orchestrator + voice pipeline automatically.
+ *
+ * Voice is enabled automatically when OPENAI_API_KEY is set.
  */
 async function main() {
   validateEnv(AGENTS_ENV, 'agents')
@@ -60,35 +70,35 @@ async function main() {
     log.info(`Health check on port ${healthPort}`)
   })
 
-  const debateId = process.env.DEBATE_ID
-  if (!debateId) {
-    log.info('Agent worker ready. Set DEBATE_ID env var to run a debate.')
-    return
+  // Set up voice provider (automatic when OPENAI_API_KEY is available)
+  let voiceProvider = undefined
+  if (process.env.OPENAI_API_KEY) {
+    const { getVoiceProvider } = await import('./voice/index.js')
+    voiceProvider = getVoiceProvider('openai')
+    log.info('Voice mode: OpenAI TTS enabled')
+  } else {
+    log.info('Voice mode: disabled (no OPENAI_API_KEY)')
   }
 
-  log.info(`Starting debate: ${debateId}`)
+  // Start the debate scheduler
+  const scheduler = new DebateScheduler(voiceProvider)
+  scheduler.start()
 
-  const { DebateOrchestrator: Orchestrator } = await import('./debate/orchestrator.js')
-  const orchestrator = new Orchestrator({
-    debateId,
-    onTurnComplete: (turn) => {
-      const label = turn.isModerator ? '[MOD]' : `[${turn.archetype.toUpperCase()}]`
-      log.info(`${label} ${turn.speakerName}: ${turn.transcript.slice(0, 120)}...`)
-    },
-    onRoundComplete: (phase, summary) => {
-      log.info(`Round complete: ${phase}`, { summary: summary.slice(0, 200) })
-    },
-    onDebateComplete: (summary) => {
-      log.info('Debate complete', {
-        turns: summary.totalTurns,
-        rounds: summary.roundsCompleted,
-        durationMs: summary.durationMs,
-      })
-    },
+  log.info('Agents service ready — scheduler polling for due debates')
+
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    log.info('Shutting down...')
+    scheduler.stop()
+    healthServer.close()
+    process.exit(0)
   })
-
-  await orchestrator.initialize()
-  await orchestrator.run()
+  process.on('SIGTERM', () => {
+    log.info('Shutting down...')
+    scheduler.stop()
+    healthServer.close()
+    process.exit(0)
+  })
 }
 
 // Run if executed directly

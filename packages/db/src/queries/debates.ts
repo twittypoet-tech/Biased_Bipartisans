@@ -108,3 +108,49 @@ export async function insertDebateVote(
   if (error) throw error
   return data
 }
+
+export async function insertDebateParticipant(
+  db: SupabaseClient,
+  participant: { debate_id: UUID; agent_id: UUID; role: string; speaking_order: number },
+): Promise<DebateParticipant> {
+  const { data, error } = await db.from('debate_participants').insert(participant).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function removeDebateParticipant(
+  db: SupabaseClient,
+  debateId: UUID,
+  agentId: UUID,
+): Promise<void> {
+  const { error } = await db
+    .from('debate_participants')
+    .delete()
+    .eq('debate_id', debateId)
+    .eq('agent_id', agentId)
+  if (error) throw error
+}
+
+export async function getScheduledDebatesDue(db: SupabaseClient): Promise<Debate[]> {
+  const { data, error } = await db
+    .from('debates')
+    .select('*')
+    .eq('status', 'scheduled')
+    .lte('scheduled_at', new Date().toISOString())
+    .order('scheduled_at', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function updateDebateStatus(
+  db: SupabaseClient,
+  debateId: UUID,
+  status: string,
+  extra?: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await db
+    .from('debates')
+    .update({ status, ...extra })
+    .eq('id', debateId)
+  if (error) throw error
+}
