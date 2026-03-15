@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "download-files": "node -e \"console.log('No model files required')\"",
+    "start": "node dist/workers/debate-worker.js start",
+    "start:scheduler": "node dist/index.js",
     "worker:dev": "tsx src/workers/debate-worker.ts dev",
     "worker:start": "node dist/workers/debate-worker.js start",
     "typecheck": "tsc --noEmit",

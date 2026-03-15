@@ -1,6 +1,9 @@
 version: '3.8'
 
 services:
+  # ── Debate Scheduler ────────────────────────────────────────────────────────
+  # Polls Supabase every 30s for scheduled debates that are due.
+  # Creates the LiveKit room — the debate-worker picks up the job automatically.
   agents:
     build:
       context: .
@@ -11,8 +14,25 @@ services:
     environment:
       - NODE_ENV=production
       - HEALTH_PORT=3002
+    command: ['node', 'dist/index.js']
     restart: unless-stopped
 
+  # ── LiveKit Debate Worker ───────────────────────────────────────────────────
+  # Registers with LiveKit and handles job dispatch when a debate room is created.
+  # Each dispatched job: loads participants → connects audio publishers → runs TurnController.
+  #
+  # For LiveKit Cloud deployment use: lk agent deploy .  (from repo root)
+  # This service is for self-hosted / local use without LiveKit Cloud.
+  debate-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  # ── Inngest Jobs Service ────────────────────────────────────────────────────
   jobs:
     build:
       context: .

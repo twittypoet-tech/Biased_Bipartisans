@@ -56,8 +56,12 @@ export default defineAgent({
       return
     }
 
-    // --- LiveKit room manager (for data messages to audience) ---
+    // --- LiveKit room manager (for audio tokens + data messages to audience) ---
     const roomManager = LiveKitRoomManager.isConfigured() ? new LiveKitRoomManager() : null
+    if (!roomManager) {
+      log.error('LiveKit not configured — LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET are required')
+      return
+    }
 
     // --- Audio publishers: one LiveKit participant per agent ---
     const livekitUrl = process.env.LIVEKIT_URL!
@@ -67,7 +71,7 @@ export default defineAgent({
       const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
       const name = (agent?.name as string) ?? 'Unknown'
       const publisher = new AudioPublisher(name)
-      const token = await roomManager!.generateToken(
+      const token = await roomManager.generateToken(
         roomName,
         name,
         `agent-${name.toLowerCase().replace(/\s+/g, '-')}`,
@@ -106,7 +110,7 @@ export default defineAgent({
       debateId,
       ttsPublishers,
       audioPublishers,
-      roomManager: roomManager ?? undefined,
+      roomManager,
       roomName,
       onDebateComplete: async (summary) => {
         log.info(`Debate complete: ${debateId}`, {
@@ -116,12 +120,10 @@ export default defineAgent({
         })
 
         // Broadcast debate_complete event to audience
-        if (roomManager) {
-          await roomManager.sendData(roomName, {
-            type: 'debate_complete',
-            timestamp: new Date().toISOString(),
-          })
-        }
+        await roomManager.sendData(roomName, {
+          type: 'debate_complete',
+          timestamp: new Date().toISOString(),
+        })
       },
     })
 
