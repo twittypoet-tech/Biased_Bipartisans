@@ -1,9 +1,12 @@
 import { getSupabaseClient } from '@bipi/db'
+import { createLogger } from '@bipi/shared'
 import { evaluateDebate } from './evaluate-debate.js'
 import { extractMemories } from './extract-memories.js'
 import { generateReflections } from './generate-reflection.js'
 import { updateTraits } from './update-traits.js'
 import { checkConvergence } from './check-convergence.js'
+
+const log = createLogger('jobs:pipeline')
 
 /**
  * Complete post-debate pipeline.
@@ -21,42 +24,42 @@ export async function runPostDebatePipeline(debateId: string): Promise<PipelineR
   const db = getSupabaseClient()
   const startTime = Date.now()
 
-  console.log(`[Pipeline] Starting post-debate pipeline for debate ${debateId}`)
+  log.info(`Starting post-debate pipeline for debate ${debateId}`)
 
   // Step 1: Evaluate
-  console.log('[Pipeline] Step 1/5: Evaluating agents...')
+  log.info('Step 1/5: Evaluating agents...')
   const agentIds = await evaluateDebate(db, debateId)
-  console.log(`[Pipeline] Evaluated ${agentIds.length} agents`)
+  log.info(`Evaluated ${agentIds.length} agents`)
 
   // Step 2: Extract memories
-  console.log('[Pipeline] Step 2/5: Extracting memory candidates...')
+  log.info('Step 2/5: Extracting memory candidates...')
   await extractMemories(db, debateId, agentIds)
-  console.log('[Pipeline] Memory candidates extracted')
+  log.info('Memory candidates extracted')
 
   // Step 3: Generate reflections
-  console.log('[Pipeline] Step 3/5: Generating reflections...')
+  log.info('Step 3/5: Generating reflections...')
   await generateReflections(db, debateId, agentIds)
-  console.log('[Pipeline] Reflections generated')
+  log.info('Reflections generated')
 
   // Step 4: Update trait vectors
-  console.log('[Pipeline] Step 4/5: Updating trait vectors...')
+  log.info('Step 4/5: Updating trait vectors...')
   await updateTraits(db, debateId, agentIds)
-  console.log('[Pipeline] Trait vectors updated')
+  log.info('Trait vectors updated')
 
   // Step 5: Check convergence
-  console.log('[Pipeline] Step 5/5: Checking for convergence...')
+  log.info('Step 5/5: Checking for convergence...')
   const alerts = await checkConvergence(db, agentIds)
   if (alerts.length > 0) {
-    console.log(`[Pipeline] WARNING: ${alerts.length} convergence alert(s) detected`)
+    log.warn(`${alerts.length} convergence alert(s) detected`)
     for (const alert of alerts) {
-      console.log(`  - Agents ${alert.agentA} <-> ${alert.agentB}: ${(alert.similarity * 100).toFixed(1)}% similar`)
+      log.warn(`Agents ${alert.agentA} <-> ${alert.agentB}: ${(alert.similarity * 100).toFixed(1)}% similar`)
     }
   } else {
-    console.log('[Pipeline] No convergence issues detected')
+    log.info('No convergence issues detected')
   }
 
   const durationMs = Date.now() - startTime
-  console.log(`[Pipeline] Complete in ${(durationMs / 1000).toFixed(1)}s`)
+  log.info(`Pipeline complete in ${(durationMs / 1000).toFixed(1)}s`)
 
   return {
     debateId,

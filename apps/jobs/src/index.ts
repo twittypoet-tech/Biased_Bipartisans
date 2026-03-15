@@ -1,6 +1,9 @@
 import { serve } from 'inngest/express'
+import { createLogger, validateEnv, JOBS_ENV } from '@bipi/shared'
 import { inngest } from './inngest/client.js'
 import { runPostDebatePipeline } from './functions/post-debate-pipeline.js'
+
+const log = createLogger('jobs')
 
 // ── Inngest Functions ──
 
@@ -26,6 +29,8 @@ export const functions = [postDebatePipeline]
 // In production, this can also be served via a Next.js API route.
 
 async function main() {
+  validateEnv(JOBS_ENV, 'jobs')
+
   const { default: express } = await import('express')
   const app = express()
   const port = process.env.PORT ?? 3001
@@ -52,22 +57,22 @@ async function main() {
       const result = await runPostDebatePipeline(debateId)
       res.json(result)
     } catch (err) {
-      console.error('Pipeline error:', err)
+      log.error('Pipeline error', err)
       res.status(500).json({ error: 'Pipeline failed' })
     }
   })
 
   app.listen(port, () => {
-    console.log(`Bipi Jobs Service running on port ${port}`)
-    console.log(`Inngest endpoint: http://localhost:${port}/api/inngest`)
-    console.log(`Health check: http://localhost:${port}/health`)
+    log.info(`Jobs service running on port ${port}`)
+    log.info(`Inngest endpoint: http://localhost:${port}/api/inngest`)
+    log.info(`Health check: http://localhost:${port}/health`)
   })
 }
 
 const isDirectRun = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')
 if (isDirectRun) {
   main().catch((err) => {
-    console.error('Fatal error:', err)
+    log.error('Fatal error', err)
     process.exit(1)
   })
 }
