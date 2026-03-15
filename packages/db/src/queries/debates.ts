@@ -131,6 +131,20 @@ export async function removeDebateParticipant(
   if (error) throw error
 }
 
+export async function updateTurnAudioUrl(
+  db: SupabaseClient,
+  debateId: UUID,
+  turnIndex: number,
+  audioUrl: string,
+): Promise<void> {
+  const { error } = await db
+    .from('debate_turns')
+    .update({ audio_url: audioUrl })
+    .eq('debate_id', debateId)
+    .eq('turn_index', turnIndex)
+  if (error) throw error
+}
+
 export async function getScheduledDebatesDue(db: SupabaseClient): Promise<Debate[]> {
   const { data, error } = await db
     .from('debates')

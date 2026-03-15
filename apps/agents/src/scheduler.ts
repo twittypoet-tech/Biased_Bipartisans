@@ -1,5 +1,5 @@
 import { createLogger } from '@bipi/shared'
-import { getSupabaseClient, getScheduledDebatesDue, getDebateParticipants, updateDebateStatus } from '@bipi/db'
+import { getSupabaseClient, getScheduledDebatesDue, getDebateParticipants, updateDebateStatus, updateTurnAudioUrl } from '@bipi/db'
 import { DebateOrchestrator } from './debate/orchestrator.js'
 import { DebateRoomBridge } from './livekit/debate-room.js'
 import { LiveKitRoomManager } from './livekit/room-manager.js'
@@ -98,7 +98,17 @@ export class DebateScheduler {
           log.info(`${label} ${turn.speakerName}: ${turn.transcript.slice(0, 120)}...`)
 
           if (bridge) {
-            await bridge.publishTurn(turn)
+            const audioUrl = await bridge.publishTurn(turn, debateId)
+
+            // Persist the audio URL back to the turn row
+            if (audioUrl) {
+              try {
+                const db = getSupabaseClient()
+                await updateTurnAudioUrl(db, debateId, turn.turnIndex, audioUrl)
+              } catch (err) {
+                log.warn(`Failed to save audio URL for turn ${turn.turnIndex}`, { error: String(err) })
+              }
+            }
           }
         },
         onRoundComplete: async (phase, summary) => {

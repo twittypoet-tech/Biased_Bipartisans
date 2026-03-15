@@ -195,6 +195,7 @@ export interface DebateTurn {
   claim_tags: string[]
   evidence_metadata: Record<string, unknown> | null
   duration_ms: number | null
+  audio_url: string | null
   created_at: Timestamp
 }
 

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { SpeakerStage, type StageParticipant } from './speaker-stage'
 import { LiveTranscript, type LiveTurnEntry } from './live-transcript'
+import { DebateTimer } from './debate-timer'
 
 interface DebateRoomProps {
   debateId: string
@@ -11,6 +12,8 @@ interface DebateRoomProps {
   /** Pre-loaded turns from the server (catch-up for late joiners) */
   initialTurns: LiveTurnEntry[]
   currentPhase: string | null
+  startedAt: string | null
+  estimatedDurationSec: number
 }
 
 export function DebateRoom({
@@ -19,6 +22,8 @@ export function DebateRoom({
   participants,
   initialTurns,
   currentPhase: initialPhase,
+  startedAt,
+  estimatedDurationSec,
 }: DebateRoomProps) {
   const [turns, setTurns] = useState<LiveTurnEntry[]>(initialTurns)
   const [activeSpeakerId, setActiveSpeakerId] = useState<string | null>(null)
@@ -27,9 +32,20 @@ export function DebateRoom({
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [audioMuted, setAudioMuted] = useState(false)
   const [audienceCount, setAudienceCount] = useState(1)
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false)
 
   const roomRef = useRef<unknown>(null)
+  const audioContainerRef = useRef<HTMLDivElement>(null)
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map())
+  const mutedRef = useRef(audioMuted)
+
+  // Keep muted ref in sync without causing reconnection
+  useEffect(() => {
+    mutedRef.current = audioMuted
+    for (const audioEl of audioElementsRef.current.values()) {
+      audioEl.muted = audioMuted
+    }
+  }, [audioMuted])
 
   // Map participant identity strings (agent-name-slug) back to participant IDs
   const identityToId = useCallback(
@@ -43,9 +59,24 @@ export function DebateRoom({
     [participants],
   )
 
+  /** Attach an audio track element to the DOM so the browser will play it */
+  const attachAudio = useCallback((audioEl: HTMLAudioElement, identity: string) => {
+    audioEl.muted = mutedRef.current
+    audioEl.autoplay = true
+    audioEl.style.display = 'none'
+
+    // Append to the hidden container so it's in the DOM
+    audioContainerRef.current?.appendChild(audioEl)
+    audioElementsRef.current.set(identity, audioEl)
+
+    // Try to play — handle autoplay policy
+    audioEl.play().catch(() => {
+      setAutoplayBlocked(true)
+    })
+  }, [])
+
   const connect = useCallback(async () => {
     try {
-      // Get subscriber token
       const res = await fetch('/api/livekit-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,7 +102,6 @@ export function DebateRoom({
         return
       }
 
-      // Dynamic import to avoid SSR issues
       const { Room, RoomEvent, Track } = await import('livekit-client')
 
       const room = new Room({
@@ -79,12 +109,11 @@ export function DebateRoom({
         dynacast: true,
       })
 
-      // --- Audio track subscription: attach to <audio> elements for playback ---
+      // --- Audio track subscription ---
       room.on(RoomEvent.TrackSubscribed, (track, _publication, participant) => {
         if (track.kind === Track.Kind.Audio) {
           const audioEl = track.attach()
-          audioEl.volume = audioMuted ? 0 : 1
-          audioElementsRef.current.set(participant.identity, audioEl)
+          attachAudio(audioEl, participant.identity)
         }
       })
 
@@ -98,7 +127,6 @@ export function DebateRoom({
       // --- Active speaker detection ---
       room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
         if (speakers.length > 0) {
-          // Find the loudest speaker that maps to one of our participants
           for (const speaker of speakers) {
             const pid = identityToId(speaker.identity)
             if (pid) {
@@ -110,7 +138,7 @@ export function DebateRoom({
         setActiveSpeakerId(null)
       })
 
-      // --- Data messages (transcript turns, round events) ---
+      // --- Data messages ---
       room.on(RoomEvent.DataReceived, (payload: Uint8Array) => {
         try {
           const text = new TextDecoder().decode(payload)
@@ -143,7 +171,6 @@ export function DebateRoom({
         }
       })
 
-      // --- Participant tracking for audience count ---
       room.on(RoomEvent.ParticipantConnected, () => {
         setAudienceCount(room.numParticipants)
       })
@@ -161,13 +188,12 @@ export function DebateRoom({
       setConnectionStatus('connected')
       setAudienceCount(room.numParticipants)
 
-      // Subscribe to existing tracks (for late joiners)
+      // Subscribe to existing tracks (late joiners)
       for (const participant of room.remoteParticipants.values()) {
         for (const pub of participant.trackPublications.values()) {
           if (pub.track && pub.track.kind === Track.Kind.Audio && pub.isSubscribed) {
             const audioEl = pub.track.attach()
-            audioEl.volume = audioMuted ? 0 : 1
-            audioElementsRef.current.set(participant.identity, audioEl)
+            attachAudio(audioEl, participant.identity)
           }
         }
       }
@@ -180,7 +206,7 @@ export function DebateRoom({
       setConnectionStatus('error')
       setErrorMsg('Failed to connect to live room')
     }
-  }, [debateId, roomName, identityToId, audioMuted])
+  }, [debateId, roomName, identityToId, attachAudio])
 
   useEffect(() => {
     let cleanup: (() => void) | undefined
@@ -194,16 +220,30 @@ export function DebateRoom({
     }
   }, [connect])
 
-  // Sync mute state to all audio elements
-  useEffect(() => {
+  /** User clicks to unblock autoplay */
+  const handleEnableAudio = () => {
+    setAutoplayBlocked(false)
     for (const audioEl of audioElementsRef.current.values()) {
-      audioEl.volume = audioMuted ? 0 : 1
+      audioEl.play().catch(() => {})
     }
-  }, [audioMuted])
+  }
 
   return (
     <div className="space-y-4">
-      {/* Connection status bar */}
+      {/* Hidden container for audio elements — must be in DOM for playback */}
+      <div ref={audioContainerRef} style={{ display: 'none' }} aria-hidden="true" />
+
+      {/* Autoplay blocked banner */}
+      {autoplayBlocked && (
+        <button
+          onClick={handleEnableAudio}
+          className="w-full rounded-lg border border-amber-800/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-300 transition hover:bg-amber-950/50"
+        >
+          Click to enable live debate audio
+        </button>
+      )}
+
+      {/* Status bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {connectionStatus === 'connected' && (
@@ -230,10 +270,14 @@ export function DebateRoom({
               {errorMsg ?? 'Connection error'}
             </div>
           )}
+
+          {/* Timer */}
+          {startedAt && connectionStatus !== 'ended' && (
+            <DebateTimer startedAt={startedAt} estimatedDurationSec={estimatedDurationSec} mode="live" />
+          )}
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Audience count */}
           {connectionStatus === 'connected' && (
             <span className="text-xs text-neutral-500">
               {audienceCount} watching

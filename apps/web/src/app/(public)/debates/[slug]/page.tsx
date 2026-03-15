@@ -3,9 +3,10 @@ export const dynamic = 'force-dynamic'
 import { createServerClient } from '@/lib/supabase/server'
 import { getDebateBySlug, getDebateFormat, getDebateParticipants, getDebateTurns, getDebateVotes } from '@bipi/db'
 import { getArchetypeColor, statusColors } from '@/lib/agent-colors'
-import { TranscriptTimeline } from '@/components/public/transcript-timeline'
 import { VotingPanel } from '@/components/public/voting-panel'
 import { DebateRoom } from '@/components/public/debate-room'
+import { DebatePlayer } from '@/components/public/debate-player'
+import { DebateTimer } from '@/components/public/debate-timer'
 import Link from 'next/link'
 
 interface Props {
@@ -57,6 +58,12 @@ export default async function DebateDetailPage({ params }: Props) {
   const debaters = participantAgents.filter((p) => p.role === 'debater')
   const moderator = participantAgents.find((p) => p.role === 'moderator')
 
+  // Estimated total duration from format round_sequence
+  const roundSequence = format?.round_sequence as unknown as Array<Record<string, unknown>> | undefined
+  const estimatedDurationSec = roundSequence
+    ? roundSequence.reduce((sum, r) => sum + ((r.duration_seconds as number) ?? 0), 0)
+    : 0
+
   // Build transcript turns with speaker names
   const transcriptTurns = turns.map((t) => {
     const speaker = participantAgents.find((p) => p.id === t.speaker_id)
@@ -71,6 +78,7 @@ export default async function DebateDetailPage({ params }: Props) {
       transcript: t.transcript,
       claimTier: t.claim_tier,
       isModerator: t.speaker_type === 'moderator',
+      audioUrl: (t as unknown as Record<string, unknown>).audio_url as string | null ?? null,
     }
   })
 
@@ -88,10 +96,10 @@ export default async function DebateDetailPage({ params }: Props) {
     }
   }
 
-  // LiveKit room name follows the pattern used by the backend
+  // LiveKit room name
   const livekitRoomName = `debate-${debate.id}`
 
-  // Stage participants for the DebateRoom component
+  // Stage participants
   const stageParticipants = participantAgents.map((p) => ({
     id: p.id,
     name: p.name,
@@ -99,7 +107,7 @@ export default async function DebateDetailPage({ params }: Props) {
     role: p.role as 'debater' | 'moderator',
   }))
 
-  // Initial turns formatted for DebateRoom
+  // Initial turns for live room
   const initialLiveTurns = transcriptTurns.map((t) => ({
     id: t.id,
     speakerName: t.speakerName,
@@ -111,6 +119,120 @@ export default async function DebateDetailPage({ params }: Props) {
     isModerator: t.isModerator,
   }))
 
+  // Playback turns for ended debates
+  const playbackTurns = transcriptTurns.map((t) => ({
+    id: t.id,
+    speakerName: t.speakerName,
+    speakerId: t.speakerId,
+    archetype: t.archetype,
+    roundPhase: t.roundPhase,
+    turnIndex: t.turnIndex,
+    transcript: t.transcript,
+    isModerator: t.isModerator,
+    audioUrl: t.audioUrl,
+    claimTier: t.claimTier,
+  }))
+
+  // Sidebar (shared across states)
+  const sidebar = (
+    <aside className="space-y-6">
+      {/* Participants */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Participants</h2>
+        <div className="space-y-2">
+          {debaters.map((agent) => {
+            const colors = getArchetypeColor(agent.archetype)
+            return (
+              <Link
+                key={agent.id}
+                href={`/agents/${agent.slug}`}
+                className={`block rounded-lg border ${colors.border} ${colors.bg} p-3 transition hover:brightness-110`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm font-semibold ${colors.text}`}>{agent.name}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${colors.badge}`}>
+                    {agent.archetype.replace('_', ' ')}
+                  </span>
+                </div>
+                {agent.shortBio && (
+                  <p className="mt-1 text-xs text-neutral-500 line-clamp-1">{agent.shortBio}</p>
+                )}
+              </Link>
+            )
+          })}
+          {moderator && (
+            <div className="rounded-lg border border-neutral-700/40 bg-neutral-900/30 p-3">
+              <span className="text-sm text-neutral-400">Moderator: {moderator.name}</span>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Voting (live debates) */}
+      {isLive && (
+        <VotingPanel
+          debateId={debate.id}
+          agents={debaters.map((a) => ({ id: a.id, name: a.name, archetype: a.archetype }))}
+          currentPhase={currentPhase}
+          isLive={true}
+        />
+      )}
+
+      {/* Vote Results (ended) */}
+      {isEnded && Object.keys(voteTallies).length > 0 && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Vote Results</h2>
+          <div className="space-y-3">
+            {Object.entries(voteTallies).map(([voteType, tally]) => (
+              <div key={voteType} className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+                <h3 className="mb-1.5 text-xs font-medium text-neutral-300">
+                  {voteType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                </h3>
+                <div className="space-y-1">
+                  {Object.entries(tally)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([agentId, count]) => {
+                      const agent = participantAgents.find((a) => a.id === agentId)
+                      const colors = getArchetypeColor(agent?.archetype ?? '')
+                      return (
+                        <div key={agentId} className="flex items-center justify-between text-xs">
+                          <span className={colors.text}>{agent?.name ?? 'Unknown'}</span>
+                          <span className="text-neutral-500">{count} vote{count !== 1 ? 's' : ''}</span>
+                        </div>
+                      )
+                    })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Format Info */}
+      {format && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Format</h2>
+          <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4 text-sm">
+            <p className="font-medium text-neutral-200">{format.name}</p>
+            <p className="mt-1 text-xs text-neutral-500">
+              {format.min_participants}-{format.max_participants} participants
+            </p>
+            {roundSequence?.map((round, i) => (
+              <div key={i} className="mt-2 flex items-center justify-between text-xs">
+                <span className="text-neutral-400 capitalize">
+                  {(round.phase as string).replace('_', ' ')}
+                </span>
+                <span className="text-neutral-600">
+                  {Math.round((round.duration_seconds as number) / 60)}min
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </aside>
+  )
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       {/* Header */}
@@ -121,6 +243,15 @@ export default async function DebateDetailPage({ params }: Props) {
           </span>
           {format && (
             <span className="text-xs text-neutral-500">{format.name}</span>
+          )}
+          {/* Duration badge for ended debates */}
+          {isEnded && debate.started_at && debate.ended_at && (
+            <DebateTimer
+              startedAt={debate.started_at}
+              endedAt={debate.ended_at}
+              estimatedDurationSec={estimatedDurationSec}
+              mode="static"
+            />
           )}
         </div>
         <h1 className="text-3xl font-bold tracking-tight">{debate.title}</h1>
@@ -177,178 +308,31 @@ export default async function DebateDetailPage({ params }: Props) {
               participants={stageParticipants}
               initialTurns={initialLiveTurns}
               currentPhase={currentPhase}
+              startedAt={debate.started_at}
+              estimatedDurationSec={estimatedDurationSec}
             />
           </div>
-
-          {/* Sidebar */}
-          <aside className="space-y-6">
-            {/* Participants */}
-            <section>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Participants</h2>
-              <div className="space-y-2">
-                {debaters.map((agent) => {
-                  const colors = getArchetypeColor(agent.archetype)
-                  return (
-                    <Link
-                      key={agent.id}
-                      href={`/agents/${agent.slug}`}
-                      className={`block rounded-lg border ${colors.border} ${colors.bg} p-3 transition hover:brightness-110`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm font-semibold ${colors.text}`}>{agent.name}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${colors.badge}`}>
-                          {agent.archetype.replace('_', ' ')}
-                        </span>
-                      </div>
-                      {agent.shortBio && (
-                        <p className="mt-1 text-xs text-neutral-500 line-clamp-1">{agent.shortBio}</p>
-                      )}
-                    </Link>
-                  )
-                })}
-                {moderator && (
-                  <div className="rounded-lg border border-neutral-700/40 bg-neutral-900/30 p-3">
-                    <span className="text-sm text-neutral-400">Moderator: {moderator.name}</span>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Voting (live debates) */}
-            <VotingPanel
-              debateId={debate.id}
-              agents={debaters.map((a) => ({ id: a.id, name: a.name, archetype: a.archetype }))}
-              currentPhase={currentPhase}
-              isLive={true}
-            />
-
-            {/* Format Info */}
-            {format && (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Format</h2>
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4 text-sm">
-                  <p className="font-medium text-neutral-200">{format.name}</p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    {format.min_participants}-{format.max_participants} participants
-                  </p>
-                  {(format.round_sequence as unknown as Array<Record<string, unknown>>)?.map((round, i) => (
-                    <div key={i} className="mt-2 flex items-center justify-between text-xs">
-                      <span className="text-neutral-400 capitalize">
-                        {(round.phase as string).replace('_', ' ')}
-                      </span>
-                      <span className="text-neutral-600">
-                        {Math.round((round.duration_seconds as number) / 60)}min
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-          </aside>
+          {sidebar}
         </div>
       )}
 
-      {/* === ENDED DEBATE (static transcript) === */}
+      {/* === ENDED DEBATE WITH AUDIO PLAYER === */}
       {isEnded && (
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <div>
-            <section>
-              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-                Transcript
-              </h2>
-              <TranscriptTimeline turns={transcriptTurns} />
-            </section>
-
-            {/* Vote Results */}
-            {Object.keys(voteTallies).length > 0 && (
-              <section className="mt-8">
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-neutral-500">Vote Results</h2>
-                <div className="space-y-4">
-                  {Object.entries(voteTallies).map(([voteType, tally]) => (
-                    <div key={voteType} className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4">
-                      <h3 className="mb-2 text-sm font-medium text-neutral-300">
-                        {voteType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                      </h3>
-                      <div className="space-y-1">
-                        {Object.entries(tally)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([agentId, count]) => {
-                            const agent = participantAgents.find((a) => a.id === agentId)
-                            const colors = getArchetypeColor(agent?.archetype ?? '')
-                            return (
-                              <div key={agentId} className="flex items-center justify-between text-sm">
-                                <span className={colors.text}>{agent?.name ?? 'Unknown'}</span>
-                                <span className="text-neutral-500">{count} vote{count !== 1 ? 's' : ''}</span>
-                              </div>
-                            )
-                          })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+            <DebatePlayer
+              turns={playbackTurns}
+              participants={stageParticipants}
+              startedAt={debate.started_at ?? debate.created_at}
+              endedAt={debate.ended_at ?? debate.created_at}
+              estimatedDurationSec={estimatedDurationSec}
+            />
           </div>
-
-          {/* Sidebar */}
-          <aside className="space-y-6">
-            <section>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Participants</h2>
-              <div className="space-y-2">
-                {debaters.map((agent) => {
-                  const colors = getArchetypeColor(agent.archetype)
-                  return (
-                    <Link
-                      key={agent.id}
-                      href={`/agents/${agent.slug}`}
-                      className={`block rounded-lg border ${colors.border} ${colors.bg} p-3 transition hover:brightness-110`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm font-semibold ${colors.text}`}>{agent.name}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${colors.badge}`}>
-                          {agent.archetype.replace('_', ' ')}
-                        </span>
-                      </div>
-                      {agent.shortBio && (
-                        <p className="mt-1 text-xs text-neutral-500 line-clamp-1">{agent.shortBio}</p>
-                      )}
-                    </Link>
-                  )
-                })}
-                {moderator && (
-                  <div className="rounded-lg border border-neutral-700/40 bg-neutral-900/30 p-3">
-                    <span className="text-sm text-neutral-400">Moderator: {moderator.name}</span>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {format && (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Format</h2>
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4 text-sm">
-                  <p className="font-medium text-neutral-200">{format.name}</p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    {format.min_participants}-{format.max_participants} participants
-                  </p>
-                  {(format.round_sequence as unknown as Array<Record<string, unknown>>)?.map((round, i) => (
-                    <div key={i} className="mt-2 flex items-center justify-between text-xs">
-                      <span className="text-neutral-400 capitalize">
-                        {(round.phase as string).replace('_', ' ')}
-                      </span>
-                      <span className="text-neutral-600">
-                        {Math.round((round.duration_seconds as number) / 60)}min
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-          </aside>
+          {sidebar}
         </div>
       )}
 
-      {/* === SCHEDULED (preview only) === */}
+      {/* === SCHEDULED (preview) === */}
       {isScheduled && (
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <div className="flex h-64 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900/40">
@@ -357,61 +341,7 @@ export default async function DebateDetailPage({ params }: Props) {
               <p className="mt-1 text-sm text-neutral-500">Come back when it&apos;s live to hear the agents debate</p>
             </div>
           </div>
-
-          <aside className="space-y-6">
-            <section>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Participants</h2>
-              <div className="space-y-2">
-                {debaters.map((agent) => {
-                  const colors = getArchetypeColor(agent.archetype)
-                  return (
-                    <Link
-                      key={agent.id}
-                      href={`/agents/${agent.slug}`}
-                      className={`block rounded-lg border ${colors.border} ${colors.bg} p-3 transition hover:brightness-110`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm font-semibold ${colors.text}`}>{agent.name}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${colors.badge}`}>
-                          {agent.archetype.replace('_', ' ')}
-                        </span>
-                      </div>
-                      {agent.shortBio && (
-                        <p className="mt-1 text-xs text-neutral-500 line-clamp-1">{agent.shortBio}</p>
-                      )}
-                    </Link>
-                  )
-                })}
-                {moderator && (
-                  <div className="rounded-lg border border-neutral-700/40 bg-neutral-900/30 p-3">
-                    <span className="text-sm text-neutral-400">Moderator: {moderator.name}</span>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {format && (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Format</h2>
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4 text-sm">
-                  <p className="font-medium text-neutral-200">{format.name}</p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    {format.min_participants}-{format.max_participants} participants
-                  </p>
-                  {(format.round_sequence as unknown as Array<Record<string, unknown>>)?.map((round, i) => (
-                    <div key={i} className="mt-2 flex items-center justify-between text-xs">
-                      <span className="text-neutral-400 capitalize">
-                        {(round.phase as string).replace('_', ' ')}
-                      </span>
-                      <span className="text-neutral-600">
-                        {Math.round((round.duration_seconds as number) / 60)}min
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-          </aside>
+          {sidebar}
         </div>
       )}
     </div>
