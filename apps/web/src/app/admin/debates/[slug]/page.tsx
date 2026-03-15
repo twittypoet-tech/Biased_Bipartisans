@@ -3,9 +3,10 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
-import { getDebateBySlug, getDebateFormat, getDebateParticipants, getDebateTurns } from '@bipi/db'
+import { getDebateBySlug, getDebateFormat, getDebateParticipants, getDebateTurns, listAgents } from '@bipi/db'
 import { statusColors, getArchetypeColor } from '@/lib/agent-colors'
 import { ConfigSection, DataList } from '@/components/admin/config-section'
+import { ParticipantManager } from '@/components/admin/participant-manager'
 
 export default async function DebateDetailPage({
   params,
@@ -17,14 +18,41 @@ export default async function DebateDetailPage({
   const debate = await getDebateBySlug(db, slug)
   if (!debate) notFound()
 
-  const [format, participants, turns] = await Promise.all([
+  const [format, participants, turns, allAgents] = await Promise.all([
     getDebateFormat(db, debate.format_id),
     getDebateParticipants(db, debate.id),
     getDebateTurns(db, debate.id),
+    listAgents(db),
   ])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const framing = debate.topic_framing as any
+
+  // Build participant info for the manager
+  const participantIds = new Set(participants.map((p) => p.agent_id))
+
+  const currentParticipants = participants.map((p) => {
+    const agent = (p as unknown as Record<string, unknown>).agents as Record<string, string> | undefined
+    return {
+      id: p.agent_id,
+      name: agent?.name ?? 'Unknown',
+      slug: agent?.slug ?? '',
+      archetype: agent?.archetype ?? 'unknown',
+      role: p.role as string,
+    }
+  })
+
+  const availableAgents = allAgents
+    .filter((a) => !participantIds.has(a.id))
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      slug: a.slug,
+      archetype: a.archetype,
+      role: a.role,
+    }))
+
+  const moderatorAgent = allAgents.find((a) => a.role === 'moderator')
 
   return (
     <div className="space-y-6">
@@ -109,36 +137,17 @@ export default async function DebateDetailPage({
         </ConfigSection>
       )}
 
-      {/* Participants */}
+      {/* Participants — now with assignment manager */}
       <ConfigSection title={`Participants (${participants.length})`} defaultOpen>
-        {participants.length === 0 ? (
-          <p className="text-sm text-neutral-500">No participants assigned yet</p>
-        ) : (
-          <div className="space-y-2">
-            {(participants as unknown as Array<Record<string, unknown>>).map((p) => {
-              const agent = (p as Record<string, unknown>).agents as Record<string, string> | undefined
-              if (!agent) return null
-              const colors = getArchetypeColor(agent.archetype ?? '')
-              return (
-                <Link
-                  key={p.id as string}
-                  href={`/admin/agents/${agent.slug}`}
-                  className={`flex items-center justify-between rounded-lg border ${colors.border} p-3 transition hover:brightness-110`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium">{agent.name}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${colors.badge}`}>
-                      {(agent.archetype ?? '').replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                  <span className="text-xs text-neutral-500">
-                    {(p.role as string)} · #{p.speaking_order as number}
-                  </span>
-                </Link>
-              )
-            })}
-          </div>
-        )}
+        <ParticipantManager
+          debateId={debate.id}
+          debateStatus={debate.status}
+          formatMinParticipants={format?.min_participants ?? 2}
+          formatMaxParticipants={format?.max_participants ?? 4}
+          currentParticipants={currentParticipants}
+          availableAgents={availableAgents}
+          moderatorId={moderatorAgent?.id ?? null}
+        />
       </ConfigSection>
 
       {/* Transcript */}
