@@ -1,3 +1,8 @@
+import http from 'node:http'
+import { createLogger, validateEnv, AGENTS_ENV } from '@bipi/shared'
+
+const log = createLogger('agents')
+
 // Debate engine
 export { DebateOrchestrator, type DebateOrchestratorConfig, type TurnResult, type DebateCompleteSummary } from './debate/orchestrator.js'
 export { AgentRunner } from './debate/agent-runner.js'
@@ -20,6 +25,12 @@ export { VoteStateTool } from './tools/vote-state.js'
 export type { VoiceProvider, Voice, SynthesisResult } from './voice/types.js'
 export { PlaceholderVoiceProvider } from './voice/placeholder-provider.js'
 
+// LiveKit
+export { LiveKitRoomManager, DebateRoomBridge } from './livekit/index.js'
+
+// Research tool
+export { ResearchTool } from './tools/research.js'
+
 // Prompt builders
 export {
   buildOpeningPrompt,
@@ -37,34 +48,42 @@ export {
  *   DEBATE_ID=<uuid> pnpm --filter @bipi/agents dev
  */
 async function main() {
+  validateEnv(AGENTS_ENV, 'agents')
+
+  // Start health check server
+  const healthPort = parseInt(process.env.HEALTH_PORT ?? '3002', 10)
+  const healthServer = http.createServer((_req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ status: 'ok', service: 'bipi-agents', uptime: process.uptime() }))
+  })
+  healthServer.listen(healthPort, () => {
+    log.info(`Health check on port ${healthPort}`)
+  })
+
   const debateId = process.env.DEBATE_ID
   if (!debateId) {
-    console.log('Bipi Agent Worker Service')
-    console.log('Set DEBATE_ID env var to run a debate, or import DebateOrchestrator programmatically.')
+    log.info('Agent worker ready. Set DEBATE_ID env var to run a debate.')
     return
   }
 
-  console.log(`Starting debate: ${debateId}`)
+  log.info(`Starting debate: ${debateId}`)
 
   const { DebateOrchestrator: Orchestrator } = await import('./debate/orchestrator.js')
   const orchestrator = new Orchestrator({
     debateId,
     onTurnComplete: (turn) => {
       const label = turn.isModerator ? '[MOD]' : `[${turn.archetype.toUpperCase()}]`
-      console.log(`\n${label} ${turn.speakerName}:`)
-      console.log(turn.transcript)
-      console.log('---')
+      log.info(`${label} ${turn.speakerName}: ${turn.transcript.slice(0, 120)}...`)
     },
     onRoundComplete: (phase, summary) => {
-      console.log(`\n=== ${phase.toUpperCase()} ROUND COMPLETE ===`)
-      console.log(summary)
+      log.info(`Round complete: ${phase}`, { summary: summary.slice(0, 200) })
     },
     onDebateComplete: (summary) => {
-      console.log('\n========== DEBATE COMPLETE ==========')
-      console.log(`Turns: ${summary.totalTurns}`)
-      console.log(`Rounds: ${summary.roundsCompleted}`)
-      console.log(`Duration: ${(summary.durationMs / 1000).toFixed(1)}s`)
-      console.log('Airtime:', summary.airtimeByAgent)
+      log.info('Debate complete', {
+        turns: summary.totalTurns,
+        rounds: summary.roundsCompleted,
+        durationMs: summary.durationMs,
+      })
     },
   })
 
@@ -76,7 +95,7 @@ async function main() {
 const isDirectRun = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')
 if (isDirectRun) {
   main().catch((err) => {
-    console.error('Fatal error:', err)
+    log.error('Fatal error', err)
     process.exit(1)
   })
 }

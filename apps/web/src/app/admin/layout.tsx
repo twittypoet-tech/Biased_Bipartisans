@@ -4,6 +4,8 @@ const navItems = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/agents', label: 'Agents' },
   { href: '/admin/debates', label: 'Debates' },
+  { href: '/admin/evaluations', label: 'Evaluations' },
+  { href: '/admin/memories', label: 'Memories' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
