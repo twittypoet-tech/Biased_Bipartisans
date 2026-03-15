@@ -11,9 +11,11 @@
   "dependencies": {
     "zod": "^3.23.0",
     "@bipi/shared": "workspace:*",
-    "@bipi/db": "workspace:*"
+    "@bipi/db": "workspace:*",
+    "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "@types/node": "^22.0.0"
   }
 }
