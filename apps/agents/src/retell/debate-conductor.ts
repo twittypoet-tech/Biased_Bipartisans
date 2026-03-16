@@ -55,6 +55,7 @@ export class DebateConductor {
   private turnTimer: ReturnType<typeof setInterval> | null = null
   private injectedQuestions = new Set<string>()   // prevent re-injecting same question
   private moderatorAgentId: string | null = null
+  private debateTitle = ''
 
   constructor(private config: DebateConductorConfig) {
     const apiKey = process.env.RETELL_API_KEY
@@ -68,6 +69,7 @@ export class DebateConductor {
     // ── 1. Load debate ────────────────────────────────────────────────────────
     const debate = await getDebate(db, this.config.debateId)
     if (!debate) throw new Error(`Debate not found: ${this.config.debateId}`)
+    this.debateTitle = debate.title ?? ''
 
     const format = debate.format_id ? await getDebateFormat(db, debate.format_id) : null
     const participants = await getDebateParticipants(
@@ -250,14 +252,17 @@ export class DebateConductor {
           // Turn duration scales with debate length (30s for short, 60s for long)
           const TURN_MS = Math.min(60_000, Math.max(30_000, maxMinutes * 1_500))
           let turnIdx = 0
-          const rotateTurn = () => {
+          const rotateTurn = async () => {
             if (this.stopped || !this.relay) return
             const id = debaterIds[turnIdx % debaterIds.length]!
             this.relay.setScheduledSpeaker(id)
             turnIdx++
+            // Inject a TTS prompt so the agent knows it's their turn.
+            // Without this, "User speaks first" agents stay silent indefinitely.
+            await this.triggerDebater(id)
           }
-          rotateTurn() // give first debater the floor immediately
-          this.turnTimer = setInterval(rotateTurn, TURN_MS)
+          rotateTurn().catch(() => {}) // give first debater the floor immediately
+          this.turnTimer = setInterval(() => { rotateTurn().catch(() => {}) }, TURN_MS)
           this.turnTimer.unref?.()
         }
       }, openingMs),
@@ -363,6 +368,36 @@ export class DebateConductor {
   ): Promise<void> {
     if (roomManager) {
       await roomManager.deleteRoom(roomName).catch(() => {})
+    }
+  }
+
+  /**
+   * Inject a short TTS prompt into a debater's Retell call to trigger them
+   * to start speaking. Without this, "User speaks first" agents wait silently
+   * when the turn rotation gives them the floor.
+   *
+   * The audio is injected on the "user" channel — it is private to that agent
+   * and will NOT be heard in the public broadcast room.
+   * Requires OPENAI_API_KEY. Silently skips if not set.
+   */
+  private async triggerDebater(agentId: string): Promise<void> {
+    if (!this.relay || !process.env.OPENAI_API_KEY) {
+      if (!process.env.OPENAI_API_KEY) {
+        log.warn('OPENAI_API_KEY not set — debater turn triggers disabled. Agents may stay silent at turn boundaries.')
+      }
+      return
+    }
+    try {
+      const { OpenAITTSProvider } = await import('../voice/openai-tts.js')
+      const tts = new OpenAITTSProvider()
+      // Brief, neutral prompt — the agent knows the topic from their system prompt vars
+      const result = await tts.synthesize('Your turn to speak.', 'nova')
+      if (result.format === 'pcm') {
+        await this.relay.injectAudio(agentId, result.audio)
+        log.info(`Turn trigger injected for agent ${agentId}`)
+      }
+    } catch (err) {
+      log.warn(`Failed to inject turn trigger for ${agentId}`, { error: String(err) })
     }
   }
 
