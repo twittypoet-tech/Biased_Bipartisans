@@ -52,6 +52,7 @@ export class DebateConductor {
   private stopped = false
   private phaseTimers: ReturnType<typeof setTimeout>[] = []
   private qaTimer: ReturnType<typeof setInterval> | null = null
+  private turnTimer: ReturnType<typeof setInterval> | null = null
   private injectedQuestions = new Set<string>()   // prevent re-injecting same question
   private moderatorAgentId: string | null = null
 
@@ -237,12 +238,37 @@ export class DebateConductor {
     const openingMs = 90_000
     const closingMs = maxMinutes * 60_000 * 0.80
 
+    // Debater IDs in rotation order — interleave so each gets equal turns
+    const debaterIds = allParticipants
+      .filter((p) => p.role === 'debater')
+      .map((p) => p.agent_id)
+
     this.phaseTimers.push(
       setTimeout(() => {
-        if (!this.stopped) { this.relay?.setPhase('debate'); log.info('Phase: opening → debate') }
+        if (!this.stopped) {
+          this.relay?.setPhase('debate')
+          log.info('Phase: opening → debate')
+          // Start explicit turn rotation: each debater gets 45s then yields
+          const TURN_MS = 45_000
+          let turnIdx = 0
+          const rotateTurn = () => {
+            if (this.stopped || !this.relay) return
+            const id = debaterIds[turnIdx % debaterIds.length]!
+            this.relay.setScheduledSpeaker(id)
+            turnIdx++
+          }
+          rotateTurn() // give first debater the floor immediately
+          this.turnTimer = setInterval(rotateTurn, TURN_MS)
+          this.turnTimer.unref?.()
+        }
       }, openingMs),
       setTimeout(() => {
-        if (!this.stopped) { this.relay?.setPhase('closing'); log.info('Phase: debate → closing') }
+        if (!this.stopped) {
+          // Stop turn rotation before closing so moderator takes over cleanly
+          if (this.turnTimer) { clearInterval(this.turnTimer); this.turnTimer = null }
+          this.relay?.setPhase('closing')
+          log.info('Phase: debate → closing')
+        }
       }, closingMs),
     )
 
@@ -273,6 +299,7 @@ export class DebateConductor {
     for (const t of this.phaseTimers) clearTimeout(t)
     this.phaseTimers = []
     if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
+    if (this.turnTimer) { clearInterval(this.turnTimer); this.turnTimer = null }
     this.poller?.stop()
     this.poller = null
     await this.relay?.disconnect().catch(() => {})
@@ -379,6 +406,7 @@ export class DebateConductor {
     for (const t of this.phaseTimers) clearTimeout(t)
     this.phaseTimers = []
     if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
+    if (this.turnTimer) { clearInterval(this.turnTimer); this.turnTimer = null }
     this.poller?.stop()
     this.poller = null
     // Disconnect relay immediately — this causes Retell to see the "user" leave

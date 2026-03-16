@@ -78,7 +78,12 @@ export class AudioRelay {
   // Phase controls which routing rules are active
   private phase: DebatePhase = 'opening'
 
-  // VAD floor control — only the current floor holder's audio routes to other agents
+  // Explicit turn rotation — conductor assigns who has the floor each turn.
+  // When set, only that agent (plus the moderator) can cross-route audio.
+  // When null, falls back to VAD floor control.
+  private scheduledSpeaker: string | null = null
+
+  // VAD floor control (fallback when scheduledSpeaker is null)
   private floorHolder: string | null = null
   private speakerStates = new Map<string, SpeakerState>()
 
@@ -179,18 +184,36 @@ export class AudioRelay {
 
   /**
    * Transition the debate to a new phase.
-   * - opening: only moderator's audio cross-routes; debaters can't interrupt
-   * - debate: VAD floor control; any agent can claim the floor
-   * - closing: same as opening — moderator has the floor for wrap-up
+   * - opening/closing: only moderator's audio cross-routes; debaters can't interrupt
+   * - debate: explicit turn rotation (scheduledSpeaker) with VAD as fallback
    */
   setPhase(phase: DebatePhase): void {
     this.phase = phase
     log.info(`Phase → ${phase}`)
-    // Reset floor on transition so the new phase starts clean
+    // Reset floor/speaker on transition so the new phase starts clean
+    this.scheduledSpeaker = null
     this.floorHolder = null
     for (const s of this.speakerStates.values()) {
       s.isSpeaking = false
       s.silentSince = Infinity
+    }
+  }
+
+  /**
+   * Explicitly assign the floor to one debater for the current turn.
+   * Only that agent's audio (plus the moderator's) cross-routes to all others.
+   * Set to null to fall back to VAD floor control.
+   */
+  setScheduledSpeaker(agentId: string | null): void {
+    this.scheduledSpeaker = agentId
+    this.floorHolder = null
+    for (const s of this.speakerStates.values()) {
+      s.isSpeaking = false
+      s.silentSince = Infinity
+    }
+    if (agentId) {
+      const name = this.calls.get(agentId)?.meta.agentName ?? agentId
+      log.info(`Turn → ${name}`)
     }
   }
 
@@ -219,10 +242,25 @@ export class AudioRelay {
       return
     }
 
-    // ── Debate phase: VAD floor control ──────────────────────────────────────
-    // Only one agent "has the floor" at a time. Their audio gets cross-routed
-    // to all other agents as user input, triggering the STT → LLM → TTS
-    // pipeline. First speaker wins; 700ms silence releases the floor.
+    // ── Debate phase: explicit turn rotation (+ VAD fallback) ────────────────
+    // If a scheduled speaker is set, only that agent and the moderator can
+    // cross-route. This prevents simultaneous bursts when turns switch and
+    // guarantees every debater gets equal speaking time.
+    // When no scheduled speaker is set, falls back to VAD floor control.
+    const agentRole = this.calls.get(speakingAgentId)?.meta.role
+
+    if (this.scheduledSpeaker !== null) {
+      if (speakingAgentId !== this.scheduledSpeaker && agentRole !== 'moderator') return
+      for (const [agentId, conn] of this.calls) {
+        if (agentId === speakingAgentId) continue
+        await conn.injectSource.captureFrame(
+          new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
+        )
+      }
+      return
+    }
+
+    // VAD floor control fallback (scheduledSpeaker === null)
     const rms = this.computeRMS(frame)
     const now = Date.now()
 
