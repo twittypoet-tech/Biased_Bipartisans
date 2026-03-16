@@ -102,11 +102,32 @@ export class DebateScheduler {
   // ── Freeflow: Retell-based ────────────────────────────────────────────────
 
   private async runFreeflowDebate(debateId: string): Promise<void> {
-    const conductor = new DebateConductor({ debateId })
+    let conductor: DebateConductor
+    try {
+      conductor = new DebateConductor({ debateId })
+    } catch (err) {
+      // Constructor throws when env vars are missing — mark failed and stop retrying
+      const msg = err instanceof Error ? err.message : String(err)
+      log.error(`Cannot start debate ${debateId}: ${msg}`)
+      this.activeDebates.delete(debateId)
+      try {
+        const db = getSupabaseClient()
+        await updateDebateStatus(db, debateId, 'cancelled')
+      } catch { /* best effort */ }
+      return
+    }
+
     this.conductors.set(debateId, conductor)
 
     try {
       await conductor.run()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      log.error(`Debate ${debateId} failed: ${msg}`)
+      try {
+        const db = getSupabaseClient()
+        await updateDebateStatus(db, debateId, 'cancelled')
+      } catch { /* best effort */ }
     } finally {
       this.conductors.delete(debateId)
       this.activeDebates.delete(debateId)
