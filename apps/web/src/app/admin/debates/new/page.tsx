@@ -87,8 +87,9 @@ export default function CreateDebatePage() {
       const { slug } = await res.json()
       router.push(`/admin/debates/${slug}`)
     } else {
+      const data = await res.json().catch(() => ({}))
       setSubmitting(false)
-      alert('Failed to create debate')
+      alert(`Failed to create debate:\n\n${data.error ?? data.message ?? JSON.stringify(data)}`)
     }
   }
 
