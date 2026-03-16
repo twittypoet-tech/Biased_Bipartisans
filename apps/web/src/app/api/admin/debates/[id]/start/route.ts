@@ -33,62 +33,64 @@ export async function POST(
     )
   }
 
-  // Check debate style — freeflow debates are run by DebateConductor in the agents service.
-  // We mark the debate as "scheduled" with scheduled_at=now so the scheduler picks it up
-  // within its next poll cycle (≤30s). The conductor then creates all Retell calls, starts
-  // the relay + transcript poller, and marks the debate "live" itself.
   const format = debate.format_id ? await getDebateFormat(db, debate.format_id) : null
   const isFreeflow = format?.debate_style === 'freeflow'
 
-  if (isFreeflow) {
-    const now = new Date().toISOString()
-    const { error } = await db
-      .from('debates')
-      .update({ status: 'scheduled', scheduled_at: now })
-      .eq('id', debateId)
+  if (!isFreeflow) {
+    return NextResponse.json(
+      {
+        error: 'This debate uses a structured format which requires LiveKit infrastructure. Switch the debate format to "Freeflow Duel" to use the Retell voice pipeline.',
+      },
+      { status: 400 },
+    )
+  }
 
-    if (error) {
-      return NextResponse.json({ error: 'Failed to schedule debate' }, { status: 500 })
+  // Mark the debate as scheduled so the scheduler can pick it up as a fallback
+  const now = new Date().toISOString()
+  const { error: updateError } = await db
+    .from('debates')
+    .update({ status: 'scheduled', scheduled_at: now })
+    .eq('id', debateId)
+
+  if (updateError) {
+    return NextResponse.json({ error: 'Failed to schedule debate' }, { status: 500 })
+  }
+
+  // Try to trigger the agents service directly — this fires the debate immediately
+  // without waiting for the 30s scheduler poll cycle.
+  const agentsUrl = process.env.AGENTS_SERVICE_URL
+  const triggerSecret = process.env.AGENTS_TRIGGER_SECRET
+
+  if (agentsUrl) {
+    try {
+      const triggerRes = await fetch(`${agentsUrl}/debates/${debateId}/trigger`, {
+        method: 'POST',
+        headers: {
+          ...(triggerSecret ? { Authorization: `Bearer ${triggerSecret}` } : {}),
+        },
+      })
+
+      if (triggerRes.ok) {
+        return NextResponse.json({
+          ok: true,
+          status: 'triggered',
+          message: 'Debate started — agents are joining now',
+        })
+      }
+
+      // Trigger call failed — fall through to scheduler mode
+      console.warn('Agents service trigger failed:', await triggerRes.text())
+    } catch (err) {
+      console.warn('Could not reach agents service:', err)
     }
-
-    return NextResponse.json({
-      ok: true,
-      status: 'scheduled',
-      message: 'Debate queued — agents will join within 30 seconds',
-    })
   }
 
-  // Legacy structured debates: create LiveKit room and mark live immediately
-  // (the agent worker connects via livekit-agents job dispatch)
-  const livekitUrl = process.env.LIVEKIT_URL
-  const apiKey = process.env.LIVEKIT_API_KEY
-  const apiSecret = process.env.LIVEKIT_API_SECRET
-
-  if (!livekitUrl || !apiKey || !apiSecret) {
-    return NextResponse.json({ error: 'LiveKit not configured on server' }, { status: 500 })
-  }
-
-  const { RoomServiceClient } = await import('livekit-server-sdk')
-  const httpHost = livekitUrl.replace('ws://', 'http://').replace('wss://', 'https://')
-  const roomService = new RoomServiceClient(httpHost, apiKey, apiSecret)
-
-  try {
-    await roomService.createRoom({
-      name: debate.room_name,
-      emptyTimeout: 300,
-      maxParticipants: 200,
-    })
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
-    if (!msg.includes('already exists') && !msg.includes('409')) {
-      return NextResponse.json({ error: 'Failed to create debate room' }, { status: 500 })
-    }
-  }
-
-  await db.from('debates').update({
-    status: 'live',
-    started_at: new Date().toISOString(),
-  }).eq('id', debateId)
-
-  return NextResponse.json({ ok: true, status: 'live', roomName: debate.room_name })
+  // Fallback: agents service not reachable — scheduler will pick it up within 30s
+  return NextResponse.json({
+    ok: true,
+    status: 'scheduled',
+    message: agentsUrl
+      ? 'Agents service unreachable — debate queued, scheduler will start it within 30s'
+      : 'No AGENTS_SERVICE_URL set — debate queued for scheduler. Set AGENTS_SERVICE_URL in Vercel to enable instant start.',
+  })
 }

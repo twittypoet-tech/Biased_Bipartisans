@@ -210,6 +210,34 @@ export class DebateScheduler {
     }
   }
 
+  /**
+   * Directly trigger a debate by ID — used by the web app's "Start Now" button
+   * so debates start immediately without waiting for the next scheduler poll.
+   */
+  async triggerDebate(debateId: string): Promise<void> {
+    if (this.activeDebates.has(debateId)) {
+      log.warn(`Debate ${debateId} is already active — ignoring trigger`)
+      return
+    }
+
+    const db = getSupabaseClient()
+    const participants = await getDebateParticipants(db, debateId)
+    const hasDebaters = participants.some((p) => p.role === 'debater')
+    const hasModerator = participants.some((p) => p.role === 'moderator')
+
+    if (!hasDebaters || !hasModerator) {
+      throw new Error(`Debate ${debateId} is missing participants`)
+    }
+
+    // All direct-triggered debates are freeflow (web only calls trigger for freeflow)
+    this.activeDebates.add(debateId)
+    log.info(`Direct trigger: starting freeflow debate ${debateId}`)
+
+    this.runFreeflowDebate(debateId).catch((err) => {
+      log.error(`Triggered freeflow debate ${debateId} failed`, { error: String(err) })
+    })
+  }
+
   get activeCount(): number {
     return this.activeDebates.size
   }
