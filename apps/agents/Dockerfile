@@ -31,5 +31,5 @@ COPY --from=build /app/packages ./packages
 
 WORKDIR /app/apps/agents
 ENV NODE_ENV=production
-EXPOSE 3002
+EXPOSE 3002 8080
 CMD ["node", "dist/index.js"]
