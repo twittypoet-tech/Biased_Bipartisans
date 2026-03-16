@@ -36,14 +36,7 @@ export class DebateScheduler {
 
     const livekitStatus = LiveKitRoomManager.isConfigured() ? 'enabled' : 'disabled'
     const ttsStatus = process.env.ELEVENLABS_API_KEY ? 'elevenlabs-streaming' : 'disabled'
-    const retellKey = process.env.RETELL_API_KEY
-    const retellStatus = retellKey ? `enabled (key length: ${retellKey.length})` : 'MISSING'
-    // Log which user-defined env vars are visible (no values, just names)
-    const userVars = Object.keys(process.env).filter(k =>
-      !['PATH','HOME','USER','SHELL','TERM','PWD','OLDPWD','LANG','LC_ALL'].includes(k) &&
-      !k.startsWith('npm_') && !k.startsWith('NODE_') && k !== 'NODE_ENV'
-    )
-    log.info(`Env vars present: ${userVars.sort().join(', ')}`)
+    const retellStatus = process.env.RETELL_API_KEY ? 'enabled' : 'disabled'
     log.info(
       `Scheduler started (poll every ${POLL_INTERVAL_MS / 1000}s, livekit: ${livekitStatus}, tts: ${ttsStatus}, retell: ${retellStatus})`,
     )
