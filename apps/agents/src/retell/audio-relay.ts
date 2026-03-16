@@ -138,7 +138,7 @@ export class AudioRelay {
       }
     })().catch((err) => {
       if (!this.stopped) {
-        log.error(`Capture error for ${speakingAgentId}`, { error: String(err) })
+        log.error(`Capture error for ${speakingAgentId}`, { error: err instanceof Error ? err.stack ?? err.message : JSON.stringify(err) })
       }
     })
   }
