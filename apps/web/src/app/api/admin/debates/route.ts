@@ -26,7 +26,8 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    console.error('Create debate error:', error)
+    return NextResponse.json({ error: error.message, code: error.code, details: error.details }, { status: 400 })
   }
 
   return NextResponse.json({ id: data.id, slug: data.slug })
