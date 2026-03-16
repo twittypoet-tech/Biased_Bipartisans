@@ -142,8 +142,8 @@ async function main() {
   })
 }
 
-// Run if executed directly
-const isDirectRun = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')
+// Run if executed directly (handles .ts, .js, .cjs, .mjs)
+const isDirectRun = /index\.(ts|js|cjs|mjs)$/.test(process.argv[1] ?? '')
 if (isDirectRun) {
   main().catch((err) => {
     log.error('Fatal error', err)
