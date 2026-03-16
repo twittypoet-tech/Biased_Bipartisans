@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { RoomServiceClient } from 'livekit-server-sdk'
 import { createServerClient } from '@/lib/supabase/server'
-import { getDebate, getDebateParticipants } from '@bipi/db'
+import { getDebate, getDebateParticipants, getDebateFormat } from '@bipi/db'
 
 export async function POST(
   _request: Request,
@@ -34,7 +33,33 @@ export async function POST(
     )
   }
 
-  // Create the LiveKit room — this dispatches the job to the deployed agent worker
+  // Check debate style — freeflow debates are run by DebateConductor in the agents service.
+  // We mark the debate as "scheduled" with scheduled_at=now so the scheduler picks it up
+  // within its next poll cycle (≤30s). The conductor then creates all Retell calls, starts
+  // the relay + transcript poller, and marks the debate "live" itself.
+  const format = debate.format_id ? await getDebateFormat(db, debate.format_id) : null
+  const isFreeflow = format?.debate_style === 'freeflow'
+
+  if (isFreeflow) {
+    const now = new Date().toISOString()
+    const { error } = await db
+      .from('debates')
+      .update({ status: 'scheduled', scheduled_at: now })
+      .eq('id', debateId)
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to schedule debate' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      ok: true,
+      status: 'scheduled',
+      message: 'Debate queued — agents will join within 30 seconds',
+    })
+  }
+
+  // Legacy structured debates: create LiveKit room and mark live immediately
+  // (the agent worker connects via livekit-agents job dispatch)
   const livekitUrl = process.env.LIVEKIT_URL
   const apiKey = process.env.LIVEKIT_API_KEY
   const apiSecret = process.env.LIVEKIT_API_SECRET
@@ -43,31 +68,27 @@ export async function POST(
     return NextResponse.json({ error: 'LiveKit not configured on server' }, { status: 500 })
   }
 
-  const roomName = debate.room_name
+  const { RoomServiceClient } = await import('livekit-server-sdk')
   const httpHost = livekitUrl.replace('ws://', 'http://').replace('wss://', 'https://')
   const roomService = new RoomServiceClient(httpHost, apiKey, apiSecret)
 
   try {
     await roomService.createRoom({
-      name: roomName,
-      emptyTimeout: 300,   // 5 min grace period after last participant leaves
+      name: debate.room_name,
+      emptyTimeout: 300,
       maxParticipants: 200,
     })
   } catch (err: unknown) {
-    // Room may already exist — that's fine
     const msg = err instanceof Error ? err.message : String(err)
     if (!msg.includes('already exists') && !msg.includes('409')) {
-      console.error('Failed to create LiveKit room:', err)
       return NextResponse.json({ error: 'Failed to create debate room' }, { status: 500 })
     }
   }
 
-  // Mark as live — the agent will also set this once it initialises,
-  // but setting it here makes the UI respond immediately
   await db.from('debates').update({
     status: 'live',
     started_at: new Date().toISOString(),
   }).eq('id', debateId)
 
-  return NextResponse.json({ ok: true, status: 'live', roomName })
+  return NextResponse.json({ ok: true, status: 'live', roomName: debate.room_name })
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { SpeakerStage, type StageParticipant } from './speaker-stage'
 import { LiveTranscript, type LiveTurnEntry } from './live-transcript'
 import { DebateTimer } from './debate-timer'
@@ -210,45 +211,59 @@ export function DebateRoom({
     }
   }, [debateId, roomName, identityToId, attachAudio, handleDataMessage])
 
-  // Polling fallback for transcript turns (when LiveKit data channel isn't available)
+  // Supabase Realtime — receives debate_turns INSERTs as they happen during the debate.
+  // The live transcript poller (agents service) writes turns every ~3s as Retell updates
+  // its transcript. This subscription makes them appear in the browser instantly.
   useEffect(() => {
-    if (connectionStatus !== 'connected') return
-    const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL
-    if (livekitUrl) return // LiveKit data channel handles turn delivery
+    const supabase = getSupabaseBrowserClient()
 
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/debate-turns?debateId=${debateId}&after=${turns.length}`)
-        if (!res.ok) return
-        const newTurns = await res.json()
-        if (newTurns.length > 0) {
-          for (const t of newTurns) {
-            const newTurn: LiveTurnEntry = {
-              id: t.id,
-              speakerName: t.speakerName,
-              speakerId: t.speakerId,
-              archetype: t.archetype ?? 'unknown',
-              roundPhase: t.roundPhase,
-              turnIndex: t.turnIndex,
-              transcript: t.transcript,
-              isModerator: t.isModerator ?? false,
-              isNew: true,
-            }
-            setTurns((prev) => {
-              if (prev.some((p) => p.id === newTurn.id)) return prev
-              return [...prev, newTurn]
-            })
-            setCurrentPhase(t.roundPhase)
-            setActiveSpeakerId(t.speakerId)
+    const channel = supabase
+      .channel(`debate-turns-${debateId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'debate_turns',
+          filter: `debate_id=eq.${debateId}`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            id: string
+            speaker_id: string
+            speaker_type: string
+            round_phase: string
+            turn_index: number
+            transcript: string
           }
-        }
-      } catch {
-        // polling error, ignore
-      }
-    }, 5000)
 
-    return () => clearInterval(interval)
-  }, [connectionStatus, debateId, turns.length])
+          const speaker = participants.find((p) => p.id === row.speaker_id)
+          const newTurn: LiveTurnEntry = {
+            id: row.id,
+            speakerName: speaker?.name ?? 'Unknown',
+            speakerId: row.speaker_id,
+            archetype: speaker?.archetype ?? 'unknown',
+            roundPhase: row.round_phase,
+            turnIndex: row.turn_index,
+            transcript: row.transcript,
+            isModerator: row.speaker_type === 'moderator',
+            isNew: true,
+          }
+
+          setTurns((prev) => {
+            if (prev.some((p) => p.id === newTurn.id)) return prev
+            return [...prev, newTurn]
+          })
+          setCurrentPhase(row.round_phase)
+          setActiveSpeakerId(row.speaker_id)
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [debateId, participants])
 
   useEffect(() => {
     let cleanup: (() => void) | undefined

@@ -1,32 +1,34 @@
 import { createLogger } from '@bipi/shared'
-import { getSupabaseClient, getScheduledDebatesDue, getDebateParticipants, updateDebateStatus } from '@bipi/db'
+import {
+  getSupabaseClient,
+  getScheduledDebatesDue,
+  getDebateParticipants,
+  getDebateFormat,
+  updateDebateStatus,
+} from '@bipi/db'
 import { LiveKitRoomManager } from './livekit/room-manager.js'
 import { LiveConversation } from './debate/live-conversation.js'
 import { AudioPublisher } from './livekit/audio-publisher.js'
 import { createTTSPublishers } from './workers/streaming-tts.js'
+import { DebateConductor } from './retell/debate-conductor.js'
 
 const log = createLogger('agents:scheduler')
 
-const POLL_INTERVAL_MS = 30_000 // 30 seconds
+const POLL_INTERVAL_MS = 30_000  // 30 seconds
 
 /**
  * DebateScheduler polls for scheduled debates that are due to start.
  *
- * When the debate-worker is running as a LiveKit Worker (registered via
- * `cli.runApp`), this scheduler simply creates the LiveKit room — LiveKit
- * automatically dispatches the job to the registered worker process.
+ * Freeflow debates (debate_style = 'freeflow') are run via DebateConductor,
+ * which creates Retell web calls and cross-routes audio between agents.
  *
- * When running without a separate worker (standalone mode, e.g. development),
- * the scheduler runs LiveConversation directly in-process using the
- * streaming TTS pipeline.
- *
- * Either way, voice synthesis now uses ElevenLabs streaming TTS (sentence-level
- * streaming via WebSocket) instead of the old batch OpenAI TTS + Supabase upload.
+ * Structured debates use the legacy LiveConversation pipeline.
  */
 export class DebateScheduler {
   private running = false
   private activeDebates = new Set<string>()
   private timer: ReturnType<typeof setInterval> | null = null
+  private conductors = new Map<string, DebateConductor>()
 
   start(): void {
     if (this.running) return
@@ -34,7 +36,10 @@ export class DebateScheduler {
 
     const livekitStatus = LiveKitRoomManager.isConfigured() ? 'enabled' : 'disabled'
     const ttsStatus = process.env.ELEVENLABS_API_KEY ? 'elevenlabs-streaming' : 'disabled'
-    log.info(`Scheduler started (poll every ${POLL_INTERVAL_MS / 1000}s, livekit: ${livekitStatus}, tts: ${ttsStatus})`)
+    const retellStatus = process.env.RETELL_API_KEY ? 'enabled' : 'disabled'
+    log.info(
+      `Scheduler started (poll every ${POLL_INTERVAL_MS / 1000}s, livekit: ${livekitStatus}, tts: ${ttsStatus}, retell: ${retellStatus})`,
+    )
 
     this.poll()
     this.timer = setInterval(() => this.poll(), POLL_INTERVAL_MS)
@@ -46,6 +51,10 @@ export class DebateScheduler {
       this.timer = null
     }
     this.running = false
+    // Signal all active Retell conductors to stop
+    for (const conductor of this.conductors.values()) {
+      conductor.stop()
+    }
     log.info('Scheduler stopped')
   }
 
@@ -66,19 +75,47 @@ export class DebateScheduler {
           continue
         }
 
-        this.activeDebates.add(debate.id)
-        log.info(`Starting debate: ${debate.title} (${debate.id})`)
+        // Determine debate style from format
+        const format = debate.format_id ? await getDebateFormat(db, debate.format_id) : null
+        const isFreeflow = format?.debate_style === 'freeflow'
 
-        this.runDebate(debate.id, debate.room_name, participants).catch((err) => {
-          log.error(`Debate ${debate.id} failed`, { error: String(err) })
-        })
+        this.activeDebates.add(debate.id)
+        log.info(
+          `Starting debate: "${debate.title}" (${debate.id}) — style: ${isFreeflow ? 'freeflow' : 'structured'}`,
+        )
+
+        if (isFreeflow) {
+          this.runFreeflowDebate(debate.id).catch((err) => {
+            log.error(`Freeflow debate ${debate.id} failed`, { error: String(err) })
+          })
+        } else {
+          this.runStructuredDebate(debate.id, debate.room_name, participants).catch((err) => {
+            log.error(`Structured debate ${debate.id} failed`, { error: String(err) })
+          })
+        }
       }
     } catch (err) {
       log.error('Scheduler poll error', { error: String(err) })
     }
   }
 
-  private async runDebate(
+  // ── Freeflow: Retell-based ────────────────────────────────────────────────
+
+  private async runFreeflowDebate(debateId: string): Promise<void> {
+    const conductor = new DebateConductor({ debateId })
+    this.conductors.set(debateId, conductor)
+
+    try {
+      await conductor.run()
+    } finally {
+      this.conductors.delete(debateId)
+      this.activeDebates.delete(debateId)
+    }
+  }
+
+  // ── Structured: legacy LiveConversation pipeline ──────────────────────────
+
+  private async runStructuredDebate(
     debateId: string,
     roomName: string,
     participants: Array<{ agent_id: string; role: string; agents?: unknown }>,
@@ -87,7 +124,9 @@ export class DebateScheduler {
     const ttsPublishers = (() => {
       if (!process.env.ELEVENLABS_API_KEY) return new Map()
       const meta = participants.map((p) => {
-        const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
+        const agent = (p as unknown as Record<string, unknown>).agents as
+          | Record<string, unknown>
+          | undefined
         return {
           agentId: p.agent_id,
           archetype: (agent?.archetype as string) ?? 'moderator',
@@ -98,7 +137,6 @@ export class DebateScheduler {
     })()
 
     try {
-      // Create LiveKit room — if using separate worker process, this triggers job dispatch
       const roomManager = LiveKitRoomManager.isConfigured() ? new LiveKitRoomManager() : null
 
       if (roomManager) {
@@ -106,13 +144,16 @@ export class DebateScheduler {
           await roomManager.createRoom(roomName)
           log.info(`LiveKit room created: ${roomName}`)
         } catch (err) {
-          log.warn(`Failed to create LiveKit room, continuing without live streaming`, { error: String(err) })
+          log.warn('Failed to create LiveKit room, continuing without live streaming', {
+            error: String(err),
+          })
         }
 
-        // Connect audio publishers (one LiveKit participant per agent)
         const livekitUrl = process.env.LIVEKIT_URL!
         for (const p of participants) {
-          const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
+          const agent = (p as unknown as Record<string, unknown>).agents as
+            | Record<string, unknown>
+            | undefined
           const name = (agent?.name as string) ?? 'Unknown'
           const publisher = new AudioPublisher(name)
           const token = await roomManager.generateToken(
@@ -121,7 +162,6 @@ export class DebateScheduler {
             `agent-${name.toLowerCase().replace(/\s+/g, '-')}`,
             'publisher',
           )
-
           try {
             await publisher.connect(livekitUrl, token)
             audioPublishers.set(p.agent_id, publisher)
@@ -131,7 +171,6 @@ export class DebateScheduler {
         }
       }
 
-      // Run the live reactive conversation
       const conversation = new LiveConversation({
         debateId,
         maxExchanges: 10,
@@ -154,7 +193,6 @@ export class DebateScheduler {
       log.info(`Debate ${debateId} finished successfully`)
     } catch (err) {
       log.error(`Debate ${debateId} error`, { error: String(err) })
-
       try {
         const db = getSupabaseClient()
         await updateDebateStatus(db, debateId, 'cancelled')
@@ -162,7 +200,6 @@ export class DebateScheduler {
         // best effort
       }
     } finally {
-      // Cleanup
       for (const [, publisher] of audioPublishers) {
         await publisher.disconnect().catch(() => {})
       }

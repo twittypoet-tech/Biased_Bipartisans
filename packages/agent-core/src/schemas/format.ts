@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const RoundDefinitionSchema = z.object({
-  phase: z.enum(['opening', 'rebuttal', 'pressure', 'audience_evidence', 'closing']),
+  phase: z.enum(['opening', 'rebuttal', 'pressure', 'audience_evidence', 'closing', 'discussion']),
   durationSeconds: z.number().int().positive(),
   speakingOrder: z.enum(['sequential', 'directed', 'free']),
   allowInterruptions: z.boolean(),

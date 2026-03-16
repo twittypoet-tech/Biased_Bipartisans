@@ -32,6 +32,8 @@ export async function persistTurn(db: SupabaseClient, input: PersistTurnInput) {
     evidence_metadata: input.evidenceMetadata ?? null,
     duration_ms: input.durationMs ?? null,
     audio_url: input.audioUrl ?? null,
+    started_at: null,
+    ended_at: null,
   })
 }
 

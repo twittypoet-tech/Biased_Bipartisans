@@ -37,6 +37,7 @@ export interface Agent {
   voice_id: string | null
   avatar_url: string | null
   short_bio: string
+  retell_agent_id: string | null  // Retell AI agent ID (migration 006)
   created_at: Timestamp
   updated_at: Timestamp
 }
@@ -137,6 +138,9 @@ export interface DebateFormatDefinition {
   max_participants: number
   round_sequence: RoundDefinition[]
   moderator_behavior: Record<string, string>
+  debate_style: 'structured' | 'freeflow'  // migration 006
+  min_duration_minutes: number              // migration 006
+  max_duration_minutes: number              // migration 006
   created_at: Timestamp
 }
 
@@ -160,6 +164,9 @@ export interface Debate {
   started_at: Timestamp | null
   ended_at: Timestamp | null
   room_name: string
+  retell_call_ids: Record<string, string>  // agentId → retellCallId (migration 006)
+  duration_override_minutes: number | null // per-debate timing override (migration 006)
+  recordings: Record<string, string>       // agentId → retellRecordingUrl (migration 008)
   created_at: Timestamp
   updated_at: Timestamp
 }
@@ -196,6 +203,8 @@ export interface DebateTurn {
   evidence_metadata: Record<string, unknown> | null
   duration_ms: number | null
   audio_url: string | null
+  started_at: Timestamp | null   // wall-clock start of utterance (migration 008)
+  ended_at: Timestamp | null     // wall-clock end of utterance (migration 008)
   created_at: Timestamp
 }
 
