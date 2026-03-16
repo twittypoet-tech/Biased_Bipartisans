@@ -13,14 +13,12 @@ RUN pnpm install --frozen-lockfile
 
 # Build
 FROM base AS build
+# Copy root and app node_modules from deps
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/agents/node_modules ./apps/agents/node_modules
-# Copy package-level node_modules (may be hoisted — use shell to handle missing dirs)
-RUN --mount=type=bind,from=deps,source=/app/packages,target=/tmp/pkg-deps \
-    mkdir -p packages/shared packages/db packages/agent-core && \
-    { cp -r /tmp/pkg-deps/shared/node_modules packages/shared/ 2>/dev/null || true; } && \
-    { cp -r /tmp/pkg-deps/db/node_modules packages/db/ 2>/dev/null || true; } && \
-    { cp -r /tmp/pkg-deps/agent-core/node_modules packages/agent-core/ 2>/dev/null || true; }
+# Copy package dirs from deps (includes any package-level node_modules if they exist)
+COPY --from=deps /app/packages ./packages
+# Overlay source files — Docker COPY merges dirs, so node_modules above are preserved
 COPY . .
 RUN pnpm --filter @bipi/agents build
 
