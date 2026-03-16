@@ -8,6 +8,7 @@ import { statusColors, getArchetypeColor } from '@/lib/agent-colors'
 import { ConfigSection, DataList } from '@/components/admin/config-section'
 import { ParticipantManager } from '@/components/admin/participant-manager'
 import { BackfillAudioButton } from '@/components/admin/backfill-audio-button'
+import { EndDebateButton } from '@/components/admin/end-debate-button'
 
 export default async function DebateDetailPage({
   params,
@@ -66,9 +67,14 @@ export default async function DebateDetailPage({
               <p className="mt-1 text-neutral-400">{framing.headline}</p>
             )}
           </div>
-          <span className={`rounded-full px-3 py-1 text-sm ${statusColors[debate.status] ?? ''}`}>
-            {debate.status}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className={`rounded-full px-3 py-1 text-sm ${statusColors[debate.status] ?? ''}`}>
+              {debate.status}
+            </span>
+            {(debate.status === 'live' || debate.status === 'scheduled') && (
+              <EndDebateButton debateId={debate.id} />
+            )}
+          </div>
         </div>
         <div className="mt-3 flex gap-4 text-xs text-neutral-500">
           <span>Room: {debate.room_name}</span>
