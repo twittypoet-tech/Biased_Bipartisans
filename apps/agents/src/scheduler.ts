@@ -36,8 +36,7 @@ export class DebateScheduler {
 
     const livekitStatus = LiveKitRoomManager.isConfigured() ? 'enabled' : 'disabled'
     const ttsStatus = process.env.ELEVENLABS_API_KEY ? 'elevenlabs-streaming' : 'disabled'
-    const retellKey = process.env.RETELL_API_KEY
-    const retellStatus = retellKey ? `enabled (key length: ${retellKey.length})` : 'MISSING — set RETELL_API_KEY in Railway Variables'
+    const retellStatus = process.env.RETELL_API_KEY ? 'enabled' : 'disabled'
     log.info(
       `Scheduler started (poll every ${POLL_INTERVAL_MS / 1000}s, livekit: ${livekitStatus}, tts: ${ttsStatus}, retell: ${retellStatus})`,
     )

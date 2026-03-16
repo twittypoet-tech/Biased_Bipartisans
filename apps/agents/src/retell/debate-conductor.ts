@@ -173,7 +173,7 @@ export class DebateConductor {
       await this.relay.connect(relayAgents, publicRoomConfig)
       log.info('AudioRelay live')
     } catch (err) {
-      log.error('AudioRelay failed to connect', { error: String(err) })
+      log.error('AudioRelay failed to connect', { error: err instanceof Error ? err.stack ?? err.message : JSON.stringify(err) })
       await this.cleanup(db, roomManager, debate.room_name)
       await updateDebateStatus(db, this.config.debateId, 'cancelled')
       throw err
