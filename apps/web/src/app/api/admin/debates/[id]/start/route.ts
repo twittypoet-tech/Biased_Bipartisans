@@ -78,18 +78,29 @@ export async function POST(
         })
       }
 
-      // Trigger call failed — surface the error from the agents service
+      // 500 from agents service = real validation error (e.g. missing retell_agent_id) — surface it
+      // 502/503/504 = transient proxy/network error — debate is already scheduled, scheduler picks it up
       const triggerBody = await triggerRes.text()
-      console.warn('Agents service trigger failed:', triggerBody)
-      let agentError = `Agents service returned ${triggerRes.status}`
-      try { agentError = JSON.parse(triggerBody).error ?? agentError } catch { /* ignore */ }
-      return NextResponse.json({ error: agentError }, { status: 502 })
-    } catch (err) {
-      const netErr = err instanceof Error ? err.message : String(err)
-      console.warn('Could not reach agents service:', netErr)
+      console.warn(`Agents service trigger returned ${triggerRes.status}:`, triggerBody)
+      if (triggerRes.status === 500) {
+        let agentError = 'Agents service error'
+        try { agentError = JSON.parse(triggerBody).error ?? agentError } catch { /* ignore */ }
+        return NextResponse.json({ error: agentError }, { status: 502 })
+      }
+      // Transient error — debate is scheduled, scheduler will start it within 30s
       return NextResponse.json({
-        error: `Cannot reach agents service at ${agentsUrl} — ${netErr}. Check AGENTS_SERVICE_URL in Vercel env vars.`,
-      }, { status: 502 })
+        ok: true,
+        status: 'queued',
+        message: 'Debate queued — agents will join within 30s',
+      })
+    } catch (err) {
+      // Network error reaching agents service — debate is still scheduled
+      console.warn('Could not reach agents service:', err instanceof Error ? err.message : String(err))
+      return NextResponse.json({
+        ok: true,
+        status: 'queued',
+        message: 'Debate queued — agents will join within 30s',
+      })
     }
   }
 

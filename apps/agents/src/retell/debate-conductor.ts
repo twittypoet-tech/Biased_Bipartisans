@@ -84,6 +84,20 @@ export class DebateConductor {
     const pollerAgents: PollerAgent[] = []
     const retellCallIds: Record<string, string> = {}
 
+    // Build topic variables to inject into every agent's system prompt via
+    // {{variable_name}} placeholders. Add these to your Retell agent prompts.
+    const tf = (debate.topic_framing ?? {}) as Record<string, string>
+    const topicVars: Record<string, string> = {
+      debate_title:          debate.title ?? '',
+      debate_headline:       tf.headline ?? '',
+      conflict_description:  tf.conflict_description ?? '',
+      forced_tradeoff:       tf.forced_tradeoff ?? '',
+      decision_surface:      tf.decision_surface ?? '',
+      moral_tension:         tf.moral_tension ?? '',
+      strategic_tension:     tf.strategic_tension ?? '',
+      identity_tension:      tf.identity_tension ?? '',
+    }
+
     for (const participant of allParticipants) {
       const agent = participant.agents
       if (!agent?.retell_agent_id) {
@@ -91,10 +105,21 @@ export class DebateConductor {
         continue
       }
 
+      // Tell each agent who the other participants are
+      const opponents = allParticipants
+        .filter((p) => p.agent_id !== participant.agent_id)
+        .map((p) => `${p.agents.name} (${p.role})`)
+        .join(', ')
+
       log.info(`Creating Retell call for ${agent.name}`)
       const callCreatedAt = new Date()
       const call = await this.retell.call.createWebCall({
         agent_id: agent.retell_agent_id,
+        retell_llm_dynamic_variables: {
+          ...topicVars,
+          other_participants: opponents,
+          my_role: participant.role,
+        },
         metadata: {
           debate_id: this.config.debateId,
           agent_id: participant.agent_id,

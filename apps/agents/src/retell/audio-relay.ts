@@ -51,11 +51,25 @@ interface ConnectedCall {
  *
  * Optionally republishes all agent audio to a public LiveKit room for audience.
  */
+/** RMS energy above this level counts as active speech (for 16-bit PCM, ~-26 dBFS) */
+const SPEECH_RMS_THRESHOLD = 1000
+/** ms of continuous silence before the speaker releases the floor */
+const FLOOR_RELEASE_MS = 700
+
+interface SpeakerState {
+  isSpeaking: boolean
+  silentSince: number   // epoch ms when silence started (Infinity = currently speaking)
+}
+
 export class AudioRelay {
   private calls = new Map<string, ConnectedCall>()
   private publicRooms = new Map<string, Room>()      // agentId → Room (one per agent)
   private publicSources = new Map<string, AudioSource>()
   private stopped = false
+
+  // VAD floor control — only the current floor holder's audio routes to other agents
+  private floorHolder: string | null = null
+  private speakerStates = new Map<string, SpeakerState>()
 
   /**
    * Connect to all Retell call rooms and start cross-routing.
@@ -145,32 +159,67 @@ export class AudioRelay {
     })
   }
 
+  /** Compute RMS energy of a PCM16 frame for VAD detection */
+  private computeRMS(frame: AudioFrame): number {
+    let sum = 0
+    for (const s of frame.data) sum += s * s
+    return Math.sqrt(sum / (frame.data.length || 1))
+  }
+
   private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
-    // Cross-route into every other agent's call as user input.
-    // Each destination gets its own AudioFrame copy — the native layer may
-    // release the underlying buffer after captureFrame, so we must not reuse
-    // the same frame object across multiple calls.
-    for (const [agentId, conn] of this.calls) {
-      if (agentId === speakingAgentId) continue
-      const copy = new AudioFrame(
-        new Int16Array(frame.data),
-        frame.sampleRate,
-        frame.channels,
-        frame.samplesPerChannel,
-      )
-      await conn.injectSource.captureFrame(copy)
+    // ── VAD floor control ────────────────────────────────────────────────────
+    // Only one agent "has the floor" at a time. Their audio gets cross-routed
+    // to all other agents as user input, triggering the STT → LLM → TTS
+    // pipeline. Agents without the floor are silenced from each other's calls,
+    // preventing simultaneous responses (cross-talk).
+    const rms = this.computeRMS(frame)
+    const now = Date.now()
+
+    let state = this.speakerStates.get(speakingAgentId)
+    if (!state) {
+      state = { isSpeaking: false, silentSince: Infinity }
+      this.speakerStates.set(speakingAgentId, state)
     }
 
-    // Forward to public broadcast room under speaker's track
+    if (rms > SPEECH_RMS_THRESHOLD) {
+      state.silentSince = Infinity  // actively speaking
+      if (!state.isSpeaking) {
+        state.isSpeaking = true
+      }
+      // Claim floor if free (first speaker wins)
+      if (this.floorHolder === null || this.floorHolder === speakingAgentId) {
+        this.floorHolder = speakingAgentId
+      }
+    } else {
+      // Silence — start tracking how long we've been quiet
+      if (state.isSpeaking) {
+        if (state.silentSince === Infinity) state.silentSince = now
+        if (now - state.silentSince > FLOOR_RELEASE_MS) {
+          state.isSpeaking = false
+          if (this.floorHolder === speakingAgentId) {
+            this.floorHolder = null
+            log.info(`Floor released by ${speakingAgentId}`)
+          }
+        }
+      }
+    }
+
+    // Only cross-route from the current floor holder
+    if (this.floorHolder === speakingAgentId) {
+      for (const [agentId, conn] of this.calls) {
+        if (agentId === speakingAgentId) continue
+        await conn.injectSource.captureFrame(
+          new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
+        )
+      }
+    }
+
+    // Always forward to public broadcast room (audience hears everyone)
     const publicSrc = this.publicSources.get(speakingAgentId)
     if (publicSrc) {
-      const pubCopy = new AudioFrame(
-        new Int16Array(frame.data),
-        frame.sampleRate,
-        frame.channels,
-        frame.samplesPerChannel,
+      await publicSrc.captureFrame(
+        new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
       )
-      await publicSrc.captureFrame(pubCopy)
     }
   }
 
