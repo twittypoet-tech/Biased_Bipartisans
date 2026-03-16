@@ -292,6 +292,21 @@ export class DebateScheduler {
     })
   }
 
+  /**
+   * Stop a specific running debate immediately.
+   * Called by the HTTP /debates/:id/stop endpoint (triggered by the web app's
+   * "End Debate" button). The conductor will end all Retell calls and disconnect.
+   */
+  stopDebate(debateId: string): void {
+    const conductor = this.conductors.get(debateId)
+    if (conductor) {
+      log.info(`Stopping debate ${debateId} on request`)
+      conductor.stop()
+    } else {
+      log.warn(`stopDebate: debate ${debateId} not found in active conductors`)
+    }
+  }
+
   get activeCount(): number {
     return this.activeDebates.size
   }

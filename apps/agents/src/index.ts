@@ -116,6 +116,25 @@ async function main() {
       return
     }
 
+    // Stop endpoint: POST /debates/:id/stop
+    const stopMatch = url.match(/^\/debates\/([^/]+)\/stop$/)
+    if (req.method === 'POST' && stopMatch) {
+      if (triggerSecret) {
+        const auth = req.headers.authorization ?? ''
+        if (auth !== `Bearer ${triggerSecret}`) {
+          res.writeHead(401, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Unauthorized' }))
+          return
+        }
+      }
+      const debateId = stopMatch[1]!
+      log.info(`Stop request received for debate ${debateId}`)
+      scheduler.stopDebate(debateId)
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ ok: true, debateId, message: 'Debate stop signal sent' }))
+      return
+    }
+
     res.writeHead(404, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ error: 'Not found' }))
   })

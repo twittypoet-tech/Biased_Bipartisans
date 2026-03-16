@@ -42,5 +42,15 @@ export async function POST(
     .update({ status: 'ended', ended_at: new Date().toISOString() })
     .eq('id', debateId)
 
+  // Signal the agents service to stop the conductor immediately
+  const agentsUrl = process.env.AGENTS_SERVICE_URL
+  const triggerSecret = process.env.AGENTS_TRIGGER_SECRET
+  if (agentsUrl) {
+    fetch(`${agentsUrl}/debates/${debateId}/stop`, {
+      method: 'POST',
+      headers: triggerSecret ? { Authorization: `Bearer ${triggerSecret}` } : {},
+    }).catch(() => {}) // best-effort, DB update already done
+  }
+
   return NextResponse.json({ ok: true })
 }

@@ -198,10 +198,10 @@ export class DebateConductor {
     await this.runTimer(maxMinutes * 60_000)
 
     // ── 8. Stop poller + disconnect relay ─────────────────────────────────────
-    log.info('Max duration reached — wrapping up')
-    this.poller.stop()
+    log.info('Debate timer done — wrapping up')
+    this.poller?.stop()
     this.poller = null
-    await this.relay.disconnect()
+    await this.relay?.disconnect().catch(() => {})
     this.relay = null
 
     // ── 9. Signal debate complete to the public LiveKit room ──────────────────
@@ -234,12 +234,24 @@ export class DebateConductor {
   private async runTimer(durationMs: number): Promise<void> {
     return new Promise((resolve) => {
       const end = Date.now() + durationMs
-      const tick = setInterval(() => {
+      const tick = setInterval(async () => {
         if (this.stopped || Date.now() >= end) {
           clearInterval(tick)
           resolve()
+          return
         }
-      }, 5_000)
+        // Poll DB — stop early if admin ended the debate
+        try {
+          const db = getSupabaseClient()
+          const debate = await getDebate(db, this.config.debateId)
+          if (debate?.status === 'ended' || debate?.status === 'cancelled') {
+            log.info(`Debate ${this.config.debateId} ended in DB — stopping early`)
+            this.stopped = true
+            clearInterval(tick)
+            resolve()
+          }
+        } catch { /* best effort */ }
+      }, 10_000)
       tick.unref?.()
     })
   }
@@ -255,7 +267,19 @@ export class DebateConductor {
   }
 
   stop(): void {
+    if (this.stopped) return
     this.stopped = true
     this.poller?.stop()
+    this.poller = null
+    // Disconnect relay immediately — this causes Retell to see the "user" leave
+    this.relay?.disconnect().catch(() => {})
+    this.relay = null
+    // Also explicitly end all Retell calls so they don't burn minutes
+    for (const [, callId] of this.callIds) {
+      this.retell.call.end(callId).catch((err) => {
+        log.warn(`Failed to end Retell call ${callId}`, err instanceof Error ? err : new Error(String(err)))
+      })
+    }
+    log.info(`Debate ${this.config.debateId} stopped`)
   }
 }
