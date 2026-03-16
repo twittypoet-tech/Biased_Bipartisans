@@ -38,6 +38,7 @@ export interface Agent {
   avatar_url: string | null
   short_bio: string
   retell_agent_id: string | null  // Retell AI agent ID (migration 006)
+  intro_audio_url: string | null  // Cached intro recording (migration 009)
   created_at: Timestamp
   updated_at: Timestamp
 }

@@ -68,21 +68,61 @@ export {
 async function main() {
   validateEnv(AGENTS_ENV, 'agents')
 
-  // Start health check server
+  const scheduler = new DebateScheduler()
+
+  // Start HTTP server — health check + debate trigger endpoint
   const healthPort = parseInt(process.env.HEALTH_PORT ?? '3002', 10)
-  const healthServer = http.createServer((_req, res) => {
-    res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ status: 'ok', service: 'bipi-agents', uptime: process.uptime() }))
+  const triggerSecret = process.env.AGENTS_TRIGGER_SECRET
+
+  const healthServer = http.createServer((req, res) => {
+    const url = req.url ?? '/'
+
+    // Health check
+    if (req.method === 'GET' && url === '/') {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ status: 'ok', service: 'bipi-agents', uptime: process.uptime(), active: scheduler.activeCount }))
+      return
+    }
+
+    // Direct trigger: POST /debates/:id/trigger
+    // Allows the web app to fire a freeflow debate immediately without waiting for the scheduler poll.
+    const triggerMatch = url.match(/^\/debates\/([^/]+)\/trigger$/)
+    if (req.method === 'POST' && triggerMatch) {
+      // Validate trigger secret if configured
+      if (triggerSecret) {
+        const auth = req.headers.authorization ?? ''
+        if (auth !== `Bearer ${triggerSecret}`) {
+          res.writeHead(401, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Unauthorized' }))
+          return
+        }
+      }
+
+      const debateId = triggerMatch[1]!
+      log.info(`Direct trigger received for debate ${debateId}`)
+
+      // Fire async — respond immediately
+      scheduler.triggerDebate(debateId).catch((err) => {
+        log.error(`Triggered debate ${debateId} failed`, { error: String(err) })
+      })
+
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ ok: true, debateId, message: 'Debate triggered' }))
+      return
+    }
+
+    res.writeHead(404, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ error: 'Not found' }))
   })
+
   healthServer.listen(healthPort, () => {
-    log.info(`Health check on port ${healthPort}`)
+    log.info(`HTTP server on port ${healthPort}`)
   })
 
   const ttsMode = process.env.ELEVENLABS_API_KEY ? 'elevenlabs-streaming' : 'disabled (set ELEVENLABS_API_KEY)'
   log.info(`Voice mode: ${ttsMode}`)
 
-  // Start the debate scheduler
-  const scheduler = new DebateScheduler()
+  // Start the debate scheduler (handles time-based auto-start)
   scheduler.start()
 
   log.info('Agents service ready — scheduler polling for due debates')

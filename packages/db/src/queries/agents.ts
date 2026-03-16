@@ -109,6 +109,18 @@ export async function getAgentRelationships(
   return data ?? []
 }
 
+export async function saveAgentIntroAudio(
+  db: SupabaseClient,
+  agentId: UUID,
+  introAudioUrl: string,
+): Promise<void> {
+  const { error } = await db
+    .from('agents')
+    .update({ intro_audio_url: introAudioUrl })
+    .eq('id', agentId)
+  if (error) throw error
+}
+
 export async function getAgentRelationshipsForParticipants(
   db: SupabaseClient,
   agentId: UUID,
