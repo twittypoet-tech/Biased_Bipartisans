@@ -29,6 +29,7 @@ RUN pnpm --filter @bipi/shared build && \
 # Runtime
 FROM base AS runtime
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/agents/node_modules ./apps/agents/node_modules
 COPY --from=build /app/apps/agents/dist ./apps/agents/dist
 COPY --from=build /app/apps/agents/package.json ./apps/agents/
 COPY --from=build /app/packages ./packages
