@@ -86,27 +86,50 @@ export class DebateScheduler {
 
         if (isFreeflow) {
           this.runFreeflowDebate(debate.id).catch((err) => {
-            log.error(`Freeflow debate ${debate.id} failed`, { error: String(err) })
+            const msg = err instanceof Error ? err.stack ?? err.message : JSON.stringify(err)
+            log.error(`Freeflow debate ${debate.id} failed: ${msg}`)
           })
         } else {
           this.runStructuredDebate(debate.id, debate.room_name, participants).catch((err) => {
-            log.error(`Structured debate ${debate.id} failed`, { error: String(err) })
+            const msg = err instanceof Error ? err.stack ?? err.message : JSON.stringify(err)
+            log.error(`Structured debate ${debate.id} failed: ${msg}`)
           })
         }
       }
     } catch (err) {
-      log.error('Scheduler poll error', { error: String(err) })
+      log.error('Scheduler poll error', { error: err instanceof Error ? err.message : JSON.stringify(err) })
     }
   }
 
   // ── Freeflow: Retell-based ────────────────────────────────────────────────
 
   private async runFreeflowDebate(debateId: string): Promise<void> {
-    const conductor = new DebateConductor({ debateId })
+    let conductor: DebateConductor
+    try {
+      conductor = new DebateConductor({ debateId })
+    } catch (err) {
+      // Constructor throws when env vars are missing — mark failed and stop retrying
+      const msg = err instanceof Error ? err.message : String(err)
+      log.error(`Cannot start debate ${debateId}: ${msg}`)
+      this.activeDebates.delete(debateId)
+      try {
+        const db = getSupabaseClient()
+        await updateDebateStatus(db, debateId, 'cancelled')
+      } catch { /* best effort */ }
+      return
+    }
+
     this.conductors.set(debateId, conductor)
 
     try {
       await conductor.run()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      log.error(`Debate ${debateId} failed: ${msg}`)
+      try {
+        const db = getSupabaseClient()
+        await updateDebateStatus(db, debateId, 'cancelled')
+      } catch { /* best effort */ }
     } finally {
       this.conductors.delete(debateId)
       this.activeDebates.delete(debateId)
@@ -166,7 +189,7 @@ export class DebateScheduler {
             await publisher.connect(livekitUrl, token)
             audioPublishers.set(p.agent_id, publisher)
           } catch (err) {
-            log.warn(`Failed to connect audio publisher for ${name}`, { error: String(err) })
+            log.warn(`Failed to connect audio publisher for ${name}`, { error: err instanceof Error ? err.message : JSON.stringify(err) })
           }
         }
       }
@@ -192,7 +215,7 @@ export class DebateScheduler {
 
       log.info(`Debate ${debateId} finished successfully`)
     } catch (err) {
-      log.error(`Debate ${debateId} error`, { error: String(err) })
+      log.error(`Debate ${debateId} error`, { error: err instanceof Error ? err.message : JSON.stringify(err) })
       try {
         const db = getSupabaseClient()
         await updateDebateStatus(db, debateId, 'cancelled')
@@ -211,8 +234,10 @@ export class DebateScheduler {
   }
 
   /**
-   * Directly trigger a debate by ID — used by the web app's "Start Now" button
-   * so debates start immediately without waiting for the next scheduler poll.
+   * Directly trigger a debate by ID — used by the web app's "Start Now" button.
+   * Validates synchronously (participants, RETELL_API_KEY, retell_agent_id) so
+   * errors are returned to the HTTP caller. The long-running debate run fires in
+   * the background after validation passes.
    */
   async triggerDebate(debateId: string): Promise<void> {
     if (this.activeDebates.has(debateId)) {
@@ -220,21 +245,50 @@ export class DebateScheduler {
       return
     }
 
+    // ── Validate env ──────────────────────────────────────────────────────────
+    if (!process.env.RETELL_API_KEY) {
+      throw new Error('RETELL_API_KEY is not set on the agents service')
+    }
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set on agents service')
+    }
+
+    // ── Validate participants ─────────────────────────────────────────────────
     const db = getSupabaseClient()
     const participants = await getDebateParticipants(db, debateId)
     const hasDebaters = participants.some((p) => p.role === 'debater')
     const hasModerator = participants.some((p) => p.role === 'moderator')
 
     if (!hasDebaters || !hasModerator) {
-      throw new Error(`Debate ${debateId} is missing participants`)
+      throw new Error(`Debate ${debateId} is missing debaters or moderator`)
     }
 
-    // All direct-triggered debates are freeflow (web only calls trigger for freeflow)
+    // Check that debaters have retell_agent_id — DebateConductor will skip agents
+    // without one, potentially leaving < 2 relay agents and aborting.
+    const missingRetell = participants
+      .filter((p) => p.role === 'debater' || p.role === 'moderator')
+      .filter((p) => {
+        const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
+        return !agent?.retell_agent_id
+      })
+      .map((p) => {
+        const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
+        return (agent?.name as string) ?? p.agent_id
+      })
+
+    if (missingRetell.length > 0) {
+      throw new Error(
+        `These agents are missing a Retell agent ID and cannot join the debate: ${missingRetell.join(', ')}. ` +
+        `Set retell_agent_id on each agent in Supabase.`,
+      )
+    }
+
+    // ── All good — fire and track ─────────────────────────────────────────────
     this.activeDebates.add(debateId)
     log.info(`Direct trigger: starting freeflow debate ${debateId}`)
 
     this.runFreeflowDebate(debateId).catch((err) => {
-      log.error(`Triggered freeflow debate ${debateId} failed`, { error: String(err) })
+      log.error(`Triggered freeflow debate ${debateId} failed`, { error: err instanceof Error ? err.message : JSON.stringify(err) })
     })
   }
 

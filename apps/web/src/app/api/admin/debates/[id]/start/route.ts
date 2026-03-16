@@ -78,19 +78,23 @@ export async function POST(
         })
       }
 
-      // Trigger call failed — fall through to scheduler mode
-      console.warn('Agents service trigger failed:', await triggerRes.text())
+      // Trigger call failed — surface the error from the agents service
+      const triggerBody = await triggerRes.text()
+      console.warn('Agents service trigger failed:', triggerBody)
+      let agentError = `Agents service returned ${triggerRes.status}`
+      try { agentError = JSON.parse(triggerBody).error ?? agentError } catch { /* ignore */ }
+      return NextResponse.json({ error: agentError }, { status: 502 })
     } catch (err) {
-      console.warn('Could not reach agents service:', err)
+      const netErr = err instanceof Error ? err.message : String(err)
+      console.warn('Could not reach agents service:', netErr)
+      return NextResponse.json({
+        error: `Cannot reach agents service at ${agentsUrl} — ${netErr}. Check AGENTS_SERVICE_URL in Vercel env vars.`,
+      }, { status: 502 })
     }
   }
 
-  // Fallback: agents service not reachable — scheduler will pick it up within 30s
+  // Fallback: AGENTS_SERVICE_URL not configured
   return NextResponse.json({
-    ok: true,
-    status: 'scheduled',
-    message: agentsUrl
-      ? 'Agents service unreachable — debate queued, scheduler will start it within 30s'
-      : 'No AGENTS_SERVICE_URL set — debate queued for scheduler. Set AGENTS_SERVICE_URL in Vercel to enable instant start.',
-  })
+    error: 'AGENTS_SERVICE_URL is not set in Vercel environment variables. Add it pointing to your Railway service public URL.',
+  }, { status: 500 })
 }

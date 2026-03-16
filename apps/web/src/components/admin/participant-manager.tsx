@@ -34,6 +34,7 @@ export function ParticipantManager({
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
+  const [startResult, setStartResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   const debaters = currentParticipants.filter((p) => p.role === 'debater')
   const hasModerator = currentParticipants.some((p) => p.role === 'moderator')
@@ -110,14 +111,18 @@ export function ParticipantManager({
   async function startNow() {
     if (!confirm('Start this debate now? Agents will begin debating immediately.')) return
     setStarting(true)
+    setStartResult(null)
     try {
       const res = await fetch(`/api/admin/debates/${debateId}/start`, { method: 'POST' })
+      const data = await res.json()
       if (res.ok) {
+        setStartResult({ ok: true, message: data.message ?? `Status: ${data.status}` })
         router.refresh()
       } else {
-        const data = await res.json()
-        alert(data.error || 'Failed to start debate')
+        setStartResult({ ok: false, message: data.error || `HTTP ${res.status}` })
       }
+    } catch (err) {
+      setStartResult({ ok: false, message: `Network error: ${String(err)}` })
     } finally {
       setStarting(false)
     }
@@ -198,18 +203,29 @@ export function ParticipantManager({
 
       {/* Status + Start Now */}
       {isEditable && (
-        <div className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-950/50 p-3">
-          <div className="text-xs text-neutral-500">
-            {debaters.length}/{formatMinParticipants} debaters
-            {hasModerator ? ' + moderator' : ' (no moderator)'}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-950/50 p-3">
+            <div className="text-xs text-neutral-500">
+              {debaters.length}/{formatMinParticipants} debaters
+              {hasModerator ? ' + moderator' : ' (no moderator)'}
+            </div>
+            <button
+              onClick={startNow}
+              disabled={!canStart || starting}
+              className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:bg-neutral-700 disabled:text-neutral-500"
+            >
+              {starting ? 'Starting...' : 'Start Now'}
+            </button>
           </div>
-          <button
-            onClick={startNow}
-            disabled={!canStart || starting}
-            className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:bg-neutral-700 disabled:text-neutral-500"
-          >
-            {starting ? 'Starting...' : 'Start Now'}
-          </button>
+          {startResult && (
+            <div className={`rounded-lg border px-3 py-2 text-xs ${
+              startResult.ok
+                ? 'border-emerald-800 bg-emerald-950/50 text-emerald-300'
+                : 'border-red-800 bg-red-950/50 text-red-300'
+            }`}>
+              {startResult.message}
+            </div>
+          )}
         </div>
       )}
     </div>

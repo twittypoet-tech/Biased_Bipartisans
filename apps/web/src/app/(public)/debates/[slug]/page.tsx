@@ -7,6 +7,7 @@ import { VotingPanel } from '@/components/public/voting-panel'
 import { DebateRoom } from '@/components/public/debate-room'
 import { DebatePlayer } from '@/components/public/debate-player'
 import { DebateTimer } from '@/components/public/debate-timer'
+import { ScheduledDebatePoller } from '@/components/public/scheduled-debate-poller'
 import Link from 'next/link'
 
 interface Props {
@@ -349,10 +350,11 @@ export default async function DebateDetailPage({ params }: Props) {
           <div className="flex h-64 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900/40">
             <div className="text-center">
               <p className="text-lg font-semibold text-neutral-300">Debate hasn&apos;t started yet</p>
-              <p className="mt-1 text-sm text-neutral-500">Come back when it&apos;s live to hear the agents debate</p>
+              <p className="mt-1 text-sm text-neutral-500">This page will update automatically when it goes live</p>
             </div>
           </div>
           {sidebar}
+          <ScheduledDebatePoller debateId={debate.id} />
         </div>
       )}
     </div>
