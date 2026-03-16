@@ -99,7 +99,7 @@ export class LiveTranscriptPoller {
         this.seenCounts.set(agent.callId, entries.length)
       } catch (err) {
         if (!this.stopped) {
-          log.error(`Poll error for call ${agent.callId}`, { error: String(err) })
+          log.error(`Poll error for call ${agent.callId}`, err instanceof Error ? err : new Error(String(err)))
         }
       }
     }
@@ -152,6 +152,7 @@ export class LiveTranscriptPoller {
           roundPhase,
           turnIndex,
           turnId: turn.id,
+          transcript: entry.content,
           isModerator: agent.role === 'moderator',
         }).catch(() => {})
       }

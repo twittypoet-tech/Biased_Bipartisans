@@ -7,6 +7,7 @@ import {
   getDebateParticipants,
   updateDebateStatus,
   saveDebateRecording,
+  getTopAudienceQuestions,
 } from '@bipi/db'
 import { LiveKitRoomManager } from '../livekit/room-manager.js'
 import { AudioRelay, type RelayAgent } from './audio-relay.js'
@@ -49,6 +50,10 @@ export class DebateConductor {
   private callIds = new Map<string, string>()      // agentId → retellCallId
   private callStartTimes = new Map<string, Date>() // agentId → when createWebCall returned
   private stopped = false
+  private phaseTimers: ReturnType<typeof setTimeout>[] = []
+  private qaTimer: ReturnType<typeof setInterval> | null = null
+  private injectedQuestions = new Set<string>()   // prevent re-injecting same question
+  private moderatorAgentId: string | null = null
 
   constructor(private config: DebateConductorConfig) {
     const apiKey = process.env.RETELL_API_KEY
@@ -132,11 +137,15 @@ export class DebateConductor {
       retellCallIds[participant.agent_id] = call.call_id
 
       const agentName = agent.name
+      const agentRole = participant.role as 'debater' | 'moderator'
+      if (agentRole === 'moderator') this.moderatorAgentId = participant.agent_id
+
       relayAgents.push({
         agentId: participant.agent_id,
         callId: call.call_id,
         accessToken: call.access_token,
         agentName,
+        role: agentRole,
       })
 
       pollerAgents.push({
@@ -220,10 +229,50 @@ export class DebateConductor {
     const maxMinutes =
       debate.duration_override_minutes ?? format?.max_duration_minutes ?? 30
     log.info(`Debate running — max ${maxMinutes}min`)
+
+    // Schedule phase transitions now that maxMinutes is known:
+    // Opening (0 – 90s): moderator speaks uninterrupted for the intro
+    // Debate (90s – 80% of max): VAD floor control, all agents can respond
+    // Closing (80% – end): moderator wraps up without debater interruption
+    const openingMs = 90_000
+    const closingMs = maxMinutes * 60_000 * 0.80
+
+    this.phaseTimers.push(
+      setTimeout(() => {
+        if (!this.stopped) { this.relay?.setPhase('debate'); log.info('Phase: opening → debate') }
+      }, openingMs),
+      setTimeout(() => {
+        if (!this.stopped) { this.relay?.setPhase('closing'); log.info('Phase: debate → closing') }
+      }, closingMs),
+    )
+
+    // Q&A: after the opening phase, inject top audience question every 90s
+    // into the moderator's call as TTS audio (requires OPENAI_API_KEY)
+    if (this.moderatorAgentId) {
+      const moderatorId = this.moderatorAgentId
+      this.phaseTimers.push(
+        setTimeout(() => {
+          if (this.stopped) return
+          this.qaTimer = setInterval(async () => {
+            if (this.stopped || !this.relay) {
+              if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
+              return
+            }
+            const qaDb = getSupabaseClient()
+            await this.injectTopQuestion(qaDb, moderatorId)
+          }, 90_000)
+          this.qaTimer?.unref?.()
+        }, openingMs),
+      )
+    }
+
     await this.runTimer(maxMinutes * 60_000)
 
     // ── 8. Stop poller + disconnect relay ─────────────────────────────────────
     log.info('Debate timer done — wrapping up')
+    for (const t of this.phaseTimers) clearTimeout(t)
+    this.phaseTimers = []
+    if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
     this.poller?.stop()
     this.poller = null
     await this.relay?.disconnect().catch(() => {})
@@ -291,9 +340,45 @@ export class DebateConductor {
     }
   }
 
+  /**
+   * Synthesize the top unaddressed audience question as TTS and inject it
+   * into the moderator's Retell call as "user" audio. The moderator hears it
+   * and incorporates it naturally into the next turn.
+   * Only runs when OPENAI_API_KEY is set; silently skips otherwise.
+   */
+  private async injectTopQuestion(
+    db: ReturnType<typeof getSupabaseClient>,
+    moderatorAgentId: string,
+  ): Promise<void> {
+    if (!this.relay || !process.env.OPENAI_API_KEY) return
+    try {
+      const questions = await getTopAudienceQuestions(db, this.config.debateId, 1)
+      if (!questions.length) return
+      const question = questions[0]!
+      if (this.injectedQuestions.has(question.id)) return
+
+      const { OpenAITTSProvider } = await import('../voice/openai-tts.js')
+      const tts = new OpenAITTSProvider()
+      const result = await tts.synthesize(
+        `An audience member asks: ${question.content}`,
+        'nova',
+      )
+      if (result.format === 'pcm') {
+        await this.relay.injectAudio(moderatorAgentId, result.audio)
+        this.injectedQuestions.add(question.id)
+        log.info(`Injected audience question: "${question.content.slice(0, 60)}"`)
+      }
+    } catch (err) {
+      log.warn('Failed to inject audience question', { error: String(err) })
+    }
+  }
+
   stop(): void {
     if (this.stopped) return
     this.stopped = true
+    for (const t of this.phaseTimers) clearTimeout(t)
+    this.phaseTimers = []
+    if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
     this.poller?.stop()
     this.poller = null
     // Disconnect relay immediately — this causes Retell to see the "user" leave

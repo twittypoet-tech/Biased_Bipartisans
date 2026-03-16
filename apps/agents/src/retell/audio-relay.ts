@@ -29,7 +29,15 @@ export interface RelayAgent {
   callId: string       // Retell call ID
   accessToken: string  // Retell access_token (LiveKit JWT for Retell cloud)
   agentName: string
+  role: 'debater' | 'moderator'
 }
+
+/**
+ * Controls which routing rules apply in the debate:
+ * - opening/closing: only moderator's audio cross-routes to debaters (structured phases)
+ * - debate: VAD floor control — any agent can claim the floor and route to others
+ */
+export type DebatePhase = 'opening' | 'debate' | 'closing'
 
 interface ConnectedCall {
   meta: RelayAgent
@@ -66,6 +74,9 @@ export class AudioRelay {
   private publicRooms = new Map<string, Room>()      // agentId → Room (one per agent)
   private publicSources = new Map<string, AudioSource>()
   private stopped = false
+
+  // Phase controls which routing rules are active
+  private phase: DebatePhase = 'opening'
 
   // VAD floor control — only the current floor holder's audio routes to other agents
   private floorHolder: string | null = null
@@ -166,12 +177,52 @@ export class AudioRelay {
     return Math.sqrt(sum / (frame.data.length || 1))
   }
 
+  /**
+   * Transition the debate to a new phase.
+   * - opening: only moderator's audio cross-routes; debaters can't interrupt
+   * - debate: VAD floor control; any agent can claim the floor
+   * - closing: same as opening — moderator has the floor for wrap-up
+   */
+  setPhase(phase: DebatePhase): void {
+    this.phase = phase
+    log.info(`Phase → ${phase}`)
+    // Reset floor on transition so the new phase starts clean
+    this.floorHolder = null
+    for (const s of this.speakerStates.values()) {
+      s.isSpeaking = false
+      s.silentSince = Infinity
+    }
+  }
+
   private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
-    // ── VAD floor control ────────────────────────────────────────────────────
+    // Always forward to public broadcast room (audience hears everyone)
+    const publicSrc = this.publicSources.get(speakingAgentId)
+    if (publicSrc) {
+      await publicSrc.captureFrame(
+        new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
+      )
+    }
+
+    // ── Opening / closing: structured phases ─────────────────────────────────
+    // Only the moderator's audio cross-routes to debaters. Debaters hear the
+    // moderator (triggering their Retell VAD) but cannot interrupt each other
+    // or the moderator. This ensures reliable intros and closing statements.
+    if (this.phase === 'opening' || this.phase === 'closing') {
+      const agentRole = this.calls.get(speakingAgentId)?.meta.role
+      if (agentRole !== 'moderator') return  // debater audio → public room only
+      for (const [agentId, conn] of this.calls) {
+        if (agentId === speakingAgentId) continue
+        await conn.injectSource.captureFrame(
+          new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
+        )
+      }
+      return
+    }
+
+    // ── Debate phase: VAD floor control ──────────────────────────────────────
     // Only one agent "has the floor" at a time. Their audio gets cross-routed
     // to all other agents as user input, triggering the STT → LLM → TTS
-    // pipeline. Agents without the floor are silenced from each other's calls,
-    // preventing simultaneous responses (cross-talk).
+    // pipeline. First speaker wins; 700ms silence releases the floor.
     const rms = this.computeRMS(frame)
     const now = Date.now()
 
@@ -182,16 +233,12 @@ export class AudioRelay {
     }
 
     if (rms > SPEECH_RMS_THRESHOLD) {
-      state.silentSince = Infinity  // actively speaking
-      if (!state.isSpeaking) {
-        state.isSpeaking = true
-      }
-      // Claim floor if free (first speaker wins)
+      state.silentSince = Infinity
+      if (!state.isSpeaking) state.isSpeaking = true
       if (this.floorHolder === null || this.floorHolder === speakingAgentId) {
         this.floorHolder = speakingAgentId
       }
     } else {
-      // Silence — start tracking how long we've been quiet
       if (state.isSpeaking) {
         if (state.silentSince === Infinity) state.silentSince = now
         if (now - state.silentSince > FLOOR_RELEASE_MS) {
@@ -204,7 +251,6 @@ export class AudioRelay {
       }
     }
 
-    // Only cross-route from the current floor holder
     if (this.floorHolder === speakingAgentId) {
       for (const [agentId, conn] of this.calls) {
         if (agentId === speakingAgentId) continue
@@ -212,14 +258,6 @@ export class AudioRelay {
           new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
         )
       }
-    }
-
-    // Always forward to public broadcast room (audience hears everyone)
-    const publicSrc = this.publicSources.get(speakingAgentId)
-    if (publicSrc) {
-      await publicSrc.captureFrame(
-        new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
-      )
     }
   }
 
