@@ -34,8 +34,8 @@ export interface RelayAgent {
 
 /**
  * Controls which routing rules apply in the debate:
- * - opening/closing: only moderator's audio cross-routes to debaters (structured phases)
- * - debate: VAD floor control — any agent can claim the floor and route to others
+ * - opening: moderator leads — mod audio → all agents; debater audio → mod only
+ * - debate/closing: full 3-way call — every agent's audio routes to every other agent
  */
 export type DebatePhase = 'opening' | 'debate' | 'closing'
 
@@ -46,46 +46,33 @@ interface ConnectedCall {
 }
 
 /**
- * AudioRelay bridges multiple Retell call rooms to enable agent-to-agent debate.
+ * AudioRelay bridges multiple Retell call rooms into a multi-agent debate.
  *
  * For each Retell web call, the relay:
  *   1. Connects as the "client" participant using Retell's access_token
  *   2. Publishes an AudioSource track (Retell agent hears this as "user" speech)
  *   3. Subscribes to the Retell agent's audio output track
  *
- * When Agent A's audio track fires frames, the relay injects those frames into
- * every other agent's call as "user" audio. This triggers each Retell agent's
- * VAD → STT → LLM pipeline, creating natural multi-agent conversation.
+ * Opening phase: moderator leads — mod audio goes to all, debater audio goes to
+ * mod only so debaters don't hear each other during intro.
  *
- * Optionally republishes all agent audio to a public LiveKit room for audience.
+ * Debate/closing phase: true 3-way call — every agent's audio is cross-routed
+ * to every other agent unconditionally. Natural conversation, no turn enforcement.
+ *
+ * All audio is also forwarded to a public LiveKit room so the audience can hear.
+ *
+ * A periodic keepalive sends silent frames to every injectSource to prevent the
+ * native AudioSource from entering InvalidState during quiet periods.
  */
-/** RMS energy above this level counts as active speech (for 16-bit PCM, ~-26 dBFS) */
-const SPEECH_RMS_THRESHOLD = 1000
-/** ms of continuous silence before the speaker releases the floor */
-const FLOOR_RELEASE_MS = 700
-
-interface SpeakerState {
-  isSpeaking: boolean
-  silentSince: number   // epoch ms when silence started (Infinity = currently speaking)
-}
-
 export class AudioRelay {
   private calls = new Map<string, ConnectedCall>()
   private publicRooms = new Map<string, Room>()      // agentId → Room (one per agent)
   private publicSources = new Map<string, AudioSource>()
   private stopped = false
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
-  // Phase controls which routing rules are active
+  // Phase controls routing rules (opening = structured; debate/closing = 3-way)
   private phase: DebatePhase = 'opening'
-
-  // Explicit turn rotation — conductor assigns who has the floor each turn.
-  // When set, only that agent (plus the moderator) can cross-route audio.
-  // When null, falls back to VAD floor control.
-  private scheduledSpeaker: string | null = null
-
-  // VAD floor control (fallback when scheduledSpeaker is null)
-  private floorHolder: string | null = null
-  private speakerStates = new Map<string, SpeakerState>()
 
   /**
    * Connect to all Retell call rooms and start cross-routing.
@@ -103,6 +90,7 @@ export class AudioRelay {
       await this.connectPublicRoom(publicRoomConfig.url, publicRoomConfig.tokens, agents)
     }
 
+    this.startHeartbeat()
     log.info(`AudioRelay ready: ${agents.length} calls connected`)
   }
 
@@ -131,6 +119,13 @@ export class AudioRelay {
       log.info(`Subscribed to agent audio: ${participant.identity} → ${meta.agentName}`)
       this.captureAndRoute(meta.agentId, track as RemoteAudioTrack)
     })
+
+    // Remove stale entry when Retell disconnects the call so future inject
+    // attempts don't hit InvalidState on a dead AudioSource.
+    room.on(RoomEvent.Disconnected, () => {
+      log.info(`Retell call disconnected: ${meta.agentName} (${meta.callId})`)
+      this.calls.delete(meta.agentId)
+    })
   }
 
   private async connectPublicRoom(
@@ -155,8 +150,38 @@ export class AudioRelay {
       this.publicRooms.set(agent.agentId, room)
       this.publicSources.set(agent.agentId, src)
 
+      room.on(RoomEvent.Disconnected, () => {
+        log.info(`Public room disconnected for ${agent.agentName}`)
+        this.publicRooms.delete(agent.agentId)
+        this.publicSources.delete(agent.agentId)
+      })
+
       log.info(`Connected ${agent.agentName} to public broadcast room`)
     }
+  }
+
+  /**
+   * Send silent frames to every injectSource every 4 seconds.
+   * The @livekit/rtc-node AudioSource can enter InvalidState if no frames
+   * are pushed for an extended period. Silent frames cost no bandwidth
+   * (Retell's VAD ignores them) but keep the native PCM pipeline warm.
+   */
+  private startHeartbeat(): void {
+    const silent = new Int16Array(FRAME_SAMPLES) // zeros
+    this.heartbeatTimer = setInterval(async () => {
+      if (this.stopped) return
+      for (const [agentId, conn] of this.calls) {
+        try {
+          await conn.injectSource.captureFrame(
+            new AudioFrame(silent, SAMPLE_RATE, NUM_CHANNELS, FRAME_SAMPLES),
+          )
+        } catch {
+          // Ignore heartbeat failures — safeCaptureFrame handles real audio
+          log.warn(`Heartbeat failed for ${agentId}`)
+        }
+      }
+    }, 4_000)
+    this.heartbeatTimer.unref?.()
   }
 
   private captureAndRoute(speakingAgentId: string, track: RemoteAudioTrack): void {
@@ -164,155 +189,97 @@ export class AudioRelay {
     ;(async () => {
       for await (const frame of stream) {
         if (this.stopped) break
-        await this.routeFrame(speakingAgentId, frame)
+        // Catch per-frame errors so one bad frame never kills the whole stream loop
+        try {
+          await this.routeFrame(speakingAgentId, frame)
+        } catch (err) {
+          if (!this.stopped) {
+            const msg = err instanceof Error ? err.message : String(err)
+            log.warn(`routeFrame error for ${speakingAgentId}: ${msg}`)
+          }
+        }
       }
       log.info(`Audio stream ended for agent ${speakingAgentId}`)
     })().catch((err) => {
       if (!this.stopped) {
         const msg = err instanceof Error ? err.message : JSON.stringify(err, Object.getOwnPropertyNames(err instanceof Object ? err as object : {})) || String(err)
-        log.error(`Capture error for ${speakingAgentId}`, new Error(msg))
+        log.error(`Capture stream error for ${speakingAgentId}`, new Error(msg))
       }
     })
   }
 
-  /** Compute RMS energy of a PCM16 frame for VAD detection */
-  private computeRMS(frame: AudioFrame): number {
-    let sum = 0
-    for (const s of frame.data) sum += s * s
-    return Math.sqrt(sum / (frame.data.length || 1))
+  /**
+   * Safely push one audio frame to a destination source.
+   * Catches InvalidState and other RTC errors so a bad destination never
+   * interrupts routing to other agents or crashes the captureAndRoute loop.
+   */
+  private async safeCaptureFrame(
+    src: AudioSource,
+    frame: AudioFrame,
+    label: string,
+  ): Promise<void> {
+    try {
+      await src.captureFrame(
+        new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
+      )
+    } catch (err) {
+      if (!this.stopped) {
+        const msg = err instanceof Error ? err.message : String(err)
+        log.warn(`captureFrame failed [${label}]: ${msg}`)
+      }
+    }
   }
 
   /**
    * Transition the debate to a new phase.
-   * - opening/closing: only moderator's audio cross-routes; debaters can't interrupt
-   * - debate: explicit turn rotation (scheduledSpeaker) with VAD as fallback
+   * - opening: moderator leads (mod → all; debaters → mod only)
+   * - debate/closing: full 3-way call (everyone → everyone)
    */
   setPhase(phase: DebatePhase): void {
     this.phase = phase
     log.info(`Phase → ${phase}`)
-    // Reset floor/speaker on transition so the new phase starts clean
-    this.scheduledSpeaker = null
-    this.floorHolder = null
-    for (const s of this.speakerStates.values()) {
-      s.isSpeaking = false
-      s.silentSince = Infinity
-    }
-  }
-
-  /**
-   * Explicitly assign the floor to one debater for the current turn.
-   * Only that agent's audio (plus the moderator's) cross-routes to all others.
-   * Set to null to fall back to VAD floor control.
-   */
-  setScheduledSpeaker(agentId: string | null): void {
-    this.scheduledSpeaker = agentId
-    this.floorHolder = null
-    for (const s of this.speakerStates.values()) {
-      s.isSpeaking = false
-      s.silentSince = Infinity
-    }
-    if (agentId) {
-      const name = this.calls.get(agentId)?.meta.agentName ?? agentId
-      log.info(`Turn → ${name}`)
-    }
   }
 
   private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
     // Always forward to public broadcast room (audience hears everyone)
     const publicSrc = this.publicSources.get(speakingAgentId)
     if (publicSrc) {
-      await publicSrc.captureFrame(
-        new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
-      )
+      await this.safeCaptureFrame(publicSrc, frame, `public:${speakingAgentId}`)
     }
 
-    // ── Opening / closing: structured phases ─────────────────────────────────
-    // Moderator ↔ debaters: full two-way conversation so the moderator can
-    // have a real intro/outro exchange with each debater.
-    // Debaters → each other: blocked — they don't cross-talk during intro.
-    if (this.phase === 'opening' || this.phase === 'closing') {
+    // ── Opening phase: moderator-led intro ───────────────────────────────────
+    // Mod audio → all agents so debaters hear the intro.
+    // Debater audio → mod only so debaters don't hear each other yet and the
+    // moderator can address each one directly.
+    if (this.phase === 'opening') {
       const agentRole = this.calls.get(speakingAgentId)?.meta.role
       if (agentRole === 'moderator') {
-        // Moderator audio → all agents (debaters hear the intro)
         for (const [agentId, conn] of this.calls) {
           if (agentId === speakingAgentId) continue
-          await conn.injectSource.captureFrame(
-            new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
-          )
+          await this.safeCaptureFrame(conn.injectSource, frame, `opening:mod→${agentId}`)
         }
       } else {
-        // Debater audio → moderator only (so moderator can respond to each debater)
         for (const [agentId, conn] of this.calls) {
           if (agentId === speakingAgentId) continue
           if (this.calls.get(agentId)?.meta.role !== 'moderator') continue
-          await conn.injectSource.captureFrame(
-            new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
-          )
+          await this.safeCaptureFrame(conn.injectSource, frame, `opening:deb→mod`)
         }
       }
       return
     }
 
-    // ── Debate phase: explicit turn rotation (+ VAD fallback) ────────────────
-    // If a scheduled speaker is set, only that agent and the moderator can
-    // cross-route. This prevents simultaneous bursts when turns switch and
-    // guarantees every debater gets equal speaking time.
-    // When no scheduled speaker is set, falls back to VAD floor control.
-    const agentRole = this.calls.get(speakingAgentId)?.meta.role
-
-    if (this.scheduledSpeaker !== null) {
-      if (speakingAgentId !== this.scheduledSpeaker && agentRole !== 'moderator') return
-      for (const [agentId, conn] of this.calls) {
-        if (agentId === speakingAgentId) continue
-        await conn.injectSource.captureFrame(
-          new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
-        )
-      }
-      return
-    }
-
-    // VAD floor control fallback (scheduledSpeaker === null)
-    const rms = this.computeRMS(frame)
-    const now = Date.now()
-
-    let state = this.speakerStates.get(speakingAgentId)
-    if (!state) {
-      state = { isSpeaking: false, silentSince: Infinity }
-      this.speakerStates.set(speakingAgentId, state)
-    }
-
-    if (rms > SPEECH_RMS_THRESHOLD) {
-      state.silentSince = Infinity
-      if (!state.isSpeaking) state.isSpeaking = true
-      if (this.floorHolder === null || this.floorHolder === speakingAgentId) {
-        this.floorHolder = speakingAgentId
-      }
-    } else {
-      if (state.isSpeaking) {
-        if (state.silentSince === Infinity) state.silentSince = now
-        if (now - state.silentSince > FLOOR_RELEASE_MS) {
-          state.isSpeaking = false
-          if (this.floorHolder === speakingAgentId) {
-            this.floorHolder = null
-            log.info(`Floor released by ${speakingAgentId}`)
-          }
-        }
-      }
-    }
-
-    if (this.floorHolder === speakingAgentId) {
-      for (const [agentId, conn] of this.calls) {
-        if (agentId === speakingAgentId) continue
-        await conn.injectSource.captureFrame(
-          new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
-        )
-      }
+    // ── Debate / closing phase: true 3-way call ───────────────────────────────
+    // Every agent's audio routes to every other agent unconditionally.
+    // Natural conversational flow — no turn enforcement, no floor control.
+    for (const [agentId, conn] of this.calls) {
+      if (agentId === speakingAgentId) continue
+      await this.safeCaptureFrame(conn.injectSource, frame, `3way:${speakingAgentId}→${agentId}`)
     }
   }
 
   /**
    * Inject synthesized PCM audio into a specific agent's call room as user audio.
-   * Used to send control signals to the moderator (e.g., phase transitions).
+   * Used for audience questions routed to the moderator.
    * The injected audio is NOT forwarded to other agents or the public room.
    */
   async injectAudio(agentId: string, pcmBuffer: Buffer): Promise<void> {
@@ -324,12 +291,14 @@ export class AudioRelay {
       const end = Math.min(offset + FRAME_SAMPLES, int16.length)
       const chunk = new Int16Array(end - offset)
       chunk.set(int16.subarray(offset, end))
-      await conn.injectSource.captureFrame(new AudioFrame(chunk, SAMPLE_RATE, NUM_CHANNELS, chunk.length))
+      const syntheticFrame = new AudioFrame(chunk, SAMPLE_RATE, NUM_CHANNELS, chunk.length)
+      await this.safeCaptureFrame(conn.injectSource, syntheticFrame, `inject:${agentId}`)
     }
   }
 
   async disconnect(): Promise<void> {
     this.stopped = true
+    if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null }
     for (const conn of this.calls.values()) {
       await conn.room.disconnect().catch(() => {})
     }

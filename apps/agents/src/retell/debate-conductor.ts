@@ -52,7 +52,6 @@ export class DebateConductor {
   private stopped = false
   private phaseTimers: ReturnType<typeof setTimeout>[] = []
   private qaTimer: ReturnType<typeof setInterval> | null = null
-  private turnTimer: ReturnType<typeof setInterval> | null = null
   private injectedQuestions = new Set<string>()   // prevent re-injecting same question
   private moderatorAgentId: string | null = null
   private debateTitle = ''
@@ -239,37 +238,15 @@ export class DebateConductor {
     const openingMs = Math.min(90_000, Math.max(30_000, maxMinutes * 9_000))
     const closingMs = maxMinutes * 60_000 * 0.85
 
-    // Debater IDs in rotation order — interleave so each gets equal turns
-    const debaterIds = allParticipants
-      .filter((p) => p.role === 'debater')
-      .map((p) => p.agent_id)
-
     this.phaseTimers.push(
       setTimeout(() => {
         if (!this.stopped) {
           this.relay?.setPhase('debate')
-          log.info('Phase: opening → debate')
-          // Turn duration scales with debate length (30s for short, 60s for long)
-          const TURN_MS = Math.min(60_000, Math.max(30_000, maxMinutes * 1_500))
-          let turnIdx = 0
-          const rotateTurn = async () => {
-            if (this.stopped || !this.relay) return
-            const id = debaterIds[turnIdx % debaterIds.length]!
-            this.relay.setScheduledSpeaker(id)
-            turnIdx++
-            // Inject a TTS prompt so the agent knows it's their turn.
-            // Without this, "User speaks first" agents stay silent indefinitely.
-            await this.triggerDebater(id)
-          }
-          rotateTurn().catch(() => {}) // give first debater the floor immediately
-          this.turnTimer = setInterval(() => { rotateTurn().catch(() => {}) }, TURN_MS)
-          this.turnTimer.unref?.()
+          log.info('Phase: opening → debate (3-way free conversation)')
         }
       }, openingMs),
       setTimeout(() => {
         if (!this.stopped) {
-          // Stop turn rotation before closing so moderator takes over cleanly
-          if (this.turnTimer) { clearInterval(this.turnTimer); this.turnTimer = null }
           this.relay?.setPhase('closing')
           log.info('Phase: debate → closing')
         }
@@ -303,7 +280,6 @@ export class DebateConductor {
     for (const t of this.phaseTimers) clearTimeout(t)
     this.phaseTimers = []
     if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
-    if (this.turnTimer) { clearInterval(this.turnTimer); this.turnTimer = null }
     this.poller?.stop()
     this.poller = null
     await this.relay?.disconnect().catch(() => {})
@@ -372,36 +348,6 @@ export class DebateConductor {
   }
 
   /**
-   * Inject a short TTS prompt into a debater's Retell call to trigger them
-   * to start speaking. Without this, "User speaks first" agents wait silently
-   * when the turn rotation gives them the floor.
-   *
-   * The audio is injected on the "user" channel — it is private to that agent
-   * and will NOT be heard in the public broadcast room.
-   * Requires OPENAI_API_KEY. Silently skips if not set.
-   */
-  private async triggerDebater(agentId: string): Promise<void> {
-    if (!this.relay || !process.env.OPENAI_API_KEY) {
-      if (!process.env.OPENAI_API_KEY) {
-        log.warn('OPENAI_API_KEY not set — debater turn triggers disabled. Agents may stay silent at turn boundaries.')
-      }
-      return
-    }
-    try {
-      const { OpenAITTSProvider } = await import('../voice/openai-tts.js')
-      const tts = new OpenAITTSProvider()
-      // Brief, neutral prompt — the agent knows the topic from their system prompt vars
-      const result = await tts.synthesize('Your turn to speak.', 'nova')
-      if (result.format === 'pcm') {
-        await this.relay.injectAudio(agentId, result.audio)
-        log.info(`Turn trigger injected for agent ${agentId}`)
-      }
-    } catch (err) {
-      log.warn(`Failed to inject turn trigger for ${agentId}`, { error: String(err) })
-    }
-  }
-
-  /**
    * Synthesize the top unaddressed audience question as TTS and inject it
    * into the moderator's Retell call as "user" audio. The moderator hears it
    * and incorporates it naturally into the next turn.
@@ -440,7 +386,6 @@ export class DebateConductor {
     for (const t of this.phaseTimers) clearTimeout(t)
     this.phaseTimers = []
     if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
-    if (this.turnTimer) { clearInterval(this.turnTimer); this.turnTimer = null }
     this.poller?.stop()
     this.poller = null
     // Disconnect relay immediately — this causes Retell to see the "user" leave
