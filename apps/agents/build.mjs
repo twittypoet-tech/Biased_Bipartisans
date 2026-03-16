@@ -1,11 +1,17 @@
 /**
- * esbuild script for agents service.
- * Bundles workspace packages (@bipi/*) inline from TypeScript source,
- * keeps all external npm packages as-is (they live in node_modules at runtime).
+ * esbuild bundle script for agents service.
+ *
+ * Bundles everything into a single dist/index.js — workspace packages
+ * (@bipi/*) and all npm dependencies are inlined. Only packages with
+ * native Node.js addons (.node binaries) are kept external, since those
+ * must be loaded from the filesystem at runtime.
  */
 import { build } from 'esbuild'
 
-const workspacePackages = new Set(['@bipi/shared', '@bipi/db', '@bipi/agent-core'])
+const nativeModules = [
+  '@livekit/rtc-node',
+  'onnxruntime-node',
+]
 
 await build({
   entryPoints: ['src/index.ts'],
@@ -14,18 +20,9 @@ await build({
   target: 'node20',
   format: 'esm',
   outfile: 'dist/index.js',
-  plugins: [
-    {
-      name: 'external-node-modules',
-      setup(build) {
-        // Mark everything external EXCEPT workspace packages
-        build.onResolve({ filter: /^[^./]/ }, (args) => {
-          if (workspacePackages.has(args.path)) return null // bundle workspace packages inline
-          return { external: true }
-        })
-      },
-    },
-  ],
+  external: nativeModules,
+  // Suppress warnings about dynamic requires in bundled npm packages
+  logLevel: 'warning',
 })
 
 console.log('Build complete: dist/index.js')
