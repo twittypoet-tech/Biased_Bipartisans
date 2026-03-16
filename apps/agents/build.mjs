@@ -18,11 +18,11 @@ await build({
   bundle: true,
   platform: 'node',
   target: 'node20',
-  format: 'esm',
-  outfile: 'dist/index.js',
+  format: 'cjs',
+  outfile: 'dist/index.cjs',
   external: nativeModules,
   // Suppress warnings about dynamic requires in bundled npm packages
   logLevel: 'warning',
 })
 
-console.log('Build complete: dist/index.js')
+console.log('Build complete: dist/index.cjs')
