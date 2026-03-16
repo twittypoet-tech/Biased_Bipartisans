@@ -78,8 +78,12 @@ export async function POST(
         })
       }
 
-      // Trigger call failed — fall through to scheduler mode
-      console.warn('Agents service trigger failed:', await triggerRes.text())
+      // Trigger call failed — surface the error from the agents service
+      const triggerBody = await triggerRes.text()
+      console.warn('Agents service trigger failed:', triggerBody)
+      let agentError = `Agents service returned ${triggerRes.status}`
+      try { agentError = JSON.parse(triggerBody).error ?? agentError } catch { /* ignore */ }
+      return NextResponse.json({ error: agentError }, { status: 502 })
     } catch (err) {
       console.warn('Could not reach agents service:', err)
     }

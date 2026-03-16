@@ -112,11 +112,12 @@ export function ParticipantManager({
     setStarting(true)
     try {
       const res = await fetch(`/api/admin/debates/${debateId}/start`, { method: 'POST' })
+      const data = await res.json()
       if (res.ok) {
+        // Page will auto-refresh via ScheduledDebatePoller once status → live
         router.refresh()
       } else {
-        const data = await res.json()
-        alert(data.error || 'Failed to start debate')
+        alert(`Failed to start debate:\n\n${data.error || res.statusText}`)
       }
     } finally {
       setStarting(false)

@@ -211,8 +211,10 @@ export class DebateScheduler {
   }
 
   /**
-   * Directly trigger a debate by ID — used by the web app's "Start Now" button
-   * so debates start immediately without waiting for the next scheduler poll.
+   * Directly trigger a debate by ID — used by the web app's "Start Now" button.
+   * Validates synchronously (participants, RETELL_API_KEY, retell_agent_id) so
+   * errors are returned to the HTTP caller. The long-running debate run fires in
+   * the background after validation passes.
    */
   async triggerDebate(debateId: string): Promise<void> {
     if (this.activeDebates.has(debateId)) {
@@ -220,16 +222,45 @@ export class DebateScheduler {
       return
     }
 
+    // ── Validate env ──────────────────────────────────────────────────────────
+    if (!process.env.RETELL_API_KEY) {
+      throw new Error('RETELL_API_KEY is not set on the agents service')
+    }
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set on agents service')
+    }
+
+    // ── Validate participants ─────────────────────────────────────────────────
     const db = getSupabaseClient()
     const participants = await getDebateParticipants(db, debateId)
     const hasDebaters = participants.some((p) => p.role === 'debater')
     const hasModerator = participants.some((p) => p.role === 'moderator')
 
     if (!hasDebaters || !hasModerator) {
-      throw new Error(`Debate ${debateId} is missing participants`)
+      throw new Error(`Debate ${debateId} is missing debaters or moderator`)
     }
 
-    // All direct-triggered debates are freeflow (web only calls trigger for freeflow)
+    // Check that debaters have retell_agent_id — DebateConductor will skip agents
+    // without one, potentially leaving < 2 relay agents and aborting.
+    const missingRetell = participants
+      .filter((p) => p.role === 'debater' || p.role === 'moderator')
+      .filter((p) => {
+        const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
+        return !agent?.retell_agent_id
+      })
+      .map((p) => {
+        const agent = (p as unknown as Record<string, unknown>).agents as Record<string, unknown> | undefined
+        return (agent?.name as string) ?? p.agent_id
+      })
+
+    if (missingRetell.length > 0) {
+      throw new Error(
+        `These agents are missing a Retell agent ID and cannot join the debate: ${missingRetell.join(', ')}. ` +
+        `Set retell_agent_id on each agent in Supabase.`,
+      )
+    }
+
+    // ── All good — fire and track ─────────────────────────────────────────────
     this.activeDebates.add(debateId)
     log.info(`Direct trigger: starting freeflow debate ${debateId}`)
 

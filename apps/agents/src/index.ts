@@ -101,13 +101,18 @@ async function main() {
       const debateId = triggerMatch[1]!
       log.info(`Direct trigger received for debate ${debateId}`)
 
-      // Fire async — respond immediately
-      scheduler.triggerDebate(debateId).catch((err) => {
-        log.error(`Triggered debate ${debateId} failed`, { error: String(err) })
-      })
-
-      res.writeHead(200, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ ok: true, debateId, message: 'Debate triggered' }))
+      // Validate synchronously so errors are returned to the caller,
+      // then fire the long-running debate run in the background.
+      try {
+        await scheduler.triggerDebate(debateId)
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: true, debateId, message: 'Debate triggered' }))
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        log.error(`Trigger validation failed for debate ${debateId}`, { error: msg })
+        res.writeHead(500, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: msg }))
+      }
       return
     }
 

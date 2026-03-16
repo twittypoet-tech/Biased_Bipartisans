@@ -9,6 +9,7 @@ import { ConfigSection, DataList } from '@/components/admin/config-section'
 import { ParticipantManager } from '@/components/admin/participant-manager'
 import { BackfillAudioButton } from '@/components/admin/backfill-audio-button'
 import { EndDebateButton } from '@/components/admin/end-debate-button'
+import { ScheduledDebatePoller } from '@/components/public/scheduled-debate-poller'
 
 export default async function DebateDetailPage({
   params,
@@ -58,6 +59,7 @@ export default async function DebateDetailPage({
 
   return (
     <div className="space-y-6">
+      {debate.status === 'scheduled' && <ScheduledDebatePoller debateId={debate.id} />}
       {/* Header */}
       <div className="rounded-lg border border-neutral-800 bg-neutral-900/30 p-6">
         <div className="flex items-start justify-between">
