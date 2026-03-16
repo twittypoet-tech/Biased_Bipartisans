@@ -25,7 +25,13 @@ const FRAME_SAMPLES = 480 // 20ms at 24kHz
 /** RMS energy above this level counts as active speech (for 16-bit PCM, ~-26 dBFS) */
 const SPEECH_RMS_THRESHOLD = 1000
 /** ms of continuous silence before the speaker releases the floor */
-const FLOOR_RELEASE_MS = 700
+const FLOOR_RELEASE_MS = 1000
+/**
+ * After the moderator finishes speaking, block the previous debater from
+ * reclaiming the floor for this many ms. Gives the newly-addressed debater
+ * time to generate their response before the other agent fills the silence.
+ */
+const POST_MOD_GRACE_MS = 4_000
 
 export interface RelayAgent {
   agentId: string      // Supabase agent UUID
@@ -81,6 +87,11 @@ export class AudioRelay {
   // VAD floor control for debate/closing phases
   private floorHolder: string | null = null
   private speakerStates = new Map<string, SpeakerState>()
+
+  // Post-moderator grace period: after the mod finishes, block the previous
+  // debater from reclaiming the floor so the other debater has time to respond.
+  private lastDebaterFloorHolder: string | null = null
+  private postModGraceUntil = 0  // epoch ms
 
   // Rate-limit warn logging: one log per label per 5s to prevent frame-level spam
   private lastWarnTime = new Map<string, number>()
@@ -277,6 +288,8 @@ export class AudioRelay {
   setPhase(phase: DebatePhase): void {
     this.phase = phase
     this.floorHolder = null
+    this.lastDebaterFloorHolder = null
+    this.postModGraceUntil = 0
     for (const s of this.speakerStates.values()) {
       s.isSpeaking = false
       s.silentSince = Infinity
@@ -285,19 +298,18 @@ export class AudioRelay {
   }
 
   private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
-    // Always forward to public broadcast room — audience hears everyone regardless
-    // of floor state. Fire in parallel with floor routing below.
-    const publicSrc = this.publicSources.get(speakingAgentId)
     const routes: Promise<void>[] = []
-    if (publicSrc) {
-      routes.push(this.safeCaptureFrame(publicSrc, frame, `public:${speakingAgentId}`))
-    }
 
     // ── Opening phase: moderator-led intro ───────────────────────────────────
-    // Mod audio → all agents so debaters hear and can respond.
-    // Debater audio → moderator only so debaters don't hear each other yet.
+    // Mod → all (debaters hear the intro). Debaters → mod only (they don't hear
+    // each other during the structured intro, preventing simultaneous opening statements).
+    // Public room: all audio during opening so the audience hears the full intro.
     if (this.phase === 'opening') {
       const agentRole = this.calls.get(speakingAgentId)?.meta.role
+      const publicSrc = this.publicSources.get(speakingAgentId)
+      if (publicSrc) {
+        routes.push(this.safeCaptureFrame(publicSrc, frame, `public:${speakingAgentId}`))
+      }
       if (agentRole === 'moderator') {
         for (const [agentId, conn] of this.calls) {
           if (agentId === speakingAgentId) continue
@@ -315,10 +327,16 @@ export class AudioRelay {
     }
 
     // ── Debate / closing phase: reactive VAD floor control ────────────────────
-    // The first agent to produce voice energy claims the floor.
-    // Their audio cross-routes to all others until 700ms of silence.
-    // Moderator can preempt any debater (to redirect the conversation).
-    // This prevents simultaneous speech and audio mixing artifacts.
+    // First agent to produce voice energy claims the floor and cross-routes to
+    // all others until 1000ms of silence. Moderator preempts any debater.
+    //
+    // Post-moderator grace period: after the mod releases the floor, the debater
+    // who PREVIOUSLY held it is blocked from reclaiming for POST_MOD_GRACE_MS.
+    // This gives the newly-addressed (silent) debater time to generate a response
+    // before the talkative debater fills the gap with filler commentary.
+    //
+    // Public room routing follows the same VAD rules so the live audience hears
+    // a consistent experience matching what the agents hear each other say.
     const rms = this.computeRMS(frame)
     const now = Date.now()
     const ismod = this.calls.get(speakingAgentId)?.meta.role === 'moderator'
@@ -332,13 +350,26 @@ export class AudioRelay {
     if (rms > SPEECH_RMS_THRESHOLD) {
       state.silentSince = Infinity
       state.isSpeaking = true
-      // Debaters: only take floor if free. Moderator: always preempts.
-      if (this.floorHolder === null || ismod) {
+
+      if (ismod) {
+        // Moderator always preempts — cancel any active grace period while speaking
         if (this.floorHolder !== speakingAgentId) {
           this.floorHolder = speakingAgentId
+          this.postModGraceUntil = 0
           const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
           log.info(`Floor → ${name}`)
         }
+      } else if (this.floorHolder === null) {
+        // Debater: only claim if floor is free AND not blocked by post-mod grace
+        const isBlocked = now < this.postModGraceUntil &&
+          speakingAgentId === this.lastDebaterFloorHolder
+        if (!isBlocked) {
+          this.floorHolder = speakingAgentId
+          this.lastDebaterFloorHolder = speakingAgentId
+          const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
+          log.info(`Floor → ${name}`)
+        }
+        // else: still in grace period, this agent is blocked — frames not routed
       }
     } else if (state.isSpeaking) {
       if (state.silentSince === Infinity) state.silentSince = now
@@ -348,11 +379,24 @@ export class AudioRelay {
           this.floorHolder = null
           const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
           log.info(`Floor released by ${name}`)
+          if (ismod) {
+            // Mod finished — block the previous debater from immediately reclaiming
+            this.postModGraceUntil = now + POST_MOD_GRACE_MS
+            const blockedName =
+              this.calls.get(this.lastDebaterFloorHolder ?? '')?.meta.agentName ?? 'none'
+            log.info(`Post-mod grace: ${blockedName} blocked for ${POST_MOD_GRACE_MS}ms`)
+          }
         }
       }
     }
 
+    // Route if this agent holds the floor — applies to both agent cross-routing
+    // and the public broadcast room for a consistent audio experience.
     if (this.floorHolder === speakingAgentId) {
+      const publicSrc = this.publicSources.get(speakingAgentId)
+      if (publicSrc) {
+        routes.push(this.safeCaptureFrame(publicSrc, frame, `public:${speakingAgentId}`))
+      }
       for (const [agentId, conn] of this.calls) {
         if (agentId === speakingAgentId) continue
         routes.push(this.safeCaptureFrame(conn.injectSource, frame, `vad:${speakingAgentId}→${agentId}`))
