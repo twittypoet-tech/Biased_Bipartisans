@@ -34,4 +34,4 @@ COPY --from=build /app/apps/agents/package.json ./apps/agents/
 WORKDIR /app/apps/agents
 ENV NODE_ENV=production
 EXPOSE 3002 8080
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/index.cjs"]
