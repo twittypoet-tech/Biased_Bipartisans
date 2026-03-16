@@ -13,18 +13,16 @@ RUN pnpm install --frozen-lockfile
 
 # Build
 FROM base AS build
-# Copy root and app node_modules from deps
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/agents/node_modules ./apps/agents/node_modules
-# Copy package dirs from deps (includes any package-level node_modules if they exist)
+# Copy package dirs from deps (includes any package-level node_modules)
 COPY --from=deps /app/packages ./packages
-# Overlay source files — Docker COPY merges dirs, so node_modules above are preserved
+# Overlay source files
 COPY . .
-# Build workspace packages in dependency order, then build agents
-RUN pnpm --filter @bipi/shared build && \
-    pnpm --filter @bipi/db build && \
-    pnpm --filter @bipi/agent-core build && \
-    pnpm --filter @bipi/agents build
+# Bundle agents + workspace packages into a single dist/index.js via esbuild.
+# Workspace packages (@bipi/*) are inlined from TypeScript source.
+# All npm packages remain external (resolved from node_modules at runtime).
+RUN pnpm --filter @bipi/agents build
 
 # Runtime
 FROM base AS runtime
@@ -32,7 +30,6 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/agents/node_modules ./apps/agents/node_modules
 COPY --from=build /app/apps/agents/dist ./apps/agents/dist
 COPY --from=build /app/apps/agents/package.json ./apps/agents/
-COPY --from=build /app/packages ./packages
 
 WORKDIR /app/apps/agents
 ENV NODE_ENV=production
