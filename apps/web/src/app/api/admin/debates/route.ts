@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const db = createServerClient()
   const body = await request.json()
 
-  const { title, topicFraming, formatId, scheduledAt } = body
+  const { title, topicFraming, formatId, scheduledAt, durationOverrideMinutes } = body
 
   const slug = generateDebateSlug(title)
   const roomName = generateRoomName(slug)
@@ -21,6 +21,7 @@ export async function POST(request: Request) {
       status: scheduledAt ? 'scheduled' : 'draft',
       scheduled_at: scheduledAt || null,
       room_name: roomName,
+      duration_override_minutes: durationOverrideMinutes ?? null,
     })
     .select()
     .single()

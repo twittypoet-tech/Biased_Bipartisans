@@ -9,6 +9,7 @@ import { ConfigSection, DataList } from '@/components/admin/config-section'
 import { ParticipantManager } from '@/components/admin/participant-manager'
 import { BackfillAudioButton } from '@/components/admin/backfill-audio-button'
 import { EndDebateButton } from '@/components/admin/end-debate-button'
+import { DurationEditor } from '@/components/admin/duration-editor'
 import { ScheduledDebatePoller } from '@/components/public/scheduled-debate-poller'
 
 export default async function DebateDetailPage({
@@ -78,12 +79,18 @@ export default async function DebateDetailPage({
             )}
           </div>
         </div>
-        <div className="mt-3 flex gap-4 text-xs text-neutral-500">
+        <div className="mt-3 flex flex-wrap gap-4 text-xs text-neutral-500">
           <span>Room: {debate.room_name}</span>
           {format && <span>Format: {format.name}</span>}
           {debate.scheduled_at && (
             <span>Scheduled: {new Date(debate.scheduled_at).toLocaleString()}</span>
           )}
+          <DurationEditor
+            debateId={debate.id}
+            currentMinutes={debate.duration_override_minutes ?? null}
+            formatDefault={format?.max_duration_minutes ?? 30}
+            canEdit={debate.status === 'draft' || debate.status === 'scheduled'}
+          />
         </div>
       </div>
 

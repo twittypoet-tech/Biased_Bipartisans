@@ -38,6 +38,7 @@ export default function CreateDebatePage() {
   const [scheduledLocal, setScheduledLocal] = useState('')
   const [parsedDate, setParsedDate] = useState<Date | null>(null)
   const [selectedFormat, setSelectedFormat] = useState(FORMATS[0]!.id)
+  const [duration, setDuration] = useState(30)
 
   useEffect(() => {
     setUserTz(Intl.DateTimeFormat().resolvedOptions().timeZone)
@@ -80,6 +81,7 @@ export default function CreateDebatePage() {
         },
         formatId: selectedFormat,
         scheduledAt,
+        durationOverrideMinutes: duration,
       }),
     })
 
@@ -206,6 +208,24 @@ export default function CreateDebatePage() {
                 )}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Duration */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">Duration</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min={5}
+              max={180}
+              step={5}
+              value={duration}
+              onChange={(e) => setDuration(Math.max(5, Math.min(180, Number(e.target.value))))}
+              className="w-28 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+            />
+            <span className="text-sm text-neutral-400">minutes</span>
+            <span className="text-xs text-neutral-600">(5–180 min, default 30)</span>
           </div>
         </div>
 
