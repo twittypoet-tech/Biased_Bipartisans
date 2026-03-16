@@ -1,17 +1,13 @@
 name: Deploy Debate Agent to LiveKit Cloud
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/agents/**'
-      - 'packages/**'
-      - 'Dockerfile'
-      - 'livekit.toml'
-      - '.dockerignore'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/deploy-agent.yml'
+  # Disabled: agents service runs on Railway (Docker), not LiveKit Cloud.
+  # Re-enable and add a livekit.toml if LiveKit Cloud deployment is needed.
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm LiveKit Cloud deployment'
+        required: true
 
 jobs:
   deploy:

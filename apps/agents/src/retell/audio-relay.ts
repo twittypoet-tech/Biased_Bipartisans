@@ -136,24 +136,41 @@ export class AudioRelay {
         if (this.stopped) break
         await this.routeFrame(speakingAgentId, frame)
       }
+      log.info(`Audio stream ended for agent ${speakingAgentId}`)
     })().catch((err) => {
       if (!this.stopped) {
-        log.error(`Capture error for ${speakingAgentId}`, { error: err instanceof Error ? err.stack ?? err.message : JSON.stringify(err) })
+        const msg = err instanceof Error ? err.message : JSON.stringify(err, Object.getOwnPropertyNames(err instanceof Object ? err as object : {})) || String(err)
+        log.error(`Capture error for ${speakingAgentId}`, new Error(msg))
       }
     })
   }
 
   private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
-    // Cross-route into every other agent's call as user input
+    // Cross-route into every other agent's call as user input.
+    // Each destination gets its own AudioFrame copy — the native layer may
+    // release the underlying buffer after captureFrame, so we must not reuse
+    // the same frame object across multiple calls.
     for (const [agentId, conn] of this.calls) {
       if (agentId === speakingAgentId) continue
-      await conn.injectSource.captureFrame(frame)
+      const copy = new AudioFrame(
+        new Int16Array(frame.data),
+        frame.sampleRate,
+        frame.channels,
+        frame.samplesPerChannel,
+      )
+      await conn.injectSource.captureFrame(copy)
     }
 
     // Forward to public broadcast room under speaker's track
     const publicSrc = this.publicSources.get(speakingAgentId)
     if (publicSrc) {
-      await publicSrc.captureFrame(frame)
+      const pubCopy = new AudioFrame(
+        new Int16Array(frame.data),
+        frame.sampleRate,
+        frame.channels,
+        frame.samplesPerChannel,
+      )
+      await publicSrc.captureFrame(pubCopy)
     }
   }
 
