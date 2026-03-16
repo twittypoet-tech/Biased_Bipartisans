@@ -227,17 +227,28 @@ export class AudioRelay {
     }
 
     // ── Opening / closing: structured phases ─────────────────────────────────
-    // Only the moderator's audio cross-routes to debaters. Debaters hear the
-    // moderator (triggering their Retell VAD) but cannot interrupt each other
-    // or the moderator. This ensures reliable intros and closing statements.
+    // Moderator ↔ debaters: full two-way conversation so the moderator can
+    // have a real intro/outro exchange with each debater.
+    // Debaters → each other: blocked — they don't cross-talk during intro.
     if (this.phase === 'opening' || this.phase === 'closing') {
       const agentRole = this.calls.get(speakingAgentId)?.meta.role
-      if (agentRole !== 'moderator') return  // debater audio → public room only
-      for (const [agentId, conn] of this.calls) {
-        if (agentId === speakingAgentId) continue
-        await conn.injectSource.captureFrame(
-          new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
-        )
+      if (agentRole === 'moderator') {
+        // Moderator audio → all agents (debaters hear the intro)
+        for (const [agentId, conn] of this.calls) {
+          if (agentId === speakingAgentId) continue
+          await conn.injectSource.captureFrame(
+            new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
+          )
+        }
+      } else {
+        // Debater audio → moderator only (so moderator can respond to each debater)
+        for (const [agentId, conn] of this.calls) {
+          if (agentId === speakingAgentId) continue
+          if (this.calls.get(agentId)?.meta.role !== 'moderator') continue
+          await conn.injectSource.captureFrame(
+            new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
+          )
+        }
       }
       return
     }

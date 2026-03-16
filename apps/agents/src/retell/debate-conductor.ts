@@ -231,12 +231,11 @@ export class DebateConductor {
       debate.duration_override_minutes ?? format?.max_duration_minutes ?? 30
     log.info(`Debate running — max ${maxMinutes}min`)
 
-    // Schedule phase transitions now that maxMinutes is known:
-    // Opening (0 – 90s): moderator speaks uninterrupted for the intro
-    // Debate (90s – 80% of max): VAD floor control, all agents can respond
-    // Closing (80% – end): moderator wraps up without debater interruption
-    const openingMs = 90_000
-    const closingMs = maxMinutes * 60_000 * 0.80
+    // Schedule phase transitions now that maxMinutes is known.
+    // Opening scales with debate length (min 30s, max 90s).
+    // Closing starts at 85% of total duration.
+    const openingMs = Math.min(90_000, Math.max(30_000, maxMinutes * 9_000))
+    const closingMs = maxMinutes * 60_000 * 0.85
 
     // Debater IDs in rotation order — interleave so each gets equal turns
     const debaterIds = allParticipants
@@ -248,8 +247,8 @@ export class DebateConductor {
         if (!this.stopped) {
           this.relay?.setPhase('debate')
           log.info('Phase: opening → debate')
-          // Start explicit turn rotation: each debater gets 45s then yields
-          const TURN_MS = 45_000
+          // Turn duration scales with debate length (30s for short, 60s for long)
+          const TURN_MS = Math.min(60_000, Math.max(30_000, maxMinutes * 1_500))
           let turnIdx = 0
           const rotateTurn = () => {
             if (this.stopped || !this.relay) return
