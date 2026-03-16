@@ -96,8 +96,8 @@ export default async function DebateDetailPage({ params }: Props) {
     }
   }
 
-  // LiveKit room name
-  const livekitRoomName = `debate-${debate.id}`
+  // LiveKit room name — must match what DebateConductor uses (debate.room_name from DB)
+  const livekitRoomName = debate.room_name
 
   // Stage participants
   const stageParticipants = participantAgents.map((p) => ({
@@ -119,19 +119,29 @@ export default async function DebateDetailPage({ params }: Props) {
     isModerator: t.isModerator,
   }))
 
-  // Playback turns for ended debates
-  const playbackTurns = transcriptTurns.map((t) => ({
-    id: t.id,
-    speakerName: t.speakerName,
-    speakerId: t.speakerId,
-    archetype: t.archetype,
-    roundPhase: t.roundPhase,
-    turnIndex: t.turnIndex,
-    transcript: t.transcript,
-    isModerator: t.isModerator,
-    audioUrl: t.audioUrl,
-    claimTier: t.claimTier,
-  }))
+  // Playback turns for ended debates (include startedAt for recording seek)
+  const playbackTurns = turns.map((t) => {
+    const speaker = participantAgents.find((p) => p.id === t.speaker_id)
+    return {
+      id: t.id,
+      speakerName: speaker?.name ?? 'Unknown',
+      speakerId: t.speaker_id,
+      archetype: speaker?.archetype ?? 'unknown',
+      roundPhase: t.round_phase,
+      turnIndex: t.turn_index,
+      transcript: t.transcript,
+      isModerator: t.speaker_type === 'moderator',
+      audioUrl: (t as unknown as Record<string, unknown>).audio_url as string | null ?? null,
+      claimTier: t.claim_tier,
+      startedAt: (t as unknown as Record<string, unknown>).started_at as string | null ?? null,
+    }
+  })
+
+  // Pick the first recording URL from recordings JSONB for playback audio
+  const debateRecordings = (debate as unknown as Record<string, unknown>).recordings as
+    | Record<string, string>
+    | null
+  const recordingUrl = debateRecordings ? (Object.values(debateRecordings)[0] ?? null) : null
 
   // Sidebar (shared across states)
   const sidebar = (
@@ -326,6 +336,7 @@ export default async function DebateDetailPage({ params }: Props) {
               startedAt={debate.started_at ?? debate.created_at}
               endedAt={debate.ended_at ?? debate.created_at}
               estimatedDurationSec={estimatedDurationSec}
+              recordingUrl={recordingUrl}
             />
           </div>
           {sidebar}

@@ -34,6 +34,10 @@ export { getVoiceProvider, ARCHETYPE_VOICE_MAP, getVoiceId } from './voice/index
 // LiveKit
 export { LiveKitRoomManager, DebateRoomBridge, AudioPublisher, type VoiceAgent } from './livekit/index.js'
 
+// Retell
+export { AudioRelay, DebateConductor, collectTranscripts, RETELL_LIVEKIT_URL } from './retell/index.js'
+export type { RelayAgent, DebateConductorConfig } from './retell/index.js'
+
 // Scheduler
 export { DebateScheduler } from './scheduler.js'
 

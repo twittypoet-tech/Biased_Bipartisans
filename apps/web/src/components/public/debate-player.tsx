@@ -16,6 +16,7 @@ export interface PlaybackTurn {
   isModerator: boolean
   audioUrl: string | null
   claimTier: string | null
+  startedAt?: string | null   // wall-clock start (migration 008) — used to seek recording
 }
 
 interface DebatePlayerProps {
@@ -24,10 +25,13 @@ interface DebatePlayerProps {
   startedAt: string
   endedAt: string
   estimatedDurationSec: number
+  /** Single debate recording URL (from Retell call recordings). Optional. */
+  recordingUrl?: string | null
 }
 
 const phaseLabels: Record<string, string> = {
   opening: 'Opening Statements',
+  discussion: 'Discussion',
   rebuttal: 'Rebuttals',
   pressure: 'Pressure Round',
   audience_evidence: 'Audience & Evidence',
@@ -40,6 +44,7 @@ export function DebatePlayer({
   startedAt,
   endedAt,
   estimatedDurationSec,
+  recordingUrl,
 }: DebatePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTurnIdx, setCurrentTurnIdx] = useState(0)
@@ -56,8 +61,8 @@ export function DebatePlayer({
   const currentTurn = turns[currentTurnIdx] ?? null
 
   useEffect(() => {
-    setHasAudio(turns.some((t) => t.audioUrl))
-  }, [turns])
+    setHasAudio(!!recordingUrl || turns.some((t) => t.audioUrl))
+  }, [turns, recordingUrl])
 
   // Keep refs in sync
   useEffect(() => {
@@ -103,12 +108,26 @@ export function DebatePlayer({
     setAudioProgress(0)
 
     if (turn.audioUrl && audioRef.current) {
+      // Per-turn audio (legacy TTS model)
       audioRef.current.src = turn.audioUrl
-      audioRef.current.play().catch((err) => {
-        console.warn('Audio play failed:', err)
-        // If audio fails to play, auto-advance
-        scheduleAdvance(idx, turn.transcript.length)
-      })
+      audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
+    } else if (recordingUrl && audioRef.current) {
+      // Single debate recording — seek to turn's position using started_at timestamp
+      if (turn.startedAt && startedAt) {
+        const offsetSec = (new Date(turn.startedAt).getTime() - new Date(startedAt).getTime()) / 1000
+        if (audioRef.current.src !== recordingUrl) {
+          audioRef.current.src = recordingUrl
+        }
+        audioRef.current.currentTime = Math.max(0, offsetSec)
+        audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
+      } else {
+        // No timestamp info — play from beginning or advance
+        if (audioRef.current.paused) {
+          audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
+        } else {
+          scheduleAdvance(idx, turn.transcript.length)
+        }
+      }
     } else {
       // No audio — auto-advance after a reading delay
       scheduleAdvance(idx, turn.transcript.length)
@@ -137,6 +156,10 @@ export function DebatePlayer({
     } else {
       setIsPlaying(true)
       isPlayingRef.current = true
+      // Pre-load the debate recording when first pressing play
+      if (recordingUrl && audioRef.current && !audioRef.current.src) {
+        audioRef.current.src = recordingUrl
+      }
       playTurn(currentTurnIdxRef.current)
     }
   }

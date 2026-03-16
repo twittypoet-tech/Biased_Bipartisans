@@ -87,6 +87,39 @@ export async function insertDebateTurn(
   return data
 }
 
+/**
+ * Get the next available turn_index for a debate.
+ * Used by the live transcript poller to assign sequential indices.
+ */
+export async function getNextTurnIndex(db: SupabaseClient, debateId: UUID): Promise<number> {
+  const { data } = await db
+    .from('debate_turns')
+    .select('turn_index')
+    .eq('debate_id', debateId)
+    .order('turn_index', { ascending: false })
+    .limit(1)
+    .single()
+  return data ? data.turn_index + 1 : 0
+}
+
+/**
+ * Save a Retell call recording URL for a specific agent in a debate.
+ * Merges into the existing recordings JSONB without overwriting other agents.
+ */
+export async function saveDebateRecording(
+  db: SupabaseClient,
+  debateId: UUID,
+  agentId: UUID,
+  recordingUrl: string,
+): Promise<void> {
+  // Fetch, merge, update (safe for single-process post-debate writes)
+  const { data } = await db.from('debates').select('recordings').eq('id', debateId).single()
+  const current = (data?.recordings as Record<string, string>) ?? {}
+  current[agentId] = recordingUrl
+  const { error } = await db.from('debates').update({ recordings: current }).eq('id', debateId)
+  if (error) throw error
+}
+
 export async function getDebateVotes(
   db: SupabaseClient,
   debateId: UUID,

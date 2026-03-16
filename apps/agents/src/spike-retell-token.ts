@@ -20,7 +20,7 @@ if (!RETELL_API_KEY || !AGENT_ID) {
 function decodeJwt(token: string) {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
-  return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
+  return JSON.parse(Buffer.from(parts[1]!, 'base64url').toString('utf-8'));
 }
 
 async function main() {

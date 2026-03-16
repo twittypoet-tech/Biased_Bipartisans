@@ -85,12 +85,14 @@ export const RoomFormat = {
 export type RoomFormat = (typeof RoomFormat)[keyof typeof RoomFormat]
 
 // Round phases from the Debate Format Framework
+// 'discussion' added for freeflow debate style (migration 007)
 export const RoundPhase = {
   OPENING: 'opening',
   REBUTTAL: 'rebuttal',
   PRESSURE: 'pressure',
   AUDIENCE_EVIDENCE: 'audience_evidence',
   CLOSING: 'closing',
+  DISCUSSION: 'discussion',
 } as const
 export type RoundPhase = (typeof RoundPhase)[keyof typeof RoundPhase]
 
