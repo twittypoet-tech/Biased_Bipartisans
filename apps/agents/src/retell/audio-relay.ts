@@ -108,20 +108,12 @@ export class AudioRelay {
       dynacast: false,
     })
 
-    const track = LocalAudioTrack.createAudioTrack('user-audio', injectSource)
-    await room.localParticipant!.publishTrack(track, new TrackPublishOptions())
-
-    // Actively warm up the AudioSource right after publishTrack.
-    // The native WebRTC PCM pipeline is not immediately ready after publishTrack
-    // resolves — the first captureFrame calls will throw InvalidState until the
-    // track is fully initialized. We spin until the first frame succeeds (up to 2s).
-    await this.warmupSource(injectSource, meta.agentName)
-
-    const conn: ConnectedCall = { meta, room, injectSource }
-    this.calls.set(meta.agentId, conn)
-
-    log.info(`Connected to Retell call: ${meta.agentName} (${meta.callId})`)
-
+    // Register event listeners IMMEDIATELY after connect — before publishTrack
+    // and before warmupSource. Retell agents with "AI speaks first" publish their
+    // audio track almost instantly. publishTrack and warmupSource both yield the
+    // event loop via await; if TrackSubscribed fires during those awaits and no
+    // listener is registered yet, the event is lost and captureAndRoute never
+    // starts, which means no audio reaches the public room or other agents.
     room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
       if (track.kind !== TrackKind.KIND_AUDIO) return
       log.info(`Subscribed to agent audio: ${participant.identity} → ${meta.agentName}`)
@@ -132,6 +124,18 @@ export class AudioRelay {
       log.info(`Retell call disconnected: ${meta.agentName} (${meta.callId})`)
       this.calls.delete(meta.agentId)
     })
+
+    const track = LocalAudioTrack.createAudioTrack('user-audio', injectSource)
+    await room.localParticipant!.publishTrack(track, new TrackPublishOptions())
+
+    // Warm up the AudioSource — spin until the first captureFrame succeeds (up to 2s).
+    // The native WebRTC PCM pipeline is not immediately ready after publishTrack resolves.
+    await this.warmupSource(injectSource, meta.agentName)
+
+    const conn: ConnectedCall = { meta, room, injectSource }
+    this.calls.set(meta.agentId, conn)
+
+    log.info(`Connected to Retell call: ${meta.agentName} (${meta.callId})`)
   }
 
   private async connectPublicRoom(
