@@ -20,7 +20,11 @@ COPY --from=deps /app/apps/agents/node_modules ./apps/agents/node_modules
 COPY --from=deps /app/packages ./packages
 # Overlay source files — Docker COPY merges dirs, so node_modules above are preserved
 COPY . .
-RUN pnpm --filter @bipi/agents build
+# Build workspace packages in dependency order, then build agents
+RUN pnpm --filter @bipi/shared build && \
+    pnpm --filter @bipi/db build && \
+    pnpm --filter @bipi/agent-core build && \
+    pnpm --filter @bipi/agents build
 
 # Runtime
 FROM base AS runtime
