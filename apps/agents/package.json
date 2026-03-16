@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "node build.mjs",
     "download-files": "node -e \"console.log('No model files required')\"",
     "start": "node dist/workers/live-debate-worker.js start",
     "start:scheduler": "node dist/index.js",
@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.27.4",
     "tsx": "^4.19.0",
     "typescript": "^5.4.0"
   }
