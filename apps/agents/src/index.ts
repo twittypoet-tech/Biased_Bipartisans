@@ -74,7 +74,7 @@ async function main() {
   const healthPort = parseInt(process.env.PORT ?? process.env.HEALTH_PORT ?? '3002', 10)
   const triggerSecret = process.env.AGENTS_TRIGGER_SECRET
 
-  const healthServer = http.createServer((req, res) => {
+  const healthServer = http.createServer(async (req, res) => {
     const url = req.url ?? '/'
 
     // Health check

@@ -86,16 +86,18 @@ export class DebateScheduler {
 
         if (isFreeflow) {
           this.runFreeflowDebate(debate.id).catch((err) => {
-            log.error(`Freeflow debate ${debate.id} failed`, { error: String(err) })
+            const msg = err instanceof Error ? err.stack ?? err.message : JSON.stringify(err)
+            log.error(`Freeflow debate ${debate.id} failed: ${msg}`)
           })
         } else {
           this.runStructuredDebate(debate.id, debate.room_name, participants).catch((err) => {
-            log.error(`Structured debate ${debate.id} failed`, { error: String(err) })
+            const msg = err instanceof Error ? err.stack ?? err.message : JSON.stringify(err)
+            log.error(`Structured debate ${debate.id} failed: ${msg}`)
           })
         }
       }
     } catch (err) {
-      log.error('Scheduler poll error', { error: String(err) })
+      log.error('Scheduler poll error', { error: err instanceof Error ? err.message : JSON.stringify(err) })
     }
   }
 
@@ -187,7 +189,7 @@ export class DebateScheduler {
             await publisher.connect(livekitUrl, token)
             audioPublishers.set(p.agent_id, publisher)
           } catch (err) {
-            log.warn(`Failed to connect audio publisher for ${name}`, { error: String(err) })
+            log.warn(`Failed to connect audio publisher for ${name}`, { error: err instanceof Error ? err.message : JSON.stringify(err) })
           }
         }
       }
@@ -213,7 +215,7 @@ export class DebateScheduler {
 
       log.info(`Debate ${debateId} finished successfully`)
     } catch (err) {
-      log.error(`Debate ${debateId} error`, { error: String(err) })
+      log.error(`Debate ${debateId} error`, { error: err instanceof Error ? err.message : JSON.stringify(err) })
       try {
         const db = getSupabaseClient()
         await updateDebateStatus(db, debateId, 'cancelled')
@@ -286,7 +288,7 @@ export class DebateScheduler {
     log.info(`Direct trigger: starting freeflow debate ${debateId}`)
 
     this.runFreeflowDebate(debateId).catch((err) => {
-      log.error(`Triggered freeflow debate ${debateId} failed`, { error: String(err) })
+      log.error(`Triggered freeflow debate ${debateId} failed`, { error: err instanceof Error ? err.message : JSON.stringify(err) })
     })
   }
 
