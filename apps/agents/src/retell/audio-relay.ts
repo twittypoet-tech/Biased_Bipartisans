@@ -42,9 +42,8 @@ export interface RelayAgent {
 }
 
 /**
- * Controls which routing rules apply:
- * - opening: moderator leads (mod → all; debaters → mod only)
- * - debate/closing: VAD floor control — first to speak wins, holds until 700ms silence
+ * Debate phase marker — used to reset VAD state at phase boundaries.
+ * Routing is identical across all phases (VAD floor control throughout).
  */
 export type DebatePhase = 'opening' | 'debate' | 'closing'
 
@@ -62,18 +61,18 @@ interface SpeakerState {
 /**
  * AudioRelay bridges multiple Retell call rooms into a multi-agent debate.
  *
- * Opening phase: moderator leads — mod audio reaches all agents; debater audio
- * routes to the moderator only so debaters don't hear each other during intro.
+ * VAD floor control is active for the entire debate (opening through closing):
+ * the first agent to produce speech energy claims the floor and cross-routes
+ * their audio to all other agents until 1s of continuous silence. The moderator
+ * can preempt any debater. This prevents simultaneous speech while allowing all
+ * agents to hear and respond to each other naturally.
  *
- * Debate/closing phase: reactive VAD floor control — the first agent to speak
- * claims the floor and cross-routes to all others until 700ms of silence.
- * The moderator can preempt any debater. This prevents simultaneous speech and
- * the audio mixing artifacts that cause robotic/static sound.
+ * Post-moderator grace period: after the mod releases the floor, the previous
+ * debater is blocked from immediately reclaiming it, giving the newly-addressed
+ * debater time to generate their LLM response first.
  *
- * All audio always goes to the public LiveKit room regardless of floor state.
- *
- * Each AudioSource is actively warmed up after track publish to eliminate the
- * InvalidState race condition where the native PCM pipeline rejects frames.
+ * Each AudioSource is warmed up after publish and kept alive via a 200ms
+ * heartbeat to prevent InvalidState errors and Retell end-of-turn timeouts.
  */
 export class AudioRelay {
   private calls = new Map<string, ConnectedCall>()
@@ -205,23 +204,29 @@ export class AudioRelay {
   }
 
   /**
-   * Send a silent keepalive frame to every injectSource every 4s.
-   * Prevents sources from going idle/stale between active speech periods.
+   * Send silent keepalive frames to every injectSource every 200ms.
+   * Each tick pushes 10 frames (10 × 20ms = 200ms of silence) so Retell sees a
+   * continuous audio stream rather than isolated pulses. Without this, prolonged
+   * silence between turns causes Retell's end-of-turn detection to fire and
+   * triggers agents to generate filler speech ("I'll wait for my opponent").
    */
   private startHeartbeat(): void {
     const silent = new Int16Array(FRAME_SAMPLES)
+    const silentFrame = new AudioFrame(silent, SAMPLE_RATE, NUM_CHANNELS, FRAME_SAMPLES)
+    const FRAMES_PER_TICK = 10  // 10 × 20ms = 200ms
     this.heartbeatTimer = setInterval(async () => {
       if (this.stopped) return
       for (const [agentId, conn] of this.calls) {
-        try {
-          await conn.injectSource.captureFrame(
-            new AudioFrame(silent, SAMPLE_RATE, NUM_CHANNELS, FRAME_SAMPLES),
-          )
-        } catch {
-          log.warn(`Heartbeat failed for ${agentId}`)
+        for (let i = 0; i < FRAMES_PER_TICK; i++) {
+          try {
+            await conn.injectSource.captureFrame(silentFrame)
+          } catch {
+            log.warn(`Heartbeat failed for ${agentId}`)
+            break
+          }
         }
       }
-    }, 4_000)
+    }, 200)
     this.heartbeatTimer.unref?.()
   }
 
@@ -300,43 +305,16 @@ export class AudioRelay {
   private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
     const routes: Promise<void>[] = []
 
-    // ── Opening phase: moderator-led intro ───────────────────────────────────
-    // Mod → all (debaters hear the intro). Debaters → mod only (they don't hear
-    // each other during the structured intro, preventing simultaneous opening statements).
-    // Public room: all audio during opening so the audience hears the full intro.
-    if (this.phase === 'opening') {
-      const agentRole = this.calls.get(speakingAgentId)?.meta.role
-      const publicSrc = this.publicSources.get(speakingAgentId)
-      if (publicSrc) {
-        routes.push(this.safeCaptureFrame(publicSrc, frame, `public:${speakingAgentId}`))
-      }
-      if (agentRole === 'moderator') {
-        for (const [agentId, conn] of this.calls) {
-          if (agentId === speakingAgentId) continue
-          routes.push(this.safeCaptureFrame(conn.injectSource, frame, `opening:mod→${agentId}`))
-        }
-      } else {
-        for (const [agentId, conn] of this.calls) {
-          if (agentId === speakingAgentId) continue
-          if (this.calls.get(agentId)?.meta.role !== 'moderator') continue
-          routes.push(this.safeCaptureFrame(conn.injectSource, frame, `opening:deb→mod`))
-        }
-      }
-      await Promise.all(routes)
-      return
-    }
-
-    // ── Debate / closing phase: reactive VAD floor control ────────────────────
-    // First agent to produce voice energy claims the floor and cross-routes to
-    // all others until 1000ms of silence. Moderator preempts any debater.
+    // ── VAD floor control (all phases) ───────────────────────────────────────
+    // First agent to produce speech energy claims the floor and cross-routes to
+    // all others until 1s of silence. Moderator preempts any debater.
     //
     // Post-moderator grace period: after the mod releases the floor, the debater
-    // who PREVIOUSLY held it is blocked from reclaiming for POST_MOD_GRACE_MS.
-    // This gives the newly-addressed (silent) debater time to generate a response
-    // before the talkative debater fills the gap with filler commentary.
+    // who PREVIOUSLY held it is blocked from reclaiming for POST_MOD_GRACE_MS,
+    // giving the newly-addressed debater time to generate their LLM response.
     //
-    // Public room routing follows the same VAD rules so the live audience hears
-    // a consistent experience matching what the agents hear each other say.
+    // Public room routing follows the same VAD rules for a consistent audience
+    // experience — only the floor holder's audio reaches the broadcast room.
     const rms = this.computeRMS(frame)
     const now = Date.now()
     const ismod = this.calls.get(speakingAgentId)?.meta.role === 'moderator'
