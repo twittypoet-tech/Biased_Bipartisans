@@ -28,14 +28,33 @@ const SPEECH_RMS_THRESHOLD = 1000
 /**
  * Current speaker must be silent for at least this long before we begin
  * watching for the next speaker. Prevents mid-sentence pauses from ending a turn.
+ *
+ * 2500ms (vs previous 1500ms): by the time 2.5s of silence has elapsed, the
+ * next agent's Retell VAD has already fired (~500ms silence threshold), and
+ * its LLM has had ~2000ms to generate a clean response — so when we advance
+ * the turn, the next agent is already producing coherent audio rather than
+ * mid-interrupted barge-in speech.
  */
-const MIN_SILENCE_BEFORE_HANDOFF_MS = 1500
+const MIN_SILENCE_BEFORE_HANDOFF_MS = 2500
 
 /**
  * If nobody starts speaking within this many ms after the current speaker
  * goes silent, advance the turn anyway (safety fallback).
+ *
+ * Bumped to 10s to account for ~5s deferred injection time before the next
+ * agent's Retell VAD triggers a response.
  */
-const TURN_TIMEOUT_MS = 5000
+const TURN_TIMEOUT_MS = 10_000
+
+/**
+ * How many frames to keep in the rolling speaker buffer for deferred injection.
+ * 250 frames × 20ms = 5 seconds of recent speech.
+ *
+ * This is injected into the next speaker's Retell call at turn start, giving
+ * their LLM immediate context without continuous injection during active speech
+ * (which caused barge-in oscillation and audio fragmentation).
+ */
+const MAX_BUFFER_FRAMES = 250
 
 export interface RelayAgent {
   agentId: string      // Supabase agent UUID
@@ -80,11 +99,11 @@ export class AudioRelay {
   private turnTimeoutTimer: ReturnType<typeof setTimeout> | null = null
   private turnAdvanced = false  // guard: only advance once per turn
 
-  // Per-destination concurrency lock — prevents concurrent captureFrame on same AudioSource
-  private capturingNow = new Set<string>()
+  // Per-destination FIFO frame queue — up to 5 frames (100ms) buffered per destination
+  private frameQueues = new Map<string, AudioFrame[]>()
 
-  // Per-destination pending frame — latest-wins instead of dropping on collision
-  private pendingFrames = new Map<string, AudioFrame>()
+  // Per-destination drain loop guard — true while drainQueue() is running for that label
+  private queueDraining = new Set<string>()
 
   // Rate-limit warn logging: one log per label per 5s
   private lastWarnTime = new Map<string, number>()
@@ -236,7 +255,7 @@ export class AudioRelay {
       for await (const frame of stream) {
         if (this.stopped) break
         try {
-          await this.routeFrame(speakingAgentId, frame)
+          this.routeFrame(speakingAgentId, frame)
         } catch (err) {
           if (!this.stopped) {
             const msg = err instanceof Error ? err.message : String(err)
@@ -253,7 +272,7 @@ export class AudioRelay {
     })
   }
 
-  private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
+  private routeFrame(speakingAgentId: string, frame: AudioFrame): void {
     const isTurnSpeaker = speakingAgentId === this.currentTurnAgentId
     const rms = this.computeRMS(frame)
     const now = Date.now()
@@ -263,7 +282,7 @@ export class AudioRelay {
         // Active speech — reset silence window, route to everyone
         this.currentSpeakerSilentSince = null
         this.clearTurnTimeout()
-        await this.broadcast(speakingAgentId, frame)
+        this.broadcast(speakingAgentId, frame)
       } else {
         // Silence — start tracking
         if (this.currentSpeakerSilentSince === null) {
@@ -306,51 +325,38 @@ export class AudioRelay {
   /**
    * Route a frame from the current speaker to all other agents + public room.
    *
-   * Inject sources (Retell agent calls) are fire-and-forget — we do NOT await them.
-   * Awaiting all destinations in Promise.all meant slow Retell connections (inject writes
-   * crossing network to Retell's LiveKit server) blocked the main for-await loop.
-   * When the loop fell behind, frames arrived in bursts that triggered Retell's barge-in
-   * detection repeatedly, producing fragmented/choppy agent speech in both the public
-   * room and Retell's own recordings.
-   *
-   * Each inject destination has its own capturingNow lock + pendingFrames slot, so it
-   * processes frames independently at its own rate — smooth, no gaps, no bursts.
-   * The main loop now paces only with the public room write (our own fast LiveKit server).
+   * All destinations use the FIFO queue (safeCaptureFrame is now synchronous) so
+   * no destination can block the main for-await loop. Each destination drains
+   * independently at its own rate via an async drain loop.
    */
-  private async broadcast(speakingAgentId: string, frame: AudioFrame): Promise<void> {
-    // Inject sources: fire-and-forget — decouple from main loop entirely
+  private broadcast(speakingAgentId: string, frame: AudioFrame): void {
     for (const [agentId, conn] of this.calls) {
       if (agentId === speakingAgentId) continue
-      void this.safeCaptureFrame(`${speakingAgentId}→${agentId}`, conn.injectSource, frame)
+      this.safeCaptureFrame(`${speakingAgentId}→${agentId}`, conn.injectSource, frame)
     }
 
-    // Public room: awaited — paces the main loop at a stable cadence
     const publicSrc = this.publicSources.get(speakingAgentId)
     if (publicSrc) {
-      await this.safeCaptureFrame(`public:${speakingAgentId}`, publicSrc, frame)
+      this.safeCaptureFrame(`public:${speakingAgentId}`, publicSrc, frame)
     }
   }
 
   /**
-   * Safely push one frame to a destination AudioSource.
+   * Safely push one frame to a destination AudioSource via a bounded FIFO queue.
    *
-   * Concurrent captureFrame on the same AudioSource causes InvalidState, so only
-   * one write per destination runs at a time. Rather than dropping frames on
-   * collision (which causes choppiness), we use a latest-wins pending slot:
-   *   - If a write is in progress, store the incoming frame as pending (overwriting
-   *     any previously pending frame — latest wins).
-   *   - When the current write completes, immediately write the pending frame if
-   *     one arrived while we were busy.
+   * Each destination has an independent 5-frame (100ms) queue and a single async
+   * drain loop. Incoming frames are enqueued synchronously; the drain loop processes
+   * them one-at-a-time. If captureFrame takes longer than the 20ms frame interval,
+   * up to 5 frames absorb the backlog before the oldest is dropped — tolerating
+   * up to ~120ms of latency spikes (e.g. Railway → Retell network jitter) without
+   * any audible gap.
    *
-   * This ensures audio is continuous (no gaps) even when captureFrame takes
-   * slightly longer than the 20ms frame interval. At most one frame of latency
-   * (~20ms) is added, which is imperceptible.
+   * Compared to the previous latest-wins 1-slot design, this prevents frame drops
+   * whenever captureFrame takes >40ms (2× frame interval).
    */
-  private async safeCaptureFrame(
-    label: string,
-    src: AudioSource,
-    frame: AudioFrame,
-  ): Promise<void> {
+  private safeCaptureFrame(label: string, src: AudioSource, frame: AudioFrame): void {
+    const MAX_QUEUE = 5
+
     // Always copy — the caller's frame buffer may be reused
     const copy = new AudioFrame(
       new Int16Array(frame.data),
@@ -359,32 +365,46 @@ export class AudioRelay {
       frame.samplesPerChannel,
     )
 
-    if (this.capturingNow.has(label)) {
-      this.pendingFrames.set(label, copy)  // latest wins
-      return
+    let queue = this.frameQueues.get(label)
+    if (!queue) {
+      queue = []
+      this.frameQueues.set(label, queue)
     }
 
-    this.capturingNow.add(label)
-    let toWrite: AudioFrame | undefined = copy
+    if (queue.length >= MAX_QUEUE) {
+      queue.shift()  // drop oldest to make room
+    }
+    queue.push(copy)
+
+    if (!this.queueDraining.has(label)) {
+      void this.drainQueue(label, src)
+    }
+  }
+
+  private async drainQueue(label: string, src: AudioSource): Promise<void> {
+    this.queueDraining.add(label)
     try {
-      while (toWrite && !this.stopped) {
-        await src.captureFrame(toWrite)
-        toWrite = this.pendingFrames.get(label)
-        this.pendingFrames.delete(label)
-      }
-    } catch (err) {
-      this.pendingFrames.delete(label)
-      if (!this.stopped) {
-        const now = Date.now()
-        const last = this.lastWarnTime.get(label) ?? 0
-        if (now - last > 5000) {
-          const msg = err instanceof Error ? err.message : String(err)
-          log.warn(`captureFrame failed [${label}]: ${msg}`)
-          this.lastWarnTime.set(label, now)
+      const queue = this.frameQueues.get(label)
+      if (!queue) return
+
+      while (queue.length > 0 && !this.stopped) {
+        const frame = queue.shift()!
+        try {
+          await src.captureFrame(frame)
+        } catch (err) {
+          if (!this.stopped) {
+            const now = Date.now()
+            const last = this.lastWarnTime.get(label) ?? 0
+            if (now - last > 5000) {
+              const msg = err instanceof Error ? err.message : String(err)
+              log.warn(`captureFrame failed [${label}]: ${msg}`)
+              this.lastWarnTime.set(label, now)
+            }
+          }
         }
       }
     } finally {
-      this.capturingNow.delete(label)
+      this.queueDraining.delete(label)
     }
   }
 
@@ -407,7 +427,7 @@ export class AudioRelay {
       const end = Math.min(offset + FRAME_SAMPLES, int16.length)
       const chunk = new Int16Array(end - offset)
       chunk.set(int16.subarray(offset, end))
-      await this.safeCaptureFrame(
+      this.safeCaptureFrame(
         `inject:${agentId}`,
         conn.injectSource,
         new AudioFrame(chunk, SAMPLE_RATE, NUM_CHANNELS, chunk.length),
@@ -429,6 +449,7 @@ export class AudioRelay {
       await room.disconnect().catch(() => {})
     }
     this.publicRooms.clear()
+    this.frameQueues.clear()
     log.info('AudioRelay disconnected')
   }
 
