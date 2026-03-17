@@ -41,11 +41,17 @@ const MIN_SILENCE_BEFORE_HANDOFF_MS = 1000
  * If the expected next speaker hasn't triggered early advance within this many
  * ms of current-speaker silence, advance the turn anyway (safety fallback).
  *
- * 3s: total max gap = 1s (MIN_SILENCE) + 3s (timeout) = 4s. This also prevents
- * "remains silent" utterances from the next agent (which end quickly) from
- * stalling the debate indefinitely.
+ * 7s: total max gap = 1s (MIN_SILENCE) + 7s (timeout) = 8s. Covers Retell LLM
+ * cold-start response time (VAD ~500ms + LLM generation ~1-3s + TTS startup).
  */
-const TURN_TIMEOUT_MS = 3_000
+const TURN_TIMEOUT_MS = 7_000
+
+/**
+ * A turn must be active for at least this long before the silence timeout can
+ * arm. Prevents ghost timers from a prior turn (race between routeFrame arming
+ * a timer and advanceTurn clearing it) from firing in under a second.
+ */
+const MIN_TURN_DURATION_MS = 3_000
 
 /**
  * How many frames to keep in the rolling speaker buffer for deferred injection.
@@ -100,6 +106,7 @@ export class AudioRelay {
   private currentSpeakerSilentSince: number | null = null  // epoch ms
   private turnTimeoutTimer: ReturnType<typeof setTimeout> | null = null
   private turnAdvanced = false  // guard: only advance once per turn
+  private turnStartTime: number | null = null  // epoch ms when current turn began
 
   // Per-destination FIFO frame queue — up to 5 frames (100ms) buffered per destination
   private frameQueues = new Map<string, AudioFrame[]>()
@@ -225,6 +232,7 @@ export class AudioRelay {
     this.currentSpeakerSilentSince = null
     this.onTurnEnd = onTurnEnd
     this.turnAdvanced = false
+    this.turnStartTime = Date.now()
     const name = this.calls.get(agentId)?.meta.agentName ?? agentId
     const nextName = nextAgentId ? (this.calls.get(nextAgentId)?.meta.agentName ?? nextAgentId) : 'none'
     log.info(`Turn → ${name} (next: ${nextName})`)
@@ -299,10 +307,17 @@ export class AudioRelay {
         }
         const silentMs = now - this.currentSpeakerSilentSince
 
-        // After MIN_SILENCE_BEFORE_HANDOFF_MS, arm the fallback timeout once.
-        // If a different agent starts speaking before the timeout, advanceTurn()
-        // fires from the non-turn-speaker branch below (catching them at word one).
-        if (silentMs >= MIN_SILENCE_BEFORE_HANDOFF_MS && !this.turnTimeoutTimer && this.onTurnEnd) {
+        // After MIN_SILENCE_BEFORE_HANDOFF_MS, arm the fallback timeout once —
+        // but only if the turn has been active for at least MIN_TURN_DURATION_MS.
+        // The floor prevents ghost timers from prior turns (which survive clearTurnTimeout
+        // in a race) from firing in < 1s and ending a brand-new turn immediately.
+        const turnActiveMs = this.turnStartTime !== null ? now - this.turnStartTime : 0
+        if (
+          silentMs >= MIN_SILENCE_BEFORE_HANDOFF_MS &&
+          turnActiveMs >= MIN_TURN_DURATION_MS &&
+          !this.turnTimeoutTimer &&
+          this.onTurnEnd
+        ) {
           this.turnTimeoutTimer = setTimeout(() => {
             this.advanceTurn('timeout — no next speaker detected')
           }, TURN_TIMEOUT_MS)
