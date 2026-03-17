@@ -83,6 +83,9 @@ export class AudioRelay {
   // Per-destination concurrency lock — prevents concurrent captureFrame on same AudioSource
   private capturingNow = new Set<string>()
 
+  // Per-destination pending frame — latest-wins instead of dropping on collision
+  private pendingFrames = new Map<string, AudioFrame>()
+
   // Rate-limit warn logging: one log per label per 5s
   private lastWarnTime = new Map<string, number>()
 
@@ -325,27 +328,47 @@ export class AudioRelay {
 
   /**
    * Safely push one frame to a destination AudioSource.
-   * Drops the frame (rather than queuing) if a write is already in progress for
-   * that destination — prevents concurrent captureFrame calls which cause InvalidState.
-   * Errors are caught per-destination and rate-limited to one log per 5s.
+   *
+   * Concurrent captureFrame on the same AudioSource causes InvalidState, so only
+   * one write per destination runs at a time. Rather than dropping frames on
+   * collision (which causes choppiness), we use a latest-wins pending slot:
+   *   - If a write is in progress, store the incoming frame as pending (overwriting
+   *     any previously pending frame — latest wins).
+   *   - When the current write completes, immediately write the pending frame if
+   *     one arrived while we were busy.
+   *
+   * This ensures audio is continuous (no gaps) even when captureFrame takes
+   * slightly longer than the 20ms frame interval. At most one frame of latency
+   * (~20ms) is added, which is imperceptible.
    */
   private async safeCaptureFrame(
     label: string,
     src: AudioSource,
     frame: AudioFrame,
   ): Promise<void> {
-    if (this.capturingNow.has(label)) return  // drop — never queue
+    // Always copy — the caller's frame buffer may be reused
+    const copy = new AudioFrame(
+      new Int16Array(frame.data),
+      frame.sampleRate,
+      frame.channels,
+      frame.samplesPerChannel,
+    )
+
+    if (this.capturingNow.has(label)) {
+      this.pendingFrames.set(label, copy)  // latest wins
+      return
+    }
+
     this.capturingNow.add(label)
+    let toWrite: AudioFrame | undefined = copy
     try {
-      await src.captureFrame(
-        new AudioFrame(
-          new Int16Array(frame.data),
-          frame.sampleRate,
-          frame.channels,
-          frame.samplesPerChannel,
-        ),
-      )
+      while (toWrite) {
+        await src.captureFrame(toWrite)
+        toWrite = this.pendingFrames.get(label)
+        this.pendingFrames.delete(label)
+      }
     } catch (err) {
+      this.pendingFrames.delete(label)
       if (!this.stopped) {
         const now = Date.now()
         const last = this.lastWarnTime.get(label) ?? 0
@@ -390,6 +413,8 @@ export class AudioRelay {
   async disconnect(): Promise<void> {
     this.stopped = true
     this.clearTurnTimeout()
+    // Unblock any turn the conductor is awaiting — allows run() to reach cleanup()
+    this.advanceTurn('relay disconnected')
     this.onTurnEnd = null
     for (const conn of this.calls.values()) {
       await conn.room.disconnect().catch(() => {})

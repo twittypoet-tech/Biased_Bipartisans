@@ -140,8 +140,8 @@ export function DebateRoom({
       const { Room, RoomEvent, Track } = await import('livekit-client')
 
       const room = new Room({
-        adaptiveStream: true,
-        dynacast: true,
+        adaptiveStream: false,
+        dynacast: false,
       })
 
       room.on(RoomEvent.TrackSubscribed, (track, _publication, participant) => {

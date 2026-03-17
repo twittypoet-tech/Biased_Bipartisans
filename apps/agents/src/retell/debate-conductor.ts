@@ -436,7 +436,7 @@ export class DebateConductor {
             resolve()
           }
         } catch { /* best effort */ }
-      }, 10_000)
+      }, 1_000)
       tick.unref?.()
     })
   }
