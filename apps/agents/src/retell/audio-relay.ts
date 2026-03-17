@@ -278,13 +278,18 @@ export class AudioRelay {
     const now = Date.now()
 
     if (isTurnSpeaker) {
+      // Always route every frame — silence gaps must reach the public room so
+      // the audio stream is continuous. Gating on RMS created 20-200ms holes
+      // in TTS audio (inter-word pauses, soft consonants) that sounded choppy
+      // to live viewers.
+      this.broadcast(speakingAgentId, frame)
+
       if (rms > SPEECH_RMS_THRESHOLD) {
-        // Active speech — reset silence window, route to everyone
+        // Active speech — reset silence window
         this.currentSpeakerSilentSince = null
         this.clearTurnTimeout()
-        this.broadcast(speakingAgentId, frame)
       } else {
-        // Silence — start tracking
+        // Silence — track for turn handoff only
         if (this.currentSpeakerSilentSince === null) {
           this.currentSpeakerSilentSince = now
         }
