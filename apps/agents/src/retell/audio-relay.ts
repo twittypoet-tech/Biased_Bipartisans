@@ -29,22 +29,23 @@ const SPEECH_RMS_THRESHOLD = 1000
  * Current speaker must be silent for at least this long before we begin
  * watching for the next speaker. Prevents mid-sentence pauses from ending a turn.
  *
- * 2500ms (vs previous 1500ms): by the time 2.5s of silence has elapsed, the
- * next agent's Retell VAD has already fired (~500ms silence threshold), and
- * its LLM has had ~2000ms to generate a clean response — so when we advance
- * the turn, the next agent is already producing coherent audio rather than
- * mid-interrupted barge-in speech.
+ * 1000ms: Retell VAD fires ~500ms after silence starts, so the next speaker's
+ * LLM has ~500ms of generation time before we advance. With the expected-next-
+ * speaker guard in place (only the playbook's next agent can trigger early
+ * advance), false advances from non-turn speakers are no longer a concern,
+ * so we can safely use a shorter window to minimise cut audio at turn starts.
  */
-const MIN_SILENCE_BEFORE_HANDOFF_MS = 2500
+const MIN_SILENCE_BEFORE_HANDOFF_MS = 1000
 
 /**
- * If nobody starts speaking within this many ms after the current speaker
- * goes silent, advance the turn anyway (safety fallback).
+ * If the expected next speaker hasn't triggered early advance within this many
+ * ms of current-speaker silence, advance the turn anyway (safety fallback).
  *
- * Bumped to 10s to account for ~5s deferred injection time before the next
- * agent's Retell VAD triggers a response.
+ * 3s: total max gap = 1s (MIN_SILENCE) + 3s (timeout) = 4s. This also prevents
+ * "remains silent" utterances from the next agent (which end quickly) from
+ * stalling the debate indefinitely.
  */
-const TURN_TIMEOUT_MS = 10_000
+const TURN_TIMEOUT_MS = 3_000
 
 /**
  * How many frames to keep in the rolling speaker buffer for deferred injection.
@@ -94,6 +95,7 @@ export class AudioRelay {
 
   // Turn state — driven by the conductor via setTurn()
   private currentTurnAgentId: string | null = null
+  private nextTurnAgentId: string | null = null
   private onTurnEnd: (() => void) | null = null
   private currentSpeakerSilentSince: number | null = null  // epoch ms
   private turnTimeoutTimer: ReturnType<typeof setTimeout> | null = null
@@ -216,14 +218,16 @@ export class AudioRelay {
    * onTurnEnd is called when: (a) current speaker silent ≥ MIN_SILENCE_BEFORE_HANDOFF_MS
    * and another agent starts speaking, or (b) TURN_TIMEOUT_MS elapses after silence.
    */
-  setTurn(agentId: string, onTurnEnd: () => void): void {
+  setTurn(agentId: string, nextAgentId: string | null, onTurnEnd: () => void): void {
     this.clearTurnTimeout()
     this.currentTurnAgentId = agentId
+    this.nextTurnAgentId = nextAgentId
     this.currentSpeakerSilentSince = null
     this.onTurnEnd = onTurnEnd
     this.turnAdvanced = false
     const name = this.calls.get(agentId)?.meta.agentName ?? agentId
-    log.info(`Turn → ${name}`)
+    const nextName = nextAgentId ? (this.calls.get(nextAgentId)?.meta.agentName ?? nextAgentId) : 'none'
+    log.info(`Turn → ${name} (next: ${nextName})`)
   }
 
   private clearTurnTimeout(): void {
@@ -315,7 +319,8 @@ export class AudioRelay {
         this.onTurnEnd &&
         this.currentSpeakerSilentSince !== null &&
         now - this.currentSpeakerSilentSince >= MIN_SILENCE_BEFORE_HANDOFF_MS &&
-        rms > SPEECH_RMS_THRESHOLD
+        rms > SPEECH_RMS_THRESHOLD &&
+        speakingAgentId === this.nextTurnAgentId
       ) {
         const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
         log.info(`Next speaker detected: ${name} — advancing turn`)

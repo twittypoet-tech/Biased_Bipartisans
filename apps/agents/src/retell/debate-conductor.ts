@@ -366,15 +366,16 @@ export class DebateConductor {
     }
 
     // Execute turns sequentially — each turn completes via the onTurnEnd callback
-    for (const turn of turnSequence) {
+    for (const [i, turn] of turnSequence.entries()) {
       if (this.stopped) break
 
+      const nextAgentId = turnSequence[i + 1]?.agentId ?? null
       log.info(`Starting turn: ${turn.agentName} — ${turn.label}`)
 
       await new Promise<void>((resolve) => {
         // Guard: if debate was stopped while we were awaiting, resolve immediately
         if (this.stopped || !this.relay) { resolve(); return }
-        this.relay.setTurn(turn.agentId, resolve)
+        this.relay.setTurn(turn.agentId, nextAgentId, resolve)
       })
 
       log.info(`Turn complete: ${turn.agentName} — ${turn.label}`)
