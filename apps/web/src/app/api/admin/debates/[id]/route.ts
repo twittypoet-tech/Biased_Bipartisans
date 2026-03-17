@@ -17,6 +17,11 @@ export async function PATCH(
       val === null || val === undefined ? null : Math.max(5, Math.min(180, Number(val)))
   }
 
+  if ('turnConfig' in body) {
+    // null clears the debate-level override (falls back to format default)
+    updates.turn_config = body.turnConfig ?? null
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
   }

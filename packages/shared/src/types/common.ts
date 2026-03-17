@@ -142,6 +142,7 @@ export interface DebateFormatDefinition {
   debate_style: 'structured' | 'freeflow'  // migration 006
   min_duration_minutes: number              // migration 006
   max_duration_minutes: number              // migration 006
+  turn_config: unknown | null               // migration 010
   created_at: Timestamp
 }
 
@@ -168,6 +169,7 @@ export interface Debate {
   retell_call_ids: Record<string, string>  // agentId → retellCallId (migration 006)
   duration_override_minutes: number | null // per-debate timing override (migration 006)
   recordings: Record<string, string>       // agentId → retellRecordingUrl (migration 008)
+  turn_config: unknown | null              // per-debate playbook override (migration 010)
   created_at: Timestamp
   updated_at: Timestamp
 }

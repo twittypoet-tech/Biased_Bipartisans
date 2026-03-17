@@ -10,6 +10,7 @@ import { ParticipantManager } from '@/components/admin/participant-manager'
 import { BackfillAudioButton } from '@/components/admin/backfill-audio-button'
 import { EndDebateButton } from '@/components/admin/end-debate-button'
 import { DurationEditor } from '@/components/admin/duration-editor'
+import { PlaybookEditor, type TurnConfig } from '@/components/admin/playbook-editor'
 import { ScheduledDebatePoller } from '@/components/public/scheduled-debate-poller'
 
 export default async function DebateDetailPage({
@@ -57,6 +58,11 @@ export default async function DebateDetailPage({
     }))
 
   const moderatorAgent = allAgents.find((a) => a.role === 'moderator')
+
+  // Derive agent A/B names from debater participants in speaking_order
+  const debaterParticipants = currentParticipants.filter((p) => p.role === 'debater')
+  const agentAName = debaterParticipants[0]?.name ?? 'Agent A'
+  const agentBName = debaterParticipants[1]?.name ?? 'Agent B'
 
   return (
     <div className="space-y-6">
@@ -163,6 +169,18 @@ export default async function DebateDetailPage({
           currentParticipants={currentParticipants}
           availableAgents={availableAgents}
           moderatorId={moderatorAgent?.id ?? null}
+        />
+      </ConfigSection>
+
+      {/* Debate Playbook */}
+      <ConfigSection title="Debate Playbook" defaultOpen>
+        <PlaybookEditor
+          debateId={debate.id}
+          debateStatus={debate.status}
+          debateTurnConfig={(debate.turn_config as TurnConfig | null) ?? null}
+          formatTurnConfig={(format?.turn_config as TurnConfig | null) ?? null}
+          agentAName={agentAName}
+          agentBName={agentBName}
         />
       </ConfigSection>
 

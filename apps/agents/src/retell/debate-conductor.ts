@@ -332,7 +332,9 @@ export class DebateConductor {
     const debaterB = debaters[1]!.agent_id
 
     const turnConfig: TurnConfig =
-      (format as unknown as { turn_config?: TurnConfig })?.turn_config ?? DEFAULT_TURN_CONFIG
+      (debate as unknown as { turn_config?: TurnConfig }).turn_config ??
+      (format as unknown as { turn_config?: TurnConfig })?.turn_config ??
+      DEFAULT_TURN_CONFIG
 
     const turnSequence = buildTurnSequence(
       turnConfig,
