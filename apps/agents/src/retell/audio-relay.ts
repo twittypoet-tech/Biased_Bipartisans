@@ -22,16 +22,20 @@ const SAMPLE_RATE = 24000
 const NUM_CHANNELS = 1
 const FRAME_SAMPLES = 480 // 20ms at 24kHz
 
-/** RMS energy above this level counts as active speech (for 16-bit PCM, ~-26 dBFS) */
+/** RMS energy above this level counts as active speech (16-bit PCM, ~-26 dBFS) */
 const SPEECH_RMS_THRESHOLD = 1000
-/** ms of continuous silence before the speaker releases the floor */
-const FLOOR_RELEASE_MS = 1000
+
 /**
- * After the moderator finishes speaking, block the previous debater from
- * reclaiming the floor for this many ms. Gives the newly-addressed debater
- * time to generate their response before the other agent fills the silence.
+ * Current speaker must be silent for at least this long before we begin
+ * watching for the next speaker. Prevents mid-sentence pauses from ending a turn.
  */
-const POST_MOD_GRACE_MS = 4_000
+const MIN_SILENCE_BEFORE_HANDOFF_MS = 1500
+
+/**
+ * If nobody starts speaking within this many ms after the current speaker
+ * goes silent, advance the turn anyway (safety fallback).
+ */
+const TURN_TIMEOUT_MS = 5000
 
 export interface RelayAgent {
   agentId: string      // Supabase agent UUID
@@ -41,58 +45,45 @@ export interface RelayAgent {
   role: 'debater' | 'moderator'
 }
 
-/**
- * Debate phase marker — used to reset VAD state at phase boundaries.
- * Routing is identical across all phases (VAD floor control throughout).
- */
-export type DebatePhase = 'opening' | 'debate' | 'closing'
-
 interface ConnectedCall {
   meta: RelayAgent
   room: Room
   injectSource: AudioSource  // frames pushed here become "user" audio in this call
 }
 
-interface SpeakerState {
-  isSpeaking: boolean
-  silentSince: number  // epoch ms when silence started (Infinity = currently speaking)
-}
-
 /**
- * AudioRelay bridges multiple Retell call rooms into a multi-agent debate.
+ * AudioRelay bridges multiple Retell call rooms into a structured turn-based debate.
  *
- * VAD floor control is active for the entire debate (opening through closing):
- * the first agent to produce speech energy claims the floor and cross-routes
- * their audio to all other agents until 1s of continuous silence. The moderator
- * can preempt any debater. This prevents simultaneous speech while allowing all
- * agents to hear and respond to each other naturally.
+ * Turn control: only the current turn speaker's audio is routed to other agents
+ * and the public room. Other agents receive the current speaker's audio in
+ * real-time (their LLMs build context and queue responses), but their own
+ * outgoing audio is not forwarded until it is their turn.
  *
- * Post-moderator grace period: after the mod releases the floor, the previous
- * debater is blocked from immediately reclaiming it, giving the newly-addressed
- * debater time to generate their LLM response first.
+ * Turn handoff: when the current speaker goes silent for MIN_SILENCE_BEFORE_HANDOFF_MS,
+ * the relay watches for any other agent to start producing audio. The moment
+ * that happens, the turn ends — catching the next speaker at word one. A
+ * TURN_TIMEOUT_MS fallback advances the turn if nobody speaks.
  *
- * Each AudioSource is warmed up after publish and kept alive via a 200ms
- * heartbeat to prevent InvalidState errors and Retell end-of-turn timeouts.
+ * The conductor calls setTurn() to begin each turn and receives an onTurnEnd
+ * callback when the turn completes, allowing it to drive the playbook sequence.
  */
 export class AudioRelay {
   private calls = new Map<string, ConnectedCall>()
   private publicRooms = new Map<string, Room>()
   private publicSources = new Map<string, AudioSource>()
   private stopped = false
-  private heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
-  private phase: DebatePhase = 'opening'
+  // Turn state — driven by the conductor via setTurn()
+  private currentTurnAgentId: string | null = null
+  private onTurnEnd: (() => void) | null = null
+  private currentSpeakerSilentSince: number | null = null  // epoch ms
+  private turnTimeoutTimer: ReturnType<typeof setTimeout> | null = null
+  private turnAdvanced = false  // guard: only advance once per turn
 
-  // VAD floor control for debate/closing phases
-  private floorHolder: string | null = null
-  private speakerStates = new Map<string, SpeakerState>()
+  // Per-destination concurrency lock — prevents concurrent captureFrame on same AudioSource
+  private capturingNow = new Set<string>()
 
-  // Post-moderator grace period: after the mod finishes, block the previous
-  // debater from reclaiming the floor so the other debater has time to respond.
-  private lastDebaterFloorHolder: string | null = null
-  private postModGraceUntil = 0  // epoch ms
-
-  // Rate-limit warn logging: one log per label per 5s to prevent frame-level spam
+  // Rate-limit warn logging: one log per label per 5s
   private lastWarnTime = new Map<string, number>()
 
   async connect(
@@ -105,7 +96,6 @@ export class AudioRelay {
       await this.connectPublicRoom(publicRoomConfig.url, publicRoomConfig.tokens, agents)
     }
 
-    this.startHeartbeat()
     log.info(`AudioRelay ready: ${agents.length} calls connected`)
   }
 
@@ -118,12 +108,10 @@ export class AudioRelay {
       dynacast: false,
     })
 
-    // Register event listeners IMMEDIATELY after connect — before publishTrack
-    // and before warmupSource. Retell agents with "AI speaks first" publish their
-    // audio track almost instantly. publishTrack and warmupSource both yield the
-    // event loop via await; if TrackSubscribed fires during those awaits and no
-    // listener is registered yet, the event is lost and captureAndRoute never
-    // starts, which means no audio reaches the public room or other agents.
+    // Listeners FIRST — before publishTrack/warmupSource to never miss TrackSubscribed.
+    // Retell agents with "AI speaks first" publish their audio track almost immediately.
+    // publishTrack and warmupSource both yield the event loop; if TrackSubscribed fires
+    // during those awaits with no listener registered, the event is permanently lost.
     room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
       if (track.kind !== TrackKind.KIND_AUDIO) return
       log.info(`Subscribed to agent audio: ${participant.identity} → ${meta.agentName}`)
@@ -137,14 +125,10 @@ export class AudioRelay {
 
     const track = LocalAudioTrack.createAudioTrack('user-audio', injectSource)
     await room.localParticipant!.publishTrack(track, new TrackPublishOptions())
-
-    // Warm up the AudioSource — spin until the first captureFrame succeeds (up to 2s).
-    // The native WebRTC PCM pipeline is not immediately ready after publishTrack resolves.
     await this.warmupSource(injectSource, meta.agentName)
 
     const conn: ConnectedCall = { meta, room, injectSource }
     this.calls.set(meta.agentId, conn)
-
     log.info(`Connected to Retell call: ${meta.agentName} (${meta.callId})`)
   }
 
@@ -163,7 +147,6 @@ export class AudioRelay {
       const src = new AudioSource(SAMPLE_RATE, NUM_CHANNELS)
       const track = LocalAudioTrack.createAudioTrack('voice', src)
       await room.localParticipant!.publishTrack(track, new TrackPublishOptions())
-
       await this.warmupSource(src, `public:${agent.agentName}`)
 
       this.publicRooms.set(agent.agentId, room)
@@ -181,8 +164,7 @@ export class AudioRelay {
 
   /**
    * Spin-loop until the AudioSource accepts a silent frame, or timeout after 2s.
-   * This eliminates the InvalidState window between publishTrack and when the
-   * native PCM pipeline becomes ready.
+   * Eliminates the InvalidState window between publishTrack and native PCM ready.
    */
   private async warmupSource(src: AudioSource, label: string): Promise<void> {
     const silent = new Int16Array(FRAME_SAMPLES)
@@ -204,30 +186,45 @@ export class AudioRelay {
   }
 
   /**
-   * Send silent keepalive frames to every injectSource every 200ms.
-   * Each tick pushes 10 frames (10 × 20ms = 200ms of silence) so Retell sees a
-   * continuous audio stream rather than isolated pulses. Without this, prolonged
-   * silence between turns causes Retell's end-of-turn detection to fire and
-   * triggers agents to generate filler speech ("I'll wait for my opponent").
+   * Set the current turn speaker. Only this agent's audio will be routed to
+   * all other agents and the public room. All other agents hear the current
+   * speaker in real-time, allowing their LLMs to build context and queue
+   * responses for when their own turn arrives.
+   *
+   * onTurnEnd is called when: (a) current speaker silent ≥ MIN_SILENCE_BEFORE_HANDOFF_MS
+   * and another agent starts speaking, or (b) TURN_TIMEOUT_MS elapses after silence.
    */
-  private startHeartbeat(): void {
-    const silent = new Int16Array(FRAME_SAMPLES)
-    const silentFrame = new AudioFrame(silent, SAMPLE_RATE, NUM_CHANNELS, FRAME_SAMPLES)
-    const FRAMES_PER_TICK = 10  // 10 × 20ms = 200ms
-    this.heartbeatTimer = setInterval(async () => {
-      if (this.stopped) return
-      for (const [agentId, conn] of this.calls) {
-        for (let i = 0; i < FRAMES_PER_TICK; i++) {
-          try {
-            await conn.injectSource.captureFrame(silentFrame)
-          } catch {
-            log.warn(`Heartbeat failed for ${agentId}`)
-            break
-          }
-        }
-      }
-    }, 200)
-    this.heartbeatTimer.unref?.()
+  setTurn(agentId: string, onTurnEnd: () => void): void {
+    this.clearTurnTimeout()
+    this.currentTurnAgentId = agentId
+    this.currentSpeakerSilentSince = null
+    this.onTurnEnd = onTurnEnd
+    this.turnAdvanced = false
+    const name = this.calls.get(agentId)?.meta.agentName ?? agentId
+    log.info(`Turn → ${name}`)
+  }
+
+  private clearTurnTimeout(): void {
+    if (this.turnTimeoutTimer) {
+      clearTimeout(this.turnTimeoutTimer)
+      this.turnTimeoutTimer = null
+    }
+  }
+
+  private advanceTurn(reason: string): void {
+    if (this.turnAdvanced || !this.onTurnEnd) return
+    this.turnAdvanced = true
+    this.clearTurnTimeout()
+
+    const name = this.calls.get(this.currentTurnAgentId ?? '')?.meta.agentName ?? 'unknown'
+    log.info(`Turn ended [${name}]: ${reason}`)
+
+    this.currentTurnAgentId = null
+    this.currentSpeakerSilentSince = null
+
+    const cb = this.onTurnEnd
+    this.onTurnEnd = null
+    cb()
   }
 
   private captureAndRoute(speakingAgentId: string, track: RemoteAudioTrack): void {
@@ -253,19 +250,100 @@ export class AudioRelay {
     })
   }
 
+  private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
+    const isTurnSpeaker = speakingAgentId === this.currentTurnAgentId
+    const rms = this.computeRMS(frame)
+    const now = Date.now()
+
+    if (isTurnSpeaker) {
+      if (rms > SPEECH_RMS_THRESHOLD) {
+        // Active speech — reset silence window, route to everyone
+        this.currentSpeakerSilentSince = null
+        this.clearTurnTimeout()
+        await this.broadcast(speakingAgentId, frame)
+      } else {
+        // Silence — start tracking
+        if (this.currentSpeakerSilentSince === null) {
+          this.currentSpeakerSilentSince = now
+        }
+        const silentMs = now - this.currentSpeakerSilentSince
+
+        // After MIN_SILENCE_BEFORE_HANDOFF_MS, arm the fallback timeout once.
+        // If a different agent starts speaking before the timeout, advanceTurn()
+        // fires from the non-turn-speaker branch below (catching them at word one).
+        if (silentMs >= MIN_SILENCE_BEFORE_HANDOFF_MS && !this.turnTimeoutTimer && this.onTurnEnd) {
+          this.turnTimeoutTimer = setTimeout(() => {
+            this.advanceTurn('timeout — no next speaker detected')
+          }, TURN_TIMEOUT_MS)
+          this.turnTimeoutTimer.unref?.()
+        }
+      }
+    } else {
+      // Not the current turn speaker — their audio is not routed.
+      // BUT: once the current speaker has been silent long enough, the moment
+      // this agent starts producing speech we advance the turn immediately,
+      // catching them at the very first frame of their response.
+      if (
+        !this.turnAdvanced &&
+        this.onTurnEnd &&
+        this.currentSpeakerSilentSince !== null &&
+        now - this.currentSpeakerSilentSince >= MIN_SILENCE_BEFORE_HANDOFF_MS &&
+        rms > SPEECH_RMS_THRESHOLD
+      ) {
+        const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
+        log.info(`Next speaker detected: ${name} — advancing turn`)
+        this.advanceTurn('next speaker started')
+        // The conductor will call setTurn() for the next turn agent (possibly this
+        // agent, possibly someone else per the playbook). Until setTurn() is called,
+        // this frame is not routed — the gap is one microtask round trip (~0ms).
+      }
+    }
+  }
+
+  /**
+   * Route a frame from the current speaker to all other agents + public room.
+   */
+  private async broadcast(speakingAgentId: string, frame: AudioFrame): Promise<void> {
+    const routes: Promise<void>[] = []
+
+    // Public broadcast room
+    const publicSrc = this.publicSources.get(speakingAgentId)
+    if (publicSrc) {
+      routes.push(this.safeCaptureFrame(`public:${speakingAgentId}`, publicSrc, frame))
+    }
+
+    // All other agents' injectSources (they hear the current speaker)
+    for (const [agentId, conn] of this.calls) {
+      if (agentId === speakingAgentId) continue
+      routes.push(
+        this.safeCaptureFrame(`${speakingAgentId}→${agentId}`, conn.injectSource, frame),
+      )
+    }
+
+    await Promise.all(routes)
+  }
+
   /**
    * Safely push one frame to a destination AudioSource.
-   * Errors are caught per-destination so one bad source never disrupts others.
-   * Warnings are rate-limited to one per 5s per label to prevent log floods.
+   * Drops the frame (rather than queuing) if a write is already in progress for
+   * that destination — prevents concurrent captureFrame calls which cause InvalidState.
+   * Errors are caught per-destination and rate-limited to one log per 5s.
    */
   private async safeCaptureFrame(
+    label: string,
     src: AudioSource,
     frame: AudioFrame,
-    label: string,
   ): Promise<void> {
+    if (this.capturingNow.has(label)) return  // drop — never queue
+    this.capturingNow.add(label)
     try {
       await src.captureFrame(
-        new AudioFrame(new Int16Array(frame.data), frame.sampleRate, frame.channels, frame.samplesPerChannel),
+        new AudioFrame(
+          new Int16Array(frame.data),
+          frame.sampleRate,
+          frame.channels,
+          frame.samplesPerChannel,
+        ),
       )
     } catch (err) {
       if (!this.stopped) {
@@ -277,6 +355,8 @@ export class AudioRelay {
           this.lastWarnTime.set(label, now)
         }
       }
+    } finally {
+      this.capturingNow.delete(label)
     }
   }
 
@@ -287,107 +367,8 @@ export class AudioRelay {
   }
 
   /**
-   * Transition the debate to a new phase.
-   * Resets VAD floor state so the new phase starts clean.
-   */
-  setPhase(phase: DebatePhase): void {
-    this.phase = phase
-    this.floorHolder = null
-    this.lastDebaterFloorHolder = null
-    this.postModGraceUntil = 0
-    for (const s of this.speakerStates.values()) {
-      s.isSpeaking = false
-      s.silentSince = Infinity
-    }
-    log.info(`Phase → ${phase}`)
-  }
-
-  private async routeFrame(speakingAgentId: string, frame: AudioFrame): Promise<void> {
-    const routes: Promise<void>[] = []
-
-    // ── VAD floor control (all phases) ───────────────────────────────────────
-    // First agent to produce speech energy claims the floor and cross-routes to
-    // all others until 1s of silence. Moderator preempts any debater.
-    //
-    // Post-moderator grace period: after the mod releases the floor, the debater
-    // who PREVIOUSLY held it is blocked from reclaiming for POST_MOD_GRACE_MS,
-    // giving the newly-addressed debater time to generate their LLM response.
-    //
-    // Public room routing follows the same VAD rules for a consistent audience
-    // experience — only the floor holder's audio reaches the broadcast room.
-    const rms = this.computeRMS(frame)
-    const now = Date.now()
-    const ismod = this.calls.get(speakingAgentId)?.meta.role === 'moderator'
-
-    let state = this.speakerStates.get(speakingAgentId)
-    if (!state) {
-      state = { isSpeaking: false, silentSince: Infinity }
-      this.speakerStates.set(speakingAgentId, state)
-    }
-
-    if (rms > SPEECH_RMS_THRESHOLD) {
-      state.silentSince = Infinity
-      state.isSpeaking = true
-
-      if (ismod) {
-        // Moderator always preempts — cancel any active grace period while speaking
-        if (this.floorHolder !== speakingAgentId) {
-          this.floorHolder = speakingAgentId
-          this.postModGraceUntil = 0
-          const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
-          log.info(`Floor → ${name}`)
-        }
-      } else if (this.floorHolder === null) {
-        // Debater: only claim if floor is free AND not blocked by post-mod grace
-        const isBlocked = now < this.postModGraceUntil &&
-          speakingAgentId === this.lastDebaterFloorHolder
-        if (!isBlocked) {
-          this.floorHolder = speakingAgentId
-          this.lastDebaterFloorHolder = speakingAgentId
-          const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
-          log.info(`Floor → ${name}`)
-        }
-        // else: still in grace period, this agent is blocked — frames not routed
-      }
-    } else if (state.isSpeaking) {
-      if (state.silentSince === Infinity) state.silentSince = now
-      if (now - state.silentSince > FLOOR_RELEASE_MS) {
-        state.isSpeaking = false
-        if (this.floorHolder === speakingAgentId) {
-          this.floorHolder = null
-          const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
-          log.info(`Floor released by ${name}`)
-          if (ismod) {
-            // Mod finished — block the previous debater from immediately reclaiming
-            this.postModGraceUntil = now + POST_MOD_GRACE_MS
-            const blockedName =
-              this.calls.get(this.lastDebaterFloorHolder ?? '')?.meta.agentName ?? 'none'
-            log.info(`Post-mod grace: ${blockedName} blocked for ${POST_MOD_GRACE_MS}ms`)
-          }
-        }
-      }
-    }
-
-    // Route if this agent holds the floor — applies to both agent cross-routing
-    // and the public broadcast room for a consistent audio experience.
-    if (this.floorHolder === speakingAgentId) {
-      const publicSrc = this.publicSources.get(speakingAgentId)
-      if (publicSrc) {
-        routes.push(this.safeCaptureFrame(publicSrc, frame, `public:${speakingAgentId}`))
-      }
-      for (const [agentId, conn] of this.calls) {
-        if (agentId === speakingAgentId) continue
-        routes.push(this.safeCaptureFrame(conn.injectSource, frame, `vad:${speakingAgentId}→${agentId}`))
-      }
-    }
-
-    await Promise.all(routes)
-  }
-
-  /**
    * Inject synthesized PCM audio into a specific agent's call as user audio.
    * Used for audience questions routed to the moderator.
-   * NOT forwarded to other agents or the public room.
    */
   async injectAudio(agentId: string, pcmBuffer: Buffer): Promise<void> {
     const conn = this.calls.get(agentId)
@@ -399,16 +380,17 @@ export class AudioRelay {
       const chunk = new Int16Array(end - offset)
       chunk.set(int16.subarray(offset, end))
       await this.safeCaptureFrame(
+        `inject:${agentId}`,
         conn.injectSource,
         new AudioFrame(chunk, SAMPLE_RATE, NUM_CHANNELS, chunk.length),
-        `inject:${agentId}`,
       )
     }
   }
 
   async disconnect(): Promise<void> {
     this.stopped = true
-    if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null }
+    this.clearTurnTimeout()
+    this.onTurnEnd = null
     for (const conn of this.calls.values()) {
       await conn.room.disconnect().catch(() => {})
     }

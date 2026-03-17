@@ -27,19 +27,121 @@ type ParticipantWithAgent = {
   agents: Agent
 }
 
+// ── Playbook types ────────────────────────────────────────────────────────────
+
+/** Role-based speaker slot — resolved to actual agent IDs at runtime */
+type SpeakerSlot = 'moderator' | 'agent_a' | 'agent_b'
+
+interface SingleTurn {
+  id: string
+  type?: 'single'
+  speaker: SpeakerSlot
+  label: string
+}
+
+interface RoundRobinTurn {
+  id: string
+  type: 'round_robin'
+  speakers: SpeakerSlot[]
+  rounds: number
+  label: string
+}
+
+type PlaybookTurn = SingleTurn | RoundRobinTurn
+
+interface TurnConfig {
+  turns: PlaybookTurn[]
+}
+
+/** A resolved, flat turn with actual agent IDs */
+interface ResolvedTurn {
+  agentId: string
+  agentName: string
+  label: string
+}
+
 /**
- * DebateConductor orchestrates a freeflow Retell-based debate end-to-end.
+ * Default 3-phase debate playbook used when no turn_config is set on the format.
  *
- * 1. Load debate + format + participants from DB
- * 2. Create one Retell web call per participant (using their retell_agent_id)
- * 3. Update debate status → "live"
- * 4. Set up public LiveKit room with one participant per agent (for speaker highlighting)
- * 5. Start AudioRelay — cross-routes audio between all Retell call rooms
- * 6. Start LiveTranscriptPoller — polls Retell every 3s, writes turns to DB
- *    → Supabase Realtime delivers turns to the browser as they happen
- * 7. Run for max_duration_minutes
- * 8. Stop poller + disconnect relay (agents go silent → Retell ends calls)
- * 9. Broadcast "debate_complete" to the LiveKit room
+ * Phase 1 (Opening): mod intro → agent A opening → mod transition → agent B opening → mod opens discussion
+ * Phase 2 (Discussion): 3 rounds of A ↔ B, then mod summarises
+ * Phase 3 (Closing): mod announces → A closes → mod bridges → B closes → mod final address
+ */
+const DEFAULT_TURN_CONFIG: TurnConfig = {
+  turns: [
+    { id: 't1',  speaker: 'moderator', label: 'Introduction' },
+    { id: 't2',  speaker: 'agent_a',   label: 'Opening Statement' },
+    { id: 't3',  speaker: 'moderator', label: 'Transition to B' },
+    { id: 't4',  speaker: 'agent_b',   label: 'Opening Statement' },
+    { id: 't5',  speaker: 'moderator', label: 'Opens Discussion' },
+    { id: 't6',  type: 'round_robin',  speakers: ['agent_a', 'agent_b'], rounds: 3, label: 'Open Discussion' },
+    { id: 't7',  speaker: 'moderator', label: 'Discussion Summary' },
+    { id: 't8',  speaker: 'moderator', label: 'Announce Closings' },
+    { id: 't9',  speaker: 'agent_a',   label: 'Closing Argument' },
+    { id: 't10', speaker: 'moderator', label: 'Bridge to B' },
+    { id: 't11', speaker: 'agent_b',   label: 'Closing Argument' },
+    { id: 't12', speaker: 'moderator', label: 'Final Address' },
+  ],
+}
+
+/**
+ * Expand the playbook into a flat, ordered list of resolved turns.
+ * SpeakerSlots are resolved against the actual participants.
+ */
+function buildTurnSequence(
+  config: TurnConfig,
+  moderatorId: string,
+  debaterIds: [string, string],  // [agent_a, agent_b]
+  agentNames: Map<string, string>,
+): ResolvedTurn[] {
+  function resolve(slot: SpeakerSlot): string {
+    if (slot === 'moderator') return moderatorId
+    if (slot === 'agent_a')   return debaterIds[0]
+    return debaterIds[1]
+  }
+
+  const turns: ResolvedTurn[] = []
+
+  for (const entry of config.turns) {
+    if (entry.type === 'round_robin') {
+      for (let round = 0; round < entry.rounds; round++) {
+        for (const slot of entry.speakers) {
+          const agentId = resolve(slot)
+          turns.push({
+            agentId,
+            agentName: agentNames.get(agentId) ?? agentId,
+            label: `${entry.label} — Round ${round + 1}`,
+          })
+        }
+      }
+    } else {
+      const agentId = resolve(entry.speaker)
+      turns.push({
+        agentId,
+        agentName: agentNames.get(agentId) ?? agentId,
+        label: entry.label,
+      })
+    }
+  }
+
+  return turns
+}
+
+// ── Conductor ─────────────────────────────────────────────────────────────────
+
+/**
+ * DebateConductor orchestrates a structured, turn-based Retell debate end-to-end.
+ *
+ * 1.  Load debate + format + participants from DB
+ * 2.  Create one Retell web call per participant (using their retell_agent_id)
+ * 3.  Update debate status → "live"
+ * 4.  Set up public LiveKit room with one participant per agent (speaker highlighting)
+ * 5.  Start AudioRelay — routes audio according to the active turn
+ * 6.  Start LiveTranscriptPoller — polls Retell every 3s, writes turns to DB
+ * 7.  Execute the playbook turn sequence (onTurnEnd callback drives each advance)
+ *     while the overall debate timer runs in parallel as a ceiling
+ * 8.  Stop poller + disconnect relay
+ * 9.  Broadcast "debate_complete" to the public LiveKit room
  * 10. Collect final transcripts + recording URLs from Retell
  * 11. Update debate status → "ended"
  */
@@ -50,11 +152,9 @@ export class DebateConductor {
   private callIds = new Map<string, string>()      // agentId → retellCallId
   private callStartTimes = new Map<string, Date>() // agentId → when createWebCall returned
   private stopped = false
-  private phaseTimers: ReturnType<typeof setTimeout>[] = []
   private qaTimer: ReturnType<typeof setInterval> | null = null
-  private injectedQuestions = new Set<string>()   // prevent re-injecting same question
+  private injectedQuestions = new Set<string>()
   private moderatorAgentId: string | null = null
-  private debateTitle = ''
 
   constructor(private config: DebateConductorConfig) {
     const apiKey = process.env.RETELL_API_KEY
@@ -68,7 +168,6 @@ export class DebateConductor {
     // ── 1. Load debate ────────────────────────────────────────────────────────
     const debate = await getDebate(db, this.config.debateId)
     if (!debate) throw new Error(`Debate not found: ${this.config.debateId}`)
-    this.debateTitle = debate.title ?? ''
 
     const format = debate.format_id ? await getDebateFormat(db, debate.format_id) : null
     const participants = await getDebateParticipants(
@@ -80,9 +179,11 @@ export class DebateConductor {
       (p) => p.role === 'debater' || p.role === 'moderator',
     )
 
-    if (!allParticipants.some((p) => p.role === 'debater')) {
-      throw new Error('No debaters found for debate')
-    }
+    const debaters = allParticipants.filter((p) => p.role === 'debater')
+    const moderator = allParticipants.find((p) => p.role === 'moderator')
+
+    if (debaters.length < 2) throw new Error('Need at least 2 debaters')
+    if (!moderator) throw new Error('No moderator found for debate')
 
     log.info(`Starting: "${debate.title}" — ${allParticipants.length} participants`)
 
@@ -91,18 +192,16 @@ export class DebateConductor {
     const pollerAgents: PollerAgent[] = []
     const retellCallIds: Record<string, string> = {}
 
-    // Build topic variables to inject into every agent's system prompt via
-    // {{variable_name}} placeholders. Add these to your Retell agent prompts.
-    const tf = (debate.topic_framing ?? {}) as Record<string, string>
+    const tf = (debate.topic_framing ?? {}) as unknown as Record<string, string>
     const topicVars: Record<string, string> = {
-      debate_title:          debate.title ?? '',
-      debate_headline:       tf.headline ?? '',
-      conflict_description:  tf.conflict_description ?? '',
-      forced_tradeoff:       tf.forced_tradeoff ?? '',
-      decision_surface:      tf.decision_surface ?? '',
-      moral_tension:         tf.moral_tension ?? '',
-      strategic_tension:     tf.strategic_tension ?? '',
-      identity_tension:      tf.identity_tension ?? '',
+      debate_title:         debate.title ?? '',
+      debate_headline:      tf.headline ?? '',
+      conflict_description: tf.conflict_description ?? '',
+      forced_tradeoff:      tf.forced_tradeoff ?? '',
+      decision_surface:     tf.decision_surface ?? '',
+      moral_tension:        tf.moral_tension ?? '',
+      strategic_tension:    tf.strategic_tension ?? '',
+      identity_tension:     tf.identity_tension ?? '',
     }
 
     for (const participant of allParticipants) {
@@ -112,7 +211,6 @@ export class DebateConductor {
         continue
       }
 
-      // Tell each agent who the other participants are
       const opponents = allParticipants
         .filter((p) => p.agent_id !== participant.agent_id)
         .map((p) => `${p.agents.name} (${p.role})`)
@@ -138,7 +236,6 @@ export class DebateConductor {
       this.callStartTimes.set(participant.agent_id, callCreatedAt)
       retellCallIds[participant.agent_id] = call.call_id
 
-      const agentName = agent.name
       const agentRole = participant.role as 'debater' | 'moderator'
       if (agentRole === 'moderator') this.moderatorAgentId = participant.agent_id
 
@@ -146,19 +243,19 @@ export class DebateConductor {
         agentId: participant.agent_id,
         callId: call.call_id,
         accessToken: call.access_token,
-        agentName,
+        agentName: agent.name,
         role: agentRole,
       })
 
       pollerAgents.push({
         agentId: participant.agent_id,
         callId: call.call_id,
-        agentName,
-        role: participant.role as 'debater' | 'moderator',
+        agentName: agent.name,
+        role: agentRole,
         callStartedAt: callCreatedAt,
       })
 
-      log.info(`Call created: ${call.call_id} for ${agentName}`)
+      log.info(`Call created: ${call.call_id} for ${agent.name}`)
     }
 
     if (relayAgents.length < 2) {
@@ -172,7 +269,7 @@ export class DebateConductor {
       started_at: debateStartedAt.toISOString(),
     })
 
-    // ── 4. Public LiveKit room — one participant per agent ────────────────────
+    // ── 4. Public LiveKit room ────────────────────────────────────────────────
     let roomManager: LiveKitRoomManager | null = null
     let publicRoomConfig: { url: string; tokens: Map<string, string> } | undefined
 
@@ -181,8 +278,6 @@ export class DebateConductor {
         roomManager = new LiveKitRoomManager()
         await roomManager.createRoom(debate.room_name)
 
-        // Generate a token per agent with the identity DebateRoom expects:
-        // "agent-${name.toLowerCase().replace(/\s+/g, '-')}"
         const tokens = new Map<string, string>()
         for (const agent of relayAgents) {
           const identity = `agent-${agent.agentName.toLowerCase().replace(/\s+/g, '-')}`
@@ -209,8 +304,8 @@ export class DebateConductor {
       await this.relay.connect(relayAgents, publicRoomConfig)
       log.info('AudioRelay live')
     } catch (err) {
-      log.error('AudioRelay failed to connect', err instanceof Error ? err : new Error(JSON.stringify(err, Object.getOwnPropertyNames(err instanceof Object ? err as object : {})) || String(err)))
-      await this.cleanup(db, roomManager, debate.room_name)
+      log.error('AudioRelay failed to connect', err instanceof Error ? err : new Error(String(err)))
+      await this.cleanup(roomManager, debate.room_name)
       await updateDebateStatus(db, this.config.debateId, 'cancelled')
       throw err
     }
@@ -227,65 +322,74 @@ export class DebateConductor {
     )
     this.poller.start()
 
-    // ── 7. Run for max duration ───────────────────────────────────────────────
-    const maxMinutes =
-      debate.duration_override_minutes ?? format?.max_duration_minutes ?? 30
+    // ── 7. Build turn sequence and run ────────────────────────────────────────
+    const maxMinutes = debate.duration_override_minutes ?? format?.max_duration_minutes ?? 30
     log.info(`Debate running — max ${maxMinutes}min`)
 
-    // Schedule phase transitions now that maxMinutes is known.
-    // Opening scales with debate length (min 30s, max 90s).
-    // Closing starts at 85% of total duration.
-    const openingMs = Math.min(90_000, Math.max(30_000, maxMinutes * 9_000))
-    const closingMs = maxMinutes * 60_000 * 0.85
+    // Resolve speaker slots → actual agent IDs
+    const agentNames = new Map(relayAgents.map((a) => [a.agentId, a.agentName]))
+    const debaterA = debaters[0]!.agent_id
+    const debaterB = debaters[1]!.agent_id
 
-    this.phaseTimers.push(
-      setTimeout(() => {
-        if (!this.stopped) {
-          this.relay?.setPhase('debate')
-          log.info('Phase: opening → debate (3-way free conversation)')
-        }
-      }, openingMs),
-      setTimeout(() => {
-        if (!this.stopped) {
-          this.relay?.setPhase('closing')
-          log.info('Phase: debate → closing')
-        }
-      }, closingMs),
+    const turnConfig: TurnConfig =
+      (format as unknown as { turn_config?: TurnConfig })?.turn_config ?? DEFAULT_TURN_CONFIG
+
+    const turnSequence = buildTurnSequence(
+      turnConfig,
+      moderator.agent_id,
+      [debaterA, debaterB],
+      agentNames,
     )
 
-    // Q&A: after the opening phase, inject top audience question every 90s
-    // into the moderator's call as TTS audio (requires OPENAI_API_KEY)
-    if (this.moderatorAgentId) {
-      const moderatorId = this.moderatorAgentId
-      this.phaseTimers.push(
-        setTimeout(() => {
-          if (this.stopped) return
-          this.qaTimer = setInterval(async () => {
-            if (this.stopped || !this.relay) {
-              if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
-              return
-            }
-            const qaDb = getSupabaseClient()
-            await this.injectTopQuestion(qaDb, moderatorId)
-          }, 90_000)
-          this.qaTimer?.unref?.()
-        }, openingMs),
-      )
+    log.info(`Playbook: ${turnSequence.length} turns`)
+    for (const [i, t] of turnSequence.entries()) {
+      log.info(`  ${i + 1}. ${t.agentName} — ${t.label}`)
     }
 
-    await this.runTimer(maxMinutes * 60_000)
+    // Run the overall timer in parallel — fires stopped=true when time is up
+    const overallTimer = this.runTimer(maxMinutes * 60_000)
+
+    // Q&A: inject top audience question into moderator every 90s (if OPENAI_API_KEY set)
+    if (this.moderatorAgentId) {
+      const moderatorId = this.moderatorAgentId
+      this.qaTimer = setInterval(async () => {
+        if (this.stopped || !this.relay) {
+          if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
+          return
+        }
+        const qaDb = getSupabaseClient()
+        await this.injectTopQuestion(qaDb, moderatorId)
+      }, 90_000)
+      this.qaTimer.unref?.()
+    }
+
+    // Execute turns sequentially — each turn completes via the onTurnEnd callback
+    for (const turn of turnSequence) {
+      if (this.stopped) break
+
+      log.info(`Starting turn: ${turn.agentName} — ${turn.label}`)
+
+      await new Promise<void>((resolve) => {
+        // Guard: if debate was stopped while we were awaiting, resolve immediately
+        if (this.stopped || !this.relay) { resolve(); return }
+        this.relay.setTurn(turn.agentId, resolve)
+      })
+
+      log.info(`Turn complete: ${turn.agentName} — ${turn.label}`)
+    }
+
+    // Wait for overall timer if turns finished first (unlikely but correct)
+    await overallTimer
 
     // ── 8. Stop poller + disconnect relay ─────────────────────────────────────
-    log.info('Debate timer done — wrapping up')
-    for (const t of this.phaseTimers) clearTimeout(t)
-    this.phaseTimers = []
+    log.info('Debate ending — wrapping up')
     if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
     this.poller?.stop()
     this.poller = null
     await this.relay?.disconnect().catch(() => {})
     this.relay = null
 
-    // ── 9. Signal debate complete to the public LiveKit room ──────────────────
+    // ── 9. Signal debate complete ─────────────────────────────────────────────
     if (roomManager) {
       await roomManager.sendData(debate.room_name, {
         type: 'debate_complete',
@@ -294,7 +398,7 @@ export class DebateConductor {
     }
 
     // ── 10. Collect final transcripts + recording URLs ────────────────────────
-    log.info('Collecting final transcripts and recording URLs...')
+    log.info('Collecting final transcripts...')
     try {
       await collectTranscripts(db, this.config.debateId, this.retell, this.callIds, participants)
     } catch (err) {
@@ -306,22 +410,20 @@ export class DebateConductor {
       ended_at: new Date().toISOString(),
     })
 
-    // Cleanup LiveKit room
-    await this.cleanup(db, roomManager, debate.room_name)
-
+    await this.cleanup(roomManager, debate.room_name)
     log.info(`Debate ${this.config.debateId} complete`)
   }
 
-  private async runTimer(durationMs: number): Promise<void> {
+  private runTimer(durationMs: number): Promise<void> {
     return new Promise((resolve) => {
       const end = Date.now() + durationMs
       const tick = setInterval(async () => {
         if (this.stopped || Date.now() >= end) {
           clearInterval(tick)
+          this.stopped = true
           resolve()
           return
         }
-        // Poll DB — stop early if admin ended the debate
         try {
           const db = getSupabaseClient()
           const debate = await getDebate(db, this.config.debateId)
@@ -338,7 +440,6 @@ export class DebateConductor {
   }
 
   private async cleanup(
-    _db: unknown,
     roomManager: LiveKitRoomManager | null,
     roomName: string,
   ): Promise<void> {
@@ -347,12 +448,6 @@ export class DebateConductor {
     }
   }
 
-  /**
-   * Synthesize the top unaddressed audience question as TTS and inject it
-   * into the moderator's Retell call as "user" audio. The moderator hears it
-   * and incorporates it naturally into the next turn.
-   * Only runs when OPENAI_API_KEY is set; silently skips otherwise.
-   */
   private async injectTopQuestion(
     db: ReturnType<typeof getSupabaseClient>,
     moderatorAgentId: string,
@@ -383,18 +478,15 @@ export class DebateConductor {
   stop(): void {
     if (this.stopped) return
     this.stopped = true
-    for (const t of this.phaseTimers) clearTimeout(t)
-    this.phaseTimers = []
     if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
     this.poller?.stop()
     this.poller = null
-    // Disconnect relay immediately — this causes Retell to see the "user" leave
     this.relay?.disconnect().catch(() => {})
     this.relay = null
-    // Also explicitly end all Retell calls so they don't burn minutes
     for (const [, callId] of this.callIds) {
-      this.retell.call.end(callId).catch((err) => {
-        log.warn(`Failed to end Retell call ${callId}`, err instanceof Error ? err : new Error(String(err)))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(this.retell.call as any).end(callId).catch(() => {
+        log.warn(`Failed to end Retell call ${callId}`)
       })
     }
     log.info(`Debate ${this.config.debateId} stopped`)
