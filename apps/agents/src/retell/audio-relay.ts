@@ -305,25 +305,30 @@ export class AudioRelay {
 
   /**
    * Route a frame from the current speaker to all other agents + public room.
+   *
+   * Inject sources (Retell agent calls) are fire-and-forget — we do NOT await them.
+   * Awaiting all destinations in Promise.all meant slow Retell connections (inject writes
+   * crossing network to Retell's LiveKit server) blocked the main for-await loop.
+   * When the loop fell behind, frames arrived in bursts that triggered Retell's barge-in
+   * detection repeatedly, producing fragmented/choppy agent speech in both the public
+   * room and Retell's own recordings.
+   *
+   * Each inject destination has its own capturingNow lock + pendingFrames slot, so it
+   * processes frames independently at its own rate — smooth, no gaps, no bursts.
+   * The main loop now paces only with the public room write (our own fast LiveKit server).
    */
   private async broadcast(speakingAgentId: string, frame: AudioFrame): Promise<void> {
-    const routes: Promise<void>[] = []
-
-    // Public broadcast room
-    const publicSrc = this.publicSources.get(speakingAgentId)
-    if (publicSrc) {
-      routes.push(this.safeCaptureFrame(`public:${speakingAgentId}`, publicSrc, frame))
-    }
-
-    // All other agents' injectSources (they hear the current speaker)
+    // Inject sources: fire-and-forget — decouple from main loop entirely
     for (const [agentId, conn] of this.calls) {
       if (agentId === speakingAgentId) continue
-      routes.push(
-        this.safeCaptureFrame(`${speakingAgentId}→${agentId}`, conn.injectSource, frame),
-      )
+      void this.safeCaptureFrame(`${speakingAgentId}→${agentId}`, conn.injectSource, frame)
     }
 
-    await Promise.all(routes)
+    // Public room: awaited — paces the main loop at a stable cadence
+    const publicSrc = this.publicSources.get(speakingAgentId)
+    if (publicSrc) {
+      await this.safeCaptureFrame(`public:${speakingAgentId}`, publicSrc, frame)
+    }
   }
 
   /**
@@ -362,7 +367,7 @@ export class AudioRelay {
     this.capturingNow.add(label)
     let toWrite: AudioFrame | undefined = copy
     try {
-      while (toWrite) {
+      while (toWrite && !this.stopped) {
         await src.captureFrame(toWrite)
         toWrite = this.pendingFrames.get(label)
         this.pendingFrames.delete(label)
