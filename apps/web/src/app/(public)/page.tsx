@@ -108,20 +108,28 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            {recentDebates.map((d) => {
+            {recentDebates.map((d, i) => {
               const framing = d.topic_framing as unknown as Record<string, string>
               const recordings = d.recordings as Record<string, string> | null
               const recordingUrl = recordings ? (Object.values(recordings)[0] ?? null) : null
+              const retellCallIds = d.retell_call_ids as Record<string, string> | null
+              const participantIds = retellCallIds ? Object.keys(retellCallIds) : []
+              const participants = agents
+                .filter((a) => participantIds.includes(a.id))
+                .map((a) => ({ id: a.id, name: a.name, archetype: a.archetype }))
               return (
-                <PastDebateCard
-                  key={d.id}
-                  title={d.title}
-                  slug={d.slug}
-                  headline={framing?.headline ?? ''}
-                  endedAt={d.ended_at}
-                  startedAt={d.started_at}
-                  recordingUrl={recordingUrl}
-                />
+                // Show all 4 on sm+, only first 2 on mobile
+                <div key={d.id} className={i >= 2 ? 'hidden sm:block' : ''}>
+                  <PastDebateCard
+                    title={d.title}
+                    slug={d.slug}
+                    headline={framing?.headline ?? ''}
+                    endedAt={d.ended_at}
+                    startedAt={d.started_at}
+                    recordingUrl={recordingUrl}
+                    participants={participants}
+                  />
+                </div>
               )
             })}
           </div>

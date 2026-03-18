@@ -1,13 +1,13 @@
 export const dynamic = 'force-dynamic'
 
 import { createServerClient } from '@/lib/supabase/server'
-import { listDebates } from '@bipi/db'
+import { listDebates, listAgents } from '@bipi/db'
 import { DebateCard } from '@/components/public/debate-card'
 import { PastDebateCard } from '@/components/public/past-debate-card'
 
 export default async function DebatesPage() {
   const db = createServerClient()
-  const debates = await listDebates(db)
+  const [debates, agents] = await Promise.all([listDebates(db), listAgents(db)])
 
   const liveDebates = debates.filter((d) => d.status === 'live')
   const scheduledDebates = debates.filter((d) => d.status === 'scheduled')
@@ -78,6 +78,11 @@ export default async function DebatesPage() {
               const framing = d.topic_framing as unknown as Record<string, string>
               const recordings = d.recordings as Record<string, string> | null
               const recordingUrl = recordings ? (Object.values(recordings)[0] ?? null) : null
+              const retellCallIds = d.retell_call_ids as Record<string, string> | null
+              const participantIds = retellCallIds ? Object.keys(retellCallIds) : []
+              const participants = agents
+                .filter((a) => participantIds.includes(a.id))
+                .map((a) => ({ id: a.id, name: a.name, archetype: a.archetype }))
               return (
                 <PastDebateCard
                   key={d.id}
@@ -87,6 +92,7 @@ export default async function DebatesPage() {
                   endedAt={d.ended_at}
                   startedAt={d.started_at}
                   recordingUrl={recordingUrl}
+                  participants={participants}
                 />
               )
             })}
