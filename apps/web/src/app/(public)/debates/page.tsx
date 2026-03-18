@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createServerClient } from '@/lib/supabase/server'
 import { listDebates } from '@bipi/db'
 import { DebateCard } from '@/components/public/debate-card'
+import { PastDebateCard } from '@/components/public/past-debate-card'
 
 export default async function DebatesPage() {
   const db = createServerClient()
@@ -75,15 +76,17 @@ export default async function DebatesPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {endedDebates.map((d) => {
               const framing = d.topic_framing as unknown as Record<string, string>
+              const recordings = d.recordings as Record<string, string> | null
+              const recordingUrl = recordings ? (Object.values(recordings)[0] ?? null) : null
               return (
-                <DebateCard
+                <PastDebateCard
                   key={d.id}
                   title={d.title}
                   slug={d.slug}
                   headline={framing?.headline ?? ''}
-                  status={d.status}
-                  scheduledAt={d.scheduled_at}
                   endedAt={d.ended_at}
+                  startedAt={d.started_at}
+                  recordingUrl={recordingUrl}
                 />
               )
             })}

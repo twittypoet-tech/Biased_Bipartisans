@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { listDebates, listAgents } from '@bipi/db'
 import { DebateCard } from '@/components/public/debate-card'
+import { PastDebateCard } from '@/components/public/past-debate-card'
 import { AgentCard } from '@/components/public/agent-card'
 
 export default async function HomePage() {
@@ -109,15 +110,17 @@ export default async function HomePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {recentDebates.map((d) => {
               const framing = d.topic_framing as unknown as Record<string, string>
+              const recordings = d.recordings as Record<string, string> | null
+              const recordingUrl = recordings ? (Object.values(recordings)[0] ?? null) : null
               return (
-                <DebateCard
+                <PastDebateCard
                   key={d.id}
                   title={d.title}
                   slug={d.slug}
                   headline={framing?.headline ?? ''}
-                  status={d.status}
-                  scheduledAt={d.scheduled_at}
                   endedAt={d.ended_at}
+                  startedAt={d.started_at}
+                  recordingUrl={recordingUrl}
                 />
               )
             })}
