@@ -303,6 +303,16 @@ export class DebateConductor {
     try {
       await this.relay.connect(relayAgents, publicRoomConfig)
       log.info('AudioRelay live')
+
+      // If all Retell calls die externally (e.g. their silence timeout fires),
+      // treat it as a natural debate end rather than grinding through phantom turns.
+      this.relay.setAllCallsDeadHandler(() => {
+        if (this.stopped) return
+        log.warn('All Retell calls dropped — ending debate early')
+        this.stopped = true
+        this.relay?.disconnect().catch(() => {})
+        this.relay = null
+      })
     } catch (err) {
       log.error('AudioRelay failed to connect', err instanceof Error ? err : new Error(String(err)))
       await this.cleanup(roomManager, debate.room_name)
@@ -371,6 +381,19 @@ export class DebateConductor {
 
       const nextAgentId = turnSequence[i + 1]?.agentId ?? null
       log.info(`Starting turn: ${turn.agentName} — ${turn.label}`)
+
+      // Inject current_phase into moderator so the single-prompt LLM knows
+      // which part of the playbook it's executing (e.g. "Introduction", "Opens Discussion")
+      if (turn.agentId === this.moderatorAgentId) {
+        const moderatorCallId = this.callIds.get(turn.agentId)
+        if (moderatorCallId) {
+          await this.retell.call.update(moderatorCallId, {
+            override_dynamic_variables: { current_phase: turn.label },
+          } as Parameters<typeof this.retell.call.update>[1]).catch((err) => {
+            log.warn(`Failed to inject current_phase for moderator: ${err instanceof Error ? err.message : String(err)}`)
+          })
+        }
+      }
 
       await new Promise<void>((resolve) => {
         // Guard: if debate was stopped while we were awaiting, resolve immediately

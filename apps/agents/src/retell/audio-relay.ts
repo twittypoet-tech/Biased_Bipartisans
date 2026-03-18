@@ -108,6 +108,9 @@ export class AudioRelay {
   private turnAdvanced = false  // guard: only advance once per turn
   private turnStartTime: number | null = null  // epoch ms when current turn began
 
+  // Fired when every Retell call disconnects simultaneously (e.g. silence timeout)
+  private onAllCallsDead: (() => void) | null = null
+
   // Per-destination FIFO frame queue — up to 5 frames (100ms) buffered per destination
   private frameQueues = new Map<string, AudioFrame[]>()
 
@@ -152,6 +155,10 @@ export class AudioRelay {
     room.on(RoomEvent.Disconnected, () => {
       log.info(`Retell call disconnected: ${meta.agentName} (${meta.callId})`)
       this.calls.delete(meta.agentId)
+      if (!this.stopped && this.calls.size === 0 && this.onAllCallsDead) {
+        log.warn('All Retell calls disconnected — signalling conductor')
+        this.onAllCallsDead()
+      }
     })
 
     const track = LocalAudioTrack.createAudioTrack('user-audio', injectSource)
@@ -225,6 +232,10 @@ export class AudioRelay {
    * onTurnEnd is called when: (a) current speaker silent ≥ MIN_SILENCE_BEFORE_HANDOFF_MS
    * and another agent starts speaking, or (b) TURN_TIMEOUT_MS elapses after silence.
    */
+  setAllCallsDeadHandler(cb: () => void): void {
+    this.onAllCallsDead = cb
+  }
+
   setTurn(agentId: string, nextAgentId: string | null, onTurnEnd: () => void): void {
     this.clearTurnTimeout()
     this.currentTurnAgentId = agentId
@@ -253,7 +264,10 @@ export class AudioRelay {
     const name = this.calls.get(this.currentTurnAgentId ?? '')?.meta.agentName ?? 'unknown'
     log.info(`Turn ended [${name}]: ${reason}`)
 
-    this.currentTurnAgentId = null
+    // Provisional handoff: begin routing the next speaker's frames immediately
+    // so they aren't dropped during the async gap (~60-120ms) before the conductor
+    // calls setTurn(). Without this, the first words of every response are cut off.
+    this.currentTurnAgentId = this.nextTurnAgentId
     this.currentSpeakerSilentSince = null
 
     const cb = this.onTurnEnd
@@ -340,9 +354,9 @@ export class AudioRelay {
         const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
         log.info(`Next speaker detected: ${name} — advancing turn`)
         this.advanceTurn('next speaker started')
-        // The conductor will call setTurn() for the next turn agent (possibly this
-        // agent, possibly someone else per the playbook). Until setTurn() is called,
-        // this frame is not routed — the gap is one microtask round trip (~0ms).
+        // Provisional handoff set currentTurnAgentId = nextTurnAgentId, so this
+        // trigger frame can be broadcast immediately instead of being dropped.
+        this.broadcast(speakingAgentId, frame)
       }
     }
   }
@@ -462,6 +476,7 @@ export class AudioRelay {
 
   async disconnect(): Promise<void> {
     this.stopped = true
+    this.onAllCallsDead = null
     this.clearTurnTimeout()
     // Unblock any turn the conductor is awaiting — allows run() to reach cleanup()
     this.advanceTurn('relay disconnected')
