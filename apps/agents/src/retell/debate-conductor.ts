@@ -484,14 +484,12 @@ export class DebateConductor {
     if (this.qaTimer) { clearInterval(this.qaTimer); this.qaTimer = null }
     this.poller?.stop()
     this.poller = null
+    // Disconnecting the relay closes every LiveKit room connection — Retell detects
+    // the disconnect and ends each call once end_call_after_silence_ms elapses.
+    // Ensure all Retell agents have end_call_after_silence_ms ≤ 20000 so calls
+    // terminate promptly rather than lingering for minutes.
     this.relay?.disconnect().catch(() => {})
     this.relay = null
-    for (const [, callId] of this.callIds) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(this.retell.call as any).end(callId).catch(() => {
-        log.warn(`Failed to end Retell call ${callId}`)
-      })
-    }
     log.info(`Debate ${this.config.debateId} stopped`)
   }
 }
