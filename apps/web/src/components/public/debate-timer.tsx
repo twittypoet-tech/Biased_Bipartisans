@@ -11,6 +11,8 @@ interface DebateTimerProps {
   estimatedDurationSec: number
   /** 'live' ticks every second; 'static' shows fixed duration */
   mode: 'live' | 'static'
+  /** Override elapsed seconds (e.g. from audio.currentTime during playback) */
+  elapsedSec?: number
 }
 
 function formatTime(totalSeconds: number): string {
@@ -23,16 +25,18 @@ function formatTime(totalSeconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-export function DebateTimer({ startedAt, endedAt, estimatedDurationSec, mode }: DebateTimerProps) {
-  const [elapsed, setElapsed] = useState(() => {
+export function DebateTimer({ startedAt, endedAt, estimatedDurationSec, mode, elapsedSec }: DebateTimerProps) {
+  const [computedElapsed, setComputedElapsed] = useState(() => {
     const end = endedAt ? new Date(endedAt).getTime() : Date.now()
     return Math.floor((end - new Date(startedAt).getTime()) / 1000)
   })
 
+  const elapsed = elapsedSec !== undefined ? Math.floor(elapsedSec) : computedElapsed
+
   useEffect(() => {
     if (mode !== 'live') return
     const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000))
+      setComputedElapsed(Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000))
     }, 1000)
     return () => clearInterval(interval)
   }, [startedAt, mode])

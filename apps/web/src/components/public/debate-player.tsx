@@ -49,6 +49,7 @@ export function DebatePlayer({
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTurnIdx, setCurrentTurnIdx] = useState(0)
   const [audioProgress, setAudioProgress] = useState(0)
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0)
   const [hasAudio, setHasAudio] = useState(false)
 
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -59,6 +60,8 @@ export function DebatePlayer({
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Track whether audio has been loaded at least once
   const audioLoadedRef = useRef(false)
+  // Track the src string we set ourselves — avoids comparing against browser-resolved audio.src
+  const loadedSrcRef = useRef<string>('')
 
   const currentTurn = turns[currentTurnIdx] ?? null
 
@@ -103,18 +106,22 @@ export function DebatePlayer({
     const audio = audioRef.current
     if (!turn || !audio) return
 
-    if (turn.audioUrl) {
-      audio.src = turn.audioUrl
-      audioLoadedRef.current = true
-    } else if (recordingUrl) {
-      if (audio.src !== recordingUrl) {
+    if (recordingUrl) {
+      // Prefer the single recording — compare against our own ref, not audio.src
+      // (audio.src getter returns a browser-resolved URL that may differ from the original string)
+      if (loadedSrcRef.current !== recordingUrl) {
         audio.src = recordingUrl
+        loadedSrcRef.current = recordingUrl
         audioLoadedRef.current = true
       }
       if (turn.startedAt && startedAt) {
         const offsetSec = (new Date(turn.startedAt).getTime() - new Date(startedAt).getTime()) / 1000
         audio.currentTime = Math.max(0, offsetSec)
       }
+    } else if (turn.audioUrl) {
+      audio.src = turn.audioUrl
+      loadedSrcRef.current = turn.audioUrl
+      audioLoadedRef.current = true
     }
   }, [turns, recordingUrl, startedAt])
 
@@ -138,21 +145,24 @@ export function DebatePlayer({
     currentTurnIdxRef.current = idx
     setAudioProgress(0)
 
-    if (turn.audioUrl && audioRef.current) {
-      // Per-turn audio (legacy TTS model)
-      audioRef.current.src = turn.audioUrl
-      audioLoadedRef.current = true
-      audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
-    } else if (recordingUrl && audioRef.current) {
-      // Single debate recording — seek to turn's position via startedAt timestamp
-      if (audioRef.current.src !== recordingUrl) {
+    if (recordingUrl && audioRef.current) {
+      // Single recording — preferred over per-turn audio.
+      // Use loadedSrcRef (not audio.src) to avoid false mismatches from browser URL resolution.
+      if (loadedSrcRef.current !== recordingUrl) {
         audioRef.current.src = recordingUrl
+        loadedSrcRef.current = recordingUrl
         audioLoadedRef.current = true
       }
       if (turn.startedAt && startedAt) {
         const offsetSec = (new Date(turn.startedAt).getTime() - new Date(startedAt).getTime()) / 1000
         audioRef.current.currentTime = Math.max(0, offsetSec)
       }
+      audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
+    } else if (turn.audioUrl && audioRef.current) {
+      // Per-turn audio (legacy TTS model)
+      audioRef.current.src = turn.audioUrl
+      loadedSrcRef.current = turn.audioUrl
+      audioLoadedRef.current = true
       audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
     } else {
       // No audio — auto-advance after a reading delay
@@ -194,6 +204,7 @@ export function DebatePlayer({
     if (!audio || !audio.duration) return
 
     setAudioProgress(audio.currentTime / audio.duration)
+    setAudioCurrentTime(audio.currentTime)
 
     // Auto-sync currentTurnIdx based on audio position (recording mode with timestamps)
     if (recordingUrl && startedAt) {
@@ -263,6 +274,7 @@ export function DebatePlayer({
             endedAt={endedAt}
             estimatedDurationSec={estimatedDurationSec}
             mode="static"
+            elapsedSec={audioCurrentTime > 0 ? audioCurrentTime : undefined}
           />
           <span className="text-xs text-neutral-600">
             Turn {currentTurnIdx + 1} / {turns.length}
