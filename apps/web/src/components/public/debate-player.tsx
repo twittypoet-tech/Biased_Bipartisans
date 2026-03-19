@@ -53,30 +53,30 @@ export function DebatePlayer({
 
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Use refs for values that callbacks need without stale closures
+  // Refs for callbacks that need current values without stale closures
   const isPlayingRef = useRef(false)
   const currentTurnIdxRef = useRef(0)
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Track whether audio has been loaded at least once
+  const audioLoadedRef = useRef(false)
 
   const currentTurn = turns[currentTurnIdx] ?? null
+
+  // Scroll to top of page on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
 
   useEffect(() => {
     setHasAudio(!!recordingUrl || turns.some((t) => t.audioUrl))
   }, [turns, recordingUrl])
 
-  // Keep refs in sync
   useEffect(() => {
     isPlayingRef.current = isPlaying
   }, [isPlaying])
 
   useEffect(() => {
     currentTurnIdxRef.current = currentTurnIdx
-  }, [currentTurnIdx])
-
-  // Auto-scroll transcript to current turn
-  useEffect(() => {
-    const el = document.getElementById(`playback-turn-${currentTurnIdx}`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [currentTurnIdx])
 
   // Cleanup advance timer on unmount
@@ -86,8 +86,39 @@ export function DebatePlayer({
     }
   }, [])
 
+  /** Schedule auto-advance to next turn for text-only turns */
+  const scheduleAdvance = useCallback((idx: number, textLength: number) => {
+    const readingTimeMs = Math.max(2000, textLength * 30)
+    advanceTimerRef.current = setTimeout(() => {
+      if (isPlayingRef.current) {
+        playTurn(idx + 1)
+      }
+    }, readingTimeMs)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /** Seek audio to a turn's position without playing */
+  const seekToTurn = useCallback((idx: number) => {
+    const turn = turns[idx]
+    const audio = audioRef.current
+    if (!turn || !audio) return
+
+    if (turn.audioUrl) {
+      audio.src = turn.audioUrl
+      audioLoadedRef.current = true
+    } else if (recordingUrl) {
+      if (audio.src !== recordingUrl) {
+        audio.src = recordingUrl
+        audioLoadedRef.current = true
+      }
+      if (turn.startedAt && startedAt) {
+        const offsetSec = (new Date(turn.startedAt).getTime() - new Date(startedAt).getTime()) / 1000
+        audio.currentTime = Math.max(0, offsetSec)
+      }
+    }
+  }, [turns, recordingUrl, startedAt])
+
   const playTurn = useCallback((idx: number) => {
-    // Clear any pending advance timer
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current)
       advanceTimerRef.current = null
@@ -110,39 +141,24 @@ export function DebatePlayer({
     if (turn.audioUrl && audioRef.current) {
       // Per-turn audio (legacy TTS model)
       audioRef.current.src = turn.audioUrl
+      audioLoadedRef.current = true
       audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
     } else if (recordingUrl && audioRef.current) {
-      // Single debate recording — seek to turn's position using started_at timestamp
+      // Single debate recording — seek to turn's position via startedAt timestamp
+      if (audioRef.current.src !== recordingUrl) {
+        audioRef.current.src = recordingUrl
+        audioLoadedRef.current = true
+      }
       if (turn.startedAt && startedAt) {
         const offsetSec = (new Date(turn.startedAt).getTime() - new Date(startedAt).getTime()) / 1000
-        if (audioRef.current.src !== recordingUrl) {
-          audioRef.current.src = recordingUrl
-        }
         audioRef.current.currentTime = Math.max(0, offsetSec)
-        audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
-      } else {
-        // No timestamp info — play from beginning or advance
-        if (audioRef.current.paused) {
-          audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
-        } else {
-          scheduleAdvance(idx, turn.transcript.length)
-        }
       }
+      audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
     } else {
       // No audio — auto-advance after a reading delay
       scheduleAdvance(idx, turn.transcript.length)
     }
-  }, [turns])
-
-  /** Schedule auto-advance to next turn for text-only turns */
-  const scheduleAdvance = useCallback((idx: number, textLength: number) => {
-    const readingTimeMs = Math.max(2000, textLength * 30)
-    advanceTimerRef.current = setTimeout(() => {
-      if (isPlayingRef.current) {
-        playTurn(idx + 1)
-      }
-    }, readingTimeMs)
-  }, [playTurn])
+  }, [turns, recordingUrl, startedAt, scheduleAdvance])
 
   const togglePlayback = () => {
     if (isPlaying) {
@@ -156,11 +172,14 @@ export function DebatePlayer({
     } else {
       setIsPlaying(true)
       isPlayingRef.current = true
-      // Pre-load the debate recording when first pressing play
-      if (recordingUrl && audioRef.current && !audioRef.current.src) {
-        audioRef.current.src = recordingUrl
+      const audio = audioRef.current
+      // If audio is already loaded and paused, resume from current position
+      if (audio && audioLoadedRef.current) {
+        audio.play().catch(() => playTurn(currentTurnIdxRef.current))
+      } else {
+        // First press — load audio and start from the current turn
+        playTurn(currentTurnIdxRef.current)
       }
-      playTurn(currentTurnIdxRef.current)
     }
   }
 
@@ -171,12 +190,32 @@ export function DebatePlayer({
   }
 
   const handleTimeUpdate = () => {
-    if (audioRef.current && audioRef.current.duration) {
-      setAudioProgress(audioRef.current.currentTime / audioRef.current.duration)
+    const audio = audioRef.current
+    if (!audio || !audio.duration) return
+
+    setAudioProgress(audio.currentTime / audio.duration)
+
+    // Auto-sync currentTurnIdx based on audio position (recording mode with timestamps)
+    if (recordingUrl && startedAt) {
+      const debateStartMs = new Date(startedAt).getTime()
+      let newIdx = 0
+      for (let i = 0; i < turns.length; i++) {
+        const turn = turns[i]!
+        if (turn.startedAt) {
+          const offsetSec = (new Date(turn.startedAt).getTime() - debateStartMs) / 1000
+          if (audio.currentTime >= offsetSec - 0.3) {
+            newIdx = i
+          }
+        }
+      }
+      if (newIdx !== currentTurnIdxRef.current) {
+        setCurrentTurnIdx(newIdx)
+        currentTurnIdxRef.current = newIdx
+      }
     }
   }
 
-  const skipTo = (idx: number) => {
+  const skipTo = useCallback((idx: number) => {
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current)
       advanceTimerRef.current = null
@@ -186,11 +225,14 @@ export function DebatePlayer({
     setAudioProgress(0)
     if (isPlayingRef.current) {
       playTurn(idx)
+    } else {
+      // Seek audio to the turn's position even when paused, so resume starts from there
+      seekToTurn(idx)
     }
-  }
+  }, [playTurn, seekToTurn])
 
-  const skipPrev = () => skipTo(Math.max(0, currentTurnIdx - 1))
-  const skipNext = () => skipTo(Math.min(turns.length - 1, currentTurnIdx + 1))
+  const skipPrev = () => skipTo(Math.max(0, currentTurnIdxRef.current - 1))
+  const skipNext = () => skipTo(Math.min(turns.length - 1, currentTurnIdxRef.current + 1))
 
   const overallProgress = turns.length > 0 ? (currentTurnIdx + audioProgress) / turns.length : 0
 
@@ -294,11 +336,12 @@ export function DebatePlayer({
         )}
       </div>
 
-      {/* Speaker stage — driven by current turn */}
+      {/* Speaker stage — always shows current turn's speaker (even when paused) */}
       <SpeakerStage
         participants={participants}
-        activeSpeakerId={isPlaying ? currentTurn?.speakerId ?? null : null}
+        activeSpeakerId={currentTurn?.speakerId ?? null}
         currentPhase={currentTurn?.roundPhase ?? null}
+        isPlaying={isPlaying}
       />
 
       {/* Transcript with highlighted current turn */}
@@ -309,7 +352,7 @@ export function DebatePlayer({
         <div className="debate-transcript space-y-1 overflow-y-auto max-h-[60vh] pr-1 scroll-smooth">
           {turns.map((turn, i) => {
             const showPhaseHeader = i === 0 || turn.roundPhase !== turns[i - 1]!.roundPhase
-            const isCurrent = i === currentTurnIdx && isPlaying
+            const isCurrent = i === currentTurnIdx
             const isPast = i < currentTurnIdx
             const colors = turn.isModerator
               ? { text: 'text-neutral-300', bg: 'bg-neutral-900/30', border: 'border-neutral-700/40', badge: '' }
@@ -328,6 +371,7 @@ export function DebatePlayer({
                 )}
                 <button
                   onClick={() => skipTo(i)}
+                  onMouseDown={(e) => e.preventDefault()}
                   className={`w-full text-left rounded-lg border p-4 transition-all duration-300 ${
                     turn.isModerator
                       ? 'border-neutral-700/40 bg-neutral-900/30'
@@ -338,7 +382,7 @@ export function DebatePlayer({
                 >
                   <div className="flex items-center gap-2">
                     {turn.audioUrl ? (
-                      <span className={`inline-block h-2 w-2 rounded-full ${isCurrent ? 'bg-green-400 animate-pulse' : 'bg-neutral-600'}`} />
+                      <span className={`inline-block h-2 w-2 rounded-full ${isCurrent && isPlaying ? 'bg-green-400 animate-pulse' : 'bg-neutral-600'}`} />
                     ) : (
                       <span className="inline-block h-2 w-2 rounded-full bg-neutral-800" title="No audio" />
                     )}
@@ -350,9 +394,14 @@ export function DebatePlayer({
                         {turn.archetype.replace('_', ' ')}
                       </span>
                     )}
-                    {isCurrent && (
+                    {isCurrent && isPlaying && (
                       <span className="ml-auto rounded-full bg-green-900/50 px-2 py-0.5 text-[10px] font-medium text-green-400">
                         Playing
+                      </span>
+                    )}
+                    {isCurrent && !isPlaying && (
+                      <span className="ml-auto rounded-full bg-neutral-800 px-2 py-0.5 text-[10px] font-medium text-neutral-400">
+                        Paused
                       </span>
                     )}
                   </div>

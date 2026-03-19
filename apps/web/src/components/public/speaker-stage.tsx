@@ -14,17 +14,20 @@ interface SpeakerStageProps {
   participants: StageParticipant[]
   activeSpeakerId: string | null
   currentPhase: string | null
+  /** Controls waveform animation — pass false to freeze bars when paused */
+  isPlaying?: boolean
 }
 
 const phaseLabels: Record<string, string> = {
   opening: 'Opening Statements',
+  discussion: 'Discussion',
   rebuttal: 'Rebuttals',
   pressure: 'Pressure Round',
   audience_evidence: 'Audience & Evidence',
   closing: 'Closing Arguments',
 }
 
-export function SpeakerStage({ participants, activeSpeakerId, currentPhase }: SpeakerStageProps) {
+export function SpeakerStage({ participants, activeSpeakerId, currentPhase, isPlaying = true }: SpeakerStageProps) {
   const debaters = participants.filter((p) => p.role === 'debater')
   const moderator = participants.find((p) => p.role === 'moderator')
 
@@ -95,7 +98,7 @@ export function SpeakerStage({ participants, activeSpeakerId, currentPhase }: Sp
 
                 {/* Waveform */}
                 <AudioWaveform
-                  active={isSpeaking}
+                  active={isSpeaking && isPlaying}
                   color={isSpeaking ? getWaveformColor(participant.archetype) : 'bg-neutral-700'}
                 />
               </div>
@@ -115,7 +118,7 @@ export function SpeakerStage({ participants, activeSpeakerId, currentPhase }: Sp
             }`}
           >
             <span className="text-xs font-medium">Moderator: {moderator.name}</span>
-            {activeSpeakerId === moderator.id && (
+            {activeSpeakerId === moderator.id && isPlaying && (
               <AudioWaveform active barCount={3} color="bg-neutral-300" />
             )}
           </div>

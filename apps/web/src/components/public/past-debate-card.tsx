@@ -268,7 +268,7 @@ export function PastDebateCard({
       )}
 
       {/* ── Title ── */}
-      <h3 className="line-clamp-1 font-semibold leading-snug text-neutral-100 group-hover:text-white sm:line-clamp-2">
+      <h3 className="line-clamp-2 font-semibold leading-snug text-neutral-100 group-hover:text-white">
         {title}
       </h3>
 

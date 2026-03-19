@@ -29,11 +29,13 @@ const phaseLabels: Record<string, string> = {
 }
 
 export function LiveTranscript({ turns, activeSpeakerId }: LiveTranscriptProps) {
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll on new turns
+  // Auto-scroll transcript container on new turns (without scrolling the page)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const el = containerRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
   }, [turns.length])
 
   if (turns.length === 0) {
@@ -55,7 +57,7 @@ export function LiveTranscript({ turns, activeSpeakerId }: LiveTranscriptProps) 
   let currentPhase = ''
 
   return (
-    <div className="debate-transcript space-y-1 overflow-y-auto max-h-[60vh] pr-1 scroll-smooth">
+    <div ref={containerRef} className="debate-transcript space-y-1 overflow-y-auto max-h-[60vh] pr-1 scroll-smooth">
       {turns.map((turn) => {
         const showPhaseHeader = turn.roundPhase !== currentPhase
         if (showPhaseHeader) currentPhase = turn.roundPhase
@@ -113,7 +115,6 @@ export function LiveTranscript({ turns, activeSpeakerId }: LiveTranscriptProps) 
           </div>
         )
       })}
-      <div ref={bottomRef} />
     </div>
   )
 }
