@@ -155,9 +155,16 @@ export class AudioRelay {
     room.on(RoomEvent.Disconnected, () => {
       log.info(`Retell call disconnected: ${meta.agentName} (${meta.callId})`)
       this.calls.delete(meta.agentId)
-      if (!this.stopped && this.calls.size === 0 && this.onAllCallsDead) {
-        log.warn('All Retell calls disconnected — signalling conductor')
-        this.onAllCallsDead()
+      if (!this.stopped) {
+        // If the current turn speaker hung up, advance immediately rather than
+        // waiting for the 8s silence timeout (MIN_SILENCE + TURN_TIMEOUT_MS).
+        if (this.currentTurnAgentId === meta.agentId) {
+          this.advanceTurn('turn speaker disconnected')
+        }
+        if (this.calls.size === 0 && this.onAllCallsDead) {
+          log.warn('All Retell calls disconnected — signalling conductor')
+          this.onAllCallsDead()
+        }
       }
     })
 

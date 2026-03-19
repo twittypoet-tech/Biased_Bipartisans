@@ -5,6 +5,7 @@ import {
   getDebateParticipants,
   getDebateFormat,
   updateDebateStatus,
+  listDebates,
 } from '@bipi/db'
 import { LiveKitRoomManager } from './livekit/room-manager.js'
 import { LiveConversation } from './debate/live-conversation.js'
@@ -41,8 +42,32 @@ export class DebateScheduler {
       `Scheduler started (poll every ${POLL_INTERVAL_MS / 1000}s, livekit: ${livekitStatus}, tts: ${ttsStatus}, retell: ${retellStatus})`,
     )
 
+    this.cleanupOrphanedDebates().catch((err) => {
+      log.warn('Orphan cleanup failed on startup', { error: String(err) })
+    })
+
     this.poll()
     this.timer = setInterval(() => this.poll(), POLL_INTERVAL_MS)
+  }
+
+  /**
+   * On startup, any debate stuck in 'live' with no running conductor is orphaned
+   * (e.g. the service restarted mid-debate). Mark them ended so the homepage
+   * doesn't show a stale "LIVE NOW" card and Retell/LiveKit resources are freed.
+   */
+  private async cleanupOrphanedDebates(): Promise<void> {
+    const db = getSupabaseClient()
+    const liveDebates = await listDebates(db, { status: 'live' })
+    for (const debate of liveDebates) {
+      if (!this.conductors.has(debate.id)) {
+        log.warn(`Orphaned live debate on startup: ${debate.id} ("${debate.title}") — marking ended`)
+        await updateDebateStatus(db, debate.id, 'ended', {
+          ended_at: new Date().toISOString(),
+        }).catch((err) => {
+          log.warn(`Failed to mark orphan ${debate.id} as ended`, { error: String(err) })
+        })
+      }
+    }
   }
 
   stop(): void {
