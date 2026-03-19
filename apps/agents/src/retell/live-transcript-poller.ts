@@ -109,16 +109,14 @@ export class LiveTranscriptPoller {
     const firstWord = entry.words?.[0]
     const lastWord = entry.words?.[entry.words!.length - 1]
 
-    // Convert relative word timestamps to wall-clock times
-    const startedAt = firstWord
-      ? new Date(agent.callStartedAt.getTime() + firstWord.start * 1000)
-      : new Date()
-    const endedAt = lastWord
-      ? new Date(agent.callStartedAt.getTime() + lastWord.end * 1000)
-      : new Date()
+    // Encode word timestamps as recording-relative offsets using Unix epoch as carrier:
+    // firstWord.start is already seconds-into-the-call (e.g. 71 → 1970-01-01T00:01:11Z).
+    // DebatePlayer decodes with getTime()/1000, so this must stay call-relative, NOT wall-clock.
+    const startedAt = firstWord ? new Date(firstWord.start * 1000) : null
+    const endedAt   = lastWord  ? new Date(lastWord.end   * 1000)  : null
 
-    const durationMs = endedAt.getTime() - startedAt.getTime()
-    const roundPhase = this.inferPhase(startedAt)
+    const durationMs = (startedAt && endedAt) ? endedAt.getTime() - startedAt.getTime() : null
+    const roundPhase = this.inferPhase(new Date())
     const speakerType: SpeakerType = agent.role === 'moderator' ? 'moderator' : 'agent'
 
     try {
@@ -136,8 +134,8 @@ export class LiveTranscriptPoller {
         evidence_metadata: null,
         duration_ms: durationMs,
         audio_url: null,
-        started_at: startedAt.toISOString(),
-        ended_at: endedAt.toISOString(),
+        started_at: startedAt?.toISOString() ?? null,
+        ended_at: endedAt?.toISOString() ?? null,
       })
 
       log.info(`Turn ${turnIndex}: ${agent.agentName} — "${entry.content.slice(0, 60)}..."`)

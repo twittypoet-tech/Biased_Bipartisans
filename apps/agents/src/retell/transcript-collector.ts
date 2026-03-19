@@ -60,15 +60,27 @@ export async function collectTranscripts(
         pending.delete(agentId)
         log.info(`Call ended: ${callId} (agent ${agentId})`)
 
-        // Save recording URL if present (Retell records calls when enabled in agent config)
-        const recordingUrl = (call as unknown as Record<string, unknown>).recording_url as
+        // Save recording URL — Retell processes recordings asynchronously, so the URL
+        // may not be present the moment call_status flips to 'ended'. Retry up to 5×3s.
+        let recordingUrl = (call as unknown as Record<string, unknown>).recording_url as
           | string
           | undefined
+        if (!recordingUrl) {
+          for (let attempt = 0; attempt < 5 && !recordingUrl; attempt++) {
+            await sleep(3_000)
+            const refreshed = await retell.call.retrieve(callId).catch(() => null)
+            recordingUrl = (refreshed as unknown as Record<string, unknown>)?.recording_url as
+              | string
+              | undefined
+          }
+        }
         if (recordingUrl) {
           await saveDebateRecording(db, debateId, agentId, recordingUrl).catch((err) => {
             log.warn(`Failed to save recording URL for ${agentId}`, { error: String(err) })
           })
           log.info(`Recording saved for agent ${agentId}`)
+        } else {
+          log.warn(`No recording URL found for agent ${agentId} (call ${callId})`)
         }
 
         const entries = (call as unknown as Record<string, unknown>).transcript_object as
@@ -96,16 +108,23 @@ export async function collectTranscripts(
     log.warn(`Timed out waiting for ${pending.size} call(s): ${[...pending.values()].join(', ')}`)
   }
 
-  // Only insert turns if the live transcript poller didn't already write them.
-  // If turns exist in the DB, the poller ran successfully — skip re-insertion.
+  // Compare what the live poller wrote against what Retell's final transcripts contain.
+  // If the poller captured a complete (or near-complete) set, skip re-insertion.
+  // If the poller only wrote a partial set (e.g. it was slow to start or errored early),
+  // clear those rows and replace with the full sorted batch from Retell.
   const { count: existingCount } = await db
     .from('debate_turns')
     .select('*', { count: 'exact', head: true })
     .eq('debate_id', debateId)
 
-  if ((existingCount ?? 0) > 0) {
-    log.info(`Skipping turn insertion — ${existingCount} turns already written by live poller`)
+  if ((existingCount ?? 0) >= allTurns.length) {
+    log.info(`Skipping turn insertion — live poller captured ${existingCount} turns (complete vs ${allTurns.length} from Retell)`)
     return
+  }
+
+  if ((existingCount ?? 0) > 0) {
+    log.warn(`Live poller only captured ${existingCount}/${allTurns.length} turns — clearing and replacing with complete sorted batch`)
+    await db.from('debate_turns').delete().eq('debate_id', debateId)
   }
 
   if (allTurns.length === 0) {
