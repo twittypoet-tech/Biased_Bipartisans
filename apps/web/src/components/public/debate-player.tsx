@@ -114,8 +114,11 @@ export function DebatePlayer({
         loadedSrcRef.current = recordingUrl
         audioLoadedRef.current = true
       }
-      if (turn.startedAt && startedAt) {
-        const offsetSec = (new Date(turn.startedAt).getTime() - new Date(startedAt).getTime()) / 1000
+      if (turn.startedAt) {
+        // turn.startedAt is stored as seconds-into-recording encoded as a Unix epoch timestamp
+        // (Retell stores call-relative offsets this way, e.g. "1970-01-01T00:01:11Z" = 71s in)
+        // Dividing getTime() by 1000 gives the recording offset in seconds directly.
+        const offsetSec = new Date(turn.startedAt).getTime() / 1000
         audio.currentTime = Math.max(0, offsetSec)
       }
     } else if (turn.audioUrl) {
@@ -153,8 +156,9 @@ export function DebatePlayer({
         loadedSrcRef.current = recordingUrl
         audioLoadedRef.current = true
       }
-      if (turn.startedAt && startedAt) {
-        const offsetSec = (new Date(turn.startedAt).getTime() - new Date(startedAt).getTime()) / 1000
+      if (turn.startedAt) {
+        // turn.startedAt encodes recording-relative offset as a Unix epoch timestamp
+        const offsetSec = new Date(turn.startedAt).getTime() / 1000
         audioRef.current.currentTime = Math.max(0, offsetSec)
       }
       audioRef.current.play().catch(() => scheduleAdvance(idx, turn.transcript.length))
@@ -207,21 +211,15 @@ export function DebatePlayer({
     setAudioCurrentTime(audio.currentTime)
 
     // Auto-sync currentTurnIdx based on audio position (recording mode with timestamps)
-    if (recordingUrl && startedAt) {
-      const debateStartMs = new Date(startedAt).getTime()
-      // Default: keep the current turn — only update if we find a definitive match.
-      // This prevents a false-positive mass-match where every turn satisfies the
-      // condition at currentTime=0 because of a 0/negative offset, which used to
-      // immediately jump currentTurnIdx to turns.length-1 on first play.
+    if (recordingUrl) {
       let newIdx = currentTurnIdxRef.current
 
       for (let i = 0; i < turns.length; i++) {
         const turn = turns[i]!
         if (!turn.startedAt) continue
-        const offsetSec = (new Date(turn.startedAt).getTime() - debateStartMs) / 1000
-        // Skip turns whose offset is <= 0 (at or before debate start); these can't be
-        // used to distinguish progress because they all satisfy currentTime >= 0.
-        if (offsetSec <= 0) continue
+        // turn.startedAt encodes recording-relative offset as a Unix epoch timestamp
+        const offsetSec = new Date(turn.startedAt).getTime() / 1000
+        if (offsetSec < 0) continue
         // Turns are in order — once we hit one in the future, all subsequent ones are too.
         if (offsetSec > audio.currentTime) break
         newIdx = i
