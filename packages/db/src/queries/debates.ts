@@ -65,6 +65,30 @@ export async function getDebateParticipants(
   return data ?? []
 }
 
+/**
+ * Fetch participants (with nested agent data) for multiple debates in one query.
+ * Returns a map of debateId → DebateParticipant[].
+ */
+export async function listDebateParticipants(
+  db: SupabaseClient,
+  debateIds: UUID[],
+): Promise<Record<UUID, DebateParticipant[]>> {
+  if (debateIds.length === 0) return {}
+  const { data, error } = await db
+    .from('debate_participants')
+    .select('*, agents(*)')
+    .in('debate_id', debateIds)
+    .order('speaking_order')
+  if (error) throw error
+  const map: Record<UUID, DebateParticipant[]> = {}
+  for (const row of data ?? []) {
+    if (!map[row.debate_id]) map[row.debate_id] = []
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    map[row.debate_id]!.push(row)
+  }
+  return map
+}
+
 export async function getDebateTurns(
   db: SupabaseClient,
   debateId: UUID,

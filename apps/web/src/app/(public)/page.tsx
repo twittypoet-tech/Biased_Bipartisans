@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
-import { listDebates, listAgents } from '@bipi/db'
+import { listDebates, listAgents, listDebateParticipants } from '@bipi/db'
 import { DebateCard } from '@/components/public/debate-card'
 import { PastDebateCard } from '@/components/public/past-debate-card'
 import { AgentCard } from '@/components/public/agent-card'
@@ -19,12 +19,18 @@ export default async function HomePage() {
   const recentDebates = debates.filter((d) => d.status === 'ended').slice(0, 4)
   const debaters = agents.filter((a) => a.role !== 'moderator')
 
+  // Fetch participants from debate_participants table for live + scheduled cards
+  const activeIds = [...liveDebates, ...scheduledDebates].map((d) => d.id)
+  const participantsMap = await listDebateParticipants(db, activeIds)
+
   function getParticipants(d: (typeof debates)[0]) {
-    const retellCallIds = d.retell_call_ids as Record<string, string> | null
-    const ids = retellCallIds ? Object.keys(retellCallIds) : []
-    return agents
-      .filter((a) => ids.includes(a.id))
-      .map((a) => ({ id: a.id, name: a.name, archetype: a.archetype }))
+    const rows = participantsMap[d.id] ?? []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return rows.map((r: any) => ({
+      id: r.agent_id as string,
+      name: (r.agents?.name ?? '') as string,
+      archetype: (r.agents?.archetype ?? '') as string,
+    }))
   }
 
   return (
