@@ -198,16 +198,24 @@ export function DebatePlayer({
     // Auto-sync currentTurnIdx based on audio position (recording mode with timestamps)
     if (recordingUrl && startedAt) {
       const debateStartMs = new Date(startedAt).getTime()
-      let newIdx = 0
+      // Default: keep the current turn — only update if we find a definitive match.
+      // This prevents a false-positive mass-match where every turn satisfies the
+      // condition at currentTime=0 because of a 0/negative offset, which used to
+      // immediately jump currentTurnIdx to turns.length-1 on first play.
+      let newIdx = currentTurnIdxRef.current
+
       for (let i = 0; i < turns.length; i++) {
         const turn = turns[i]!
-        if (turn.startedAt) {
-          const offsetSec = (new Date(turn.startedAt).getTime() - debateStartMs) / 1000
-          if (audio.currentTime >= offsetSec - 0.3) {
-            newIdx = i
-          }
-        }
+        if (!turn.startedAt) continue
+        const offsetSec = (new Date(turn.startedAt).getTime() - debateStartMs) / 1000
+        // Skip turns whose offset is <= 0 (at or before debate start); these can't be
+        // used to distinguish progress because they all satisfy currentTime >= 0.
+        if (offsetSec <= 0) continue
+        // Turns are in order — once we hit one in the future, all subsequent ones are too.
+        if (offsetSec > audio.currentTime) break
+        newIdx = i
       }
+
       if (newIdx !== currentTurnIdxRef.current) {
         setCurrentTurnIdx(newIdx)
         currentTurnIdxRef.current = newIdx
