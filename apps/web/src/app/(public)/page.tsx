@@ -19,6 +19,14 @@ export default async function HomePage() {
   const recentDebates = debates.filter((d) => d.status === 'ended').slice(0, 4)
   const debaters = agents.filter((a) => a.role !== 'moderator')
 
+  function getParticipants(d: (typeof debates)[0]) {
+    const retellCallIds = d.retell_call_ids as Record<string, string> | null
+    const ids = retellCallIds ? Object.keys(retellCallIds) : []
+    return agents
+      .filter((a) => ids.includes(a.id))
+      .map((a) => ({ id: a.id, name: a.name, archetype: a.archetype }))
+  }
+
   return (
     <div>
       {/* Hero */}
@@ -67,7 +75,9 @@ export default async function HomePage() {
                   headline={framing?.headline ?? ''}
                   status={d.status}
                   scheduledAt={d.scheduled_at}
-                  endedAt={d.ended_at}
+                  startedAt={d.started_at}
+                  durationMinutes={d.duration_override_minutes}
+                  participants={getParticipants(d)}
                 />
               )
             })}
@@ -90,7 +100,8 @@ export default async function HomePage() {
                   headline={framing?.headline ?? ''}
                   status={d.status}
                   scheduledAt={d.scheduled_at}
-                  endedAt={d.ended_at}
+                  durationMinutes={d.duration_override_minutes}
+                  participants={getParticipants(d)}
                 />
               )
             })}

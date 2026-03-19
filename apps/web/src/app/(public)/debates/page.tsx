@@ -13,6 +13,14 @@ export default async function DebatesPage() {
   const scheduledDebates = debates.filter((d) => d.status === 'scheduled')
   const endedDebates = debates.filter((d) => d.status === 'ended')
 
+  function getParticipants(d: (typeof debates)[0]) {
+    const retellCallIds = d.retell_call_ids as Record<string, string> | null
+    const ids = retellCallIds ? Object.keys(retellCallIds) : []
+    return agents
+      .filter((a) => ids.includes(a.id))
+      .map((a) => ({ id: a.id, name: a.name, archetype: a.archetype }))
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-3xl font-bold tracking-tight">Debates</h1>
@@ -38,7 +46,9 @@ export default async function DebatesPage() {
                   headline={framing?.headline ?? ''}
                   status={d.status}
                   scheduledAt={d.scheduled_at}
-                  endedAt={d.ended_at}
+                  startedAt={d.started_at}
+                  durationMinutes={d.duration_override_minutes}
+                  participants={getParticipants(d)}
                 />
               )
             })}
@@ -61,7 +71,8 @@ export default async function DebatesPage() {
                   headline={framing?.headline ?? ''}
                   status={d.status}
                   scheduledAt={d.scheduled_at}
-                  endedAt={d.ended_at}
+                  durationMinutes={d.duration_override_minutes}
+                  participants={getParticipants(d)}
                 />
               )
             })}
