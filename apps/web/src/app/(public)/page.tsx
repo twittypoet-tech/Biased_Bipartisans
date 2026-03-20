@@ -19,8 +19,9 @@ export default async function HomePage() {
   const recentDebates = debates.filter((d) => d.status === 'ended').slice(0, 4)
   const debaters = agents.filter((a) => a.role !== 'moderator')
 
-  // Fetch participants from debate_participants table for live + scheduled cards
-  const activeIds = [...liveDebates, ...scheduledDebates].map((d) => d.id)
+  // Fetch participants for live + scheduled cards (speaker display) and ended debates
+  // (moderator lookup for recording URL selection).
+  const activeIds = [...liveDebates, ...scheduledDebates, ...recentDebates].map((d) => d.id)
   const participantsMap = await listDebateParticipants(db, activeIds)
 
   function getParticipants(d: (typeof debates)[0]) {
@@ -128,7 +129,11 @@ export default async function HomePage() {
             {recentDebates.map((d, i) => {
               const framing = d.topic_framing as unknown as Record<string, string>
               const recordings = d.recordings as Record<string, string> | null
-              const recordingUrl = recordings ? (Object.values(recordings)[0] ?? null) : null
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const debateModerator = (participantsMap[d.id] ?? []).find((r: any) => r.role === 'moderator')
+              const recordingUrl = recordings
+                ? (recordings[debateModerator?.agent_id ?? ''] ?? Object.values(recordings)[0] ?? null)
+                : null
               const retellCallIds = d.retell_call_ids as Record<string, string> | null
               const participantIds = retellCallIds ? Object.keys(retellCallIds) : []
               const participants = agents

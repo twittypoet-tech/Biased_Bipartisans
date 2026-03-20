@@ -81,7 +81,7 @@ export function DebateRoom({
 
       if (data.type === 'turn') {
         const newTurn: LiveTurnEntry = {
-          id: `live-${Date.now()}-${data.turnIndex}`,
+          id: data.turnId ?? `live-${Date.now()}-${data.turnIndex}`,
           speakerName: data.speakerName,
           speakerId: data.speakerId,
           archetype: data.archetype ?? 'unknown',
@@ -264,6 +264,66 @@ export function DebateRoom({
       supabase.removeChannel(channel)
     }
   }, [debateId, participants])
+
+  // Polling fallback — queries debate_turns every 3s and merges any rows that
+  // weren't delivered by Supabase Realtime or LiveKit data messages.
+  // Also derives the active speaker from the latest turn when no other signal is present.
+  useEffect(() => {
+    if (connectionStatus === 'ended') return
+
+    const supabase = getSupabaseBrowserClient()
+
+    const interval = setInterval(async () => {
+      type TurnRow = {
+        id: string
+        speaker_id: string
+        speaker_type: string
+        round_phase: string
+        turn_index: number
+        transcript: string
+      }
+
+      const { data } = await supabase
+        .from('debate_turns')
+        .select('id, speaker_id, speaker_type, round_phase, turn_index, transcript')
+        .eq('debate_id', debateId)
+        .order('turn_index', { ascending: true })
+
+      if (!data || data.length === 0) return
+      const rows = data as unknown as TurnRow[]
+
+      setTurns((prev) => {
+        const existingIds = new Set(prev.map((t) => t.id))
+        const incoming = rows
+          .filter((row) => !existingIds.has(row.id))
+          .map((row) => {
+            const speaker = participants.find((p) => p.id === row.speaker_id)
+            return {
+              id: row.id,
+              speakerName: speaker?.name ?? 'Unknown',
+              speakerId: row.speaker_id,
+              archetype: speaker?.archetype ?? 'unknown',
+              roundPhase: row.round_phase,
+              turnIndex: row.turn_index,
+              transcript: row.transcript,
+              isModerator: row.speaker_type === 'moderator',
+              isNew: true,
+            }
+          })
+
+        if (incoming.length === 0) return prev
+        return [...prev, ...incoming].sort((a, b) => a.turnIndex - b.turnIndex)
+      })
+
+      // Update active speaker and phase from the latest turn in DB
+      // (fallback when LiveKit ActiveSpeakersChanged and Realtime are silent)
+      const latest = rows[rows.length - 1]!
+      setActiveSpeakerId((current) => current ?? latest.speaker_id)
+      setCurrentPhase(latest.round_phase)
+    }, 3_000)
+
+    return () => clearInterval(interval)
+  }, [debateId, participants, connectionStatus])
 
   useEffect(() => {
     let cleanup: (() => void) | undefined

@@ -138,11 +138,14 @@ export default async function DebateDetailPage({ params }: Props) {
     }
   })
 
-  // Pick the first recording URL from recordings JSONB for playback audio
+  // Pick the moderator's recording — their Retell call captures the full mixed audio.
+  // Fall back to the first available recording if the moderator's ID isn't in the map.
   const debateRecordings = (debate as unknown as Record<string, unknown>).recordings as
     | Record<string, string>
     | null
-  const recordingUrl = debateRecordings ? (Object.values(debateRecordings)[0] ?? null) : null
+  const recordingUrl = debateRecordings
+    ? (debateRecordings[moderator?.id ?? ''] ?? Object.values(debateRecordings)[0] ?? null)
+    : null
 
   // Sidebar (shared across states)
   const sidebar = (
