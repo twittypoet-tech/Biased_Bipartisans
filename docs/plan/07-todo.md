@@ -24,13 +24,13 @@
 ## MEDIUM
 > Quality/reliability improvements. Should ship in the next sprint.
 
-- [ ] **Audio overlap in playback recordings** — Agents briefly speak over each other in the recording, but not during live audio. Likely a Retell recording mux timing issue (one agent's audio tail overlapping the next agent's start). Investigate Retell recording settings.
+- [ ] **Audio overlap in playback recordings** — Agents briefly speak over each other in the recording, but not during live audio. Root cause identified: moderator's Retell LLM generates speech during non-moderator turns (it hears the debate). Since playback uses the moderator's recording, those suppressed responses contaminate the audio. **Fix deployed**: conductor now injects `current_phase: "LISTENING"` into the moderator during non-moderator turns — requires moderator prompt to respect this cue. **Remaining**: update moderator's Retell system prompt to include "When current_phase is LISTENING, do not speak."
 
 - [ ] **Agents saying "silence" after points** — Agents occasionally say the word "silence" after finishing a point. Likely a prompt issue — the system prompt or Retell config may include an instruction that the agent is interpreting literally.
 
 - [ ] **Agents talking over the moderator** — Agents sometimes speak while the moderator is still talking. May need longer pause detection or explicit turn-taking signals in the agent prompts.
 
-- [ ] **Speech chopping at beginning of agent turns** — The first few words of an agent's speech get cut off in some scenarios, especially during closing arguments. May be a Retell call setup latency or audio relay timing issue.
+- [ ] **Speech chopping at beginning of agent turns** — The first few words of an agent's speech get cut off during closing argument transitions. Root cause: next speaker's LLM responds before the 1s silence gate (`MIN_SILENCE_BEFORE_HANDOFF_MS`) has elapsed, and those early frames are silently dropped. **Fix deployed**: AudioRelay now buffers next-speaker frames during the silence gate window and flushes them when early advance triggers. Needs live test validation.
 
 - [ ] **Disable or fix Classic Duel (structured) format** — Selecting "Classic Duel" routes to `runStructuredDebate()` which crashes with `[object Object]` after ~8s. The structured path uses LiveConversation + Orchestrator (not Retell) and is broken. Either disable it in the admin UI or fix the code path. Root cause: debate `fc219258` failed because it was scheduled as `style: structured`.
 

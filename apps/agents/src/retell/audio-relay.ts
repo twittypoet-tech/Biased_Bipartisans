@@ -111,6 +111,11 @@ export class AudioRelay {
   // Fired when every Retell call disconnects simultaneously (e.g. silence timeout)
   private onAllCallsDead: (() => void) | null = null
 
+  // Buffer for next speaker's early frames that arrive before the silence gate opens.
+  // Without this, the first few words of the next speaker are silently dropped when
+  // they start speaking before MIN_SILENCE_BEFORE_HANDOFF_MS has elapsed.
+  private nextSpeakerBuffer: AudioFrame[] = []
+
   // Per-destination FIFO frame queue — up to 5 frames (100ms) buffered per destination
   private frameQueues = new Map<string, AudioFrame[]>()
 
@@ -251,6 +256,7 @@ export class AudioRelay {
     this.onTurnEnd = onTurnEnd
     this.turnAdvanced = false
     this.turnStartTime = Date.now()
+    this.nextSpeakerBuffer = []
     const name = this.calls.get(agentId)?.meta.agentName ?? agentId
     const nextName = nextAgentId ? (this.calls.get(nextAgentId)?.meta.agentName ?? nextAgentId) : 'none'
     log.info(`Turn → ${name} (next: ${nextName})`)
@@ -353,17 +359,34 @@ export class AudioRelay {
       if (
         !this.turnAdvanced &&
         this.onTurnEnd &&
-        this.currentSpeakerSilentSince !== null &&
-        now - this.currentSpeakerSilentSince >= MIN_SILENCE_BEFORE_HANDOFF_MS &&
         rms > SPEECH_RMS_THRESHOLD &&
         speakingAgentId === this.nextTurnAgentId
       ) {
-        const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
-        log.info(`Next speaker detected: ${name} — advancing turn`)
-        this.advanceTurn('next speaker started')
-        // Provisional handoff set currentTurnAgentId = nextTurnAgentId, so this
-        // trigger frame can be broadcast immediately instead of being dropped.
-        this.broadcast(speakingAgentId, frame)
+        const silenceElapsed = this.currentSpeakerSilentSince !== null
+          ? now - this.currentSpeakerSilentSince
+          : 0
+
+        if (silenceElapsed >= MIN_SILENCE_BEFORE_HANDOFF_MS) {
+          // Silence gate met — advance the turn now.
+          const name = this.calls.get(speakingAgentId)?.meta.agentName ?? speakingAgentId
+          log.info(`Next speaker detected: ${name} — advancing turn`)
+          this.advanceTurn('next speaker started')
+          // Provisional handoff set currentTurnAgentId = nextTurnAgentId, so this
+          // trigger frame can be broadcast immediately instead of being dropped.
+          // Flush any buffered early frames first so the audience hears the full response.
+          for (const buffered of this.nextSpeakerBuffer) {
+            this.broadcast(speakingAgentId, buffered)
+          }
+          this.nextSpeakerBuffer = []
+          this.broadcast(speakingAgentId, frame)
+        } else if (this.currentSpeakerSilentSince !== null) {
+          // Current speaker IS silent but gate hasn't elapsed yet. Buffer this frame
+          // so the next speaker's first words aren't lost when the gate opens.
+          // Cap at 50 frames (1s at 20ms/frame) to avoid unbounded growth.
+          if (this.nextSpeakerBuffer.length < 50) {
+            this.nextSpeakerBuffer.push(frame)
+          }
+        }
       }
     }
   }

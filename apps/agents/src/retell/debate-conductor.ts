@@ -394,12 +394,17 @@ export class DebateConductor {
       }
 
       // Inject current_phase into moderator so the single-prompt LLM knows
-      // which part of the playbook it's executing (e.g. "Introduction", "Opens Discussion")
-      if (turn.agentId === this.moderatorAgentId) {
-        const moderatorCallId = this.callIds.get(turn.agentId)
+      // which part of the playbook it's executing (e.g. "Introduction", "Opens Discussion").
+      // When it's NOT the moderator's turn, inject "LISTENING" — the moderator prompt
+      // should treat this as a cue to stay silent. This prevents the moderator's LLM
+      // from generating speech during debater turns, which would contaminate the
+      // moderator's call recording (used for playback).
+      if (this.moderatorAgentId) {
+        const moderatorCallId = this.callIds.get(this.moderatorAgentId)
         if (moderatorCallId) {
+          const phase = turn.agentId === this.moderatorAgentId ? turn.label : 'LISTENING'
           await this.retell.call.update(moderatorCallId, {
-            override_dynamic_variables: { current_phase: turn.label },
+            override_dynamic_variables: { current_phase: phase },
           } as Parameters<typeof this.retell.call.update>[1]).catch((err) => {
             log.warn(`Failed to inject current_phase for moderator: ${err instanceof Error ? err.message : String(err)}`)
           })
