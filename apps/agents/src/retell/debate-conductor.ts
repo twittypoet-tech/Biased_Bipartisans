@@ -382,6 +382,17 @@ export class DebateConductor {
       const nextAgentId = turnSequence[i + 1]?.agentId ?? null
       log.info(`Starting turn: ${turn.agentName} — ${turn.label}`)
 
+      // Notify browsers of the current speaker so they can highlight immediately
+      if (roomManager) {
+        await roomManager.sendData(debate.room_name, {
+          type: 'speaker_change',
+          speakerId: turn.agentId,
+          speakerName: turn.agentName,
+          phase: turn.label,
+          isModerator: turn.agentId === this.moderatorAgentId,
+        }).catch(() => {})
+      }
+
       // Inject current_phase into moderator so the single-prompt LLM knows
       // which part of the playbook it's executing (e.g. "Introduction", "Opens Discussion")
       if (turn.agentId === this.moderatorAgentId) {

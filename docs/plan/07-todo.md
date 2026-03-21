@@ -1,6 +1,6 @@
 # BIPI — Active Task Tracker
 
-> Last updated: 2026-03-20
+> Last updated: 2026-03-21
 > Priority spectrum: **CRITICAL > HIGH > MEDIUM > LOW > BACKLOG**
 
 ---
@@ -45,7 +45,7 @@
 
 - [ ] **Admin debate detail: show Retell IDs + recording status** — `retell_agent_id` and recording URLs are invisible in the admin UI. Debugging requires direct Supabase access. A small info card on the debate detail page would save time.
 
-- [ ] **Live debate: show live transcript + highlight current speaker** — Polling fallback, Supabase Realtime, and LiveKit data messages all fail silently during live debates. Added console.error logging to all 3 paths to diagnose which mechanism is broken. Most likely cause: browser Supabase client failing (missing anon key at build time?) or Realtime subscription not connecting. **Needs browser console check during next live test.**
+- [ ] **Live debate: speaker highlighting** — Fixed: DebateConductor now sends `speaker_change` data messages via LiveKit on each turn start. Browser handles `speaker_change` to update `activeSpeakerId`. Needs validation in next live test.
 
 ---
 
@@ -75,6 +75,14 @@ Currently `intro_audio_url` is manually set. Auto-generate a short intro clip wh
 
 ### Public Debate Calendar
 Let non-admin users see upcoming scheduled debates, set reminders, and receive notifications when a debate goes live.
+
+### Live Transcript During Debates
+The LiveTranscriptPoller uses `retell.call.retrieve()` to get `transcript_object`, but Retell only populates this field **after the call ends** — it's always empty during live calls. All debate turns are currently written by `collectTranscripts` post-debate, not during.
+
+**Options for real live transcription:**
+- **Deepgram streaming STT** — `@livekit/agents-plugin-deepgram` is installed. Pipe raw PCM frames from AudioRelay to Deepgram WebSocket. ~300ms latency. Requires `DEEPGRAM_API_KEY`.
+- **Retell WebSocket API** — Connect to Retell's real-time WebSocket (separate from the LiveKit audio connection) to receive `transcript_update` events during calls.
+- **Per-turn batch STT** — When `advanceTurn` fires, batch-transcribe the accumulated audio. Higher latency (~30s) but simpler.
 
 ### Audience Q&A Improvements
 Currently audience questions are injected into the moderator every 90s if OPENAI_API_KEY is set. Improvements: better question ranking (upvote UX), confirmation UI for injected questions, queue management.

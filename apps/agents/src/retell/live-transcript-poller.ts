@@ -75,15 +75,25 @@ export class LiveTranscriptPoller {
     log.info('LiveTranscriptPoller stopped')
   }
 
+  private pollCount = 0
+
   private async poll(): Promise<void> {
     if (this.stopped) return
+    this.pollCount++
 
     for (const agent of this.agents) {
       try {
         const call = await this.retell.call.retrieve(agent.callId)
-        const entries = (call as unknown as Record<string, unknown>).transcript_object as
+        const callRecord = call as unknown as Record<string, unknown>
+        const entries = callRecord.transcript_object as
           | TranscriptEntry[]
           | undefined
+
+        // Log call state on first poll and every 10th poll for diagnostics
+        if (this.pollCount === 1 || this.pollCount % 10 === 0) {
+          const transcriptKeys = Object.keys(callRecord).filter(k => k.includes('transcript'))
+          log.info(`Poll #${this.pollCount} [${agent.agentName}]: status=${callRecord.call_status}, transcript fields=[${transcriptKeys.join(',')}], transcript_object length=${entries?.length ?? 'undefined'}`)
+        }
 
         if (!entries || entries.length === 0) continue
 

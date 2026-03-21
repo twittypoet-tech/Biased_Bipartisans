@@ -96,6 +96,9 @@ export function DebateRoom({
         setCurrentPhase(data.roundPhase)
         setActiveSpeakerId(data.speakerId)
         // Audio arrives directly via LiveKit agent tracks — no URL needed
+      } else if (data.type === 'speaker_change') {
+        setActiveSpeakerId(data.speakerId)
+        if (data.phase) setCurrentPhase(data.phase)
       } else if (data.type === 'round_complete') {
         setCurrentPhase(data.phase)
         setActiveSpeakerId(null)
