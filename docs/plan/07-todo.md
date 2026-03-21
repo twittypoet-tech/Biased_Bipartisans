@@ -15,14 +15,24 @@
 ## HIGH
 > Must ship before the next real debate, or will cause user-facing failures.
 
-- [ ] **End-to-end test the transcript + recording pipeline** — Run a full freeflow debate and verify: (a) turns appear interleaved/chronological, (b) audio seek works in debate room, (c) recording URL saved is the moderator's (full mixed audio), (d) debate transitions to playback after natural hang-up end. // (a)(b) confirmed. (c) fix shipped — now selects moderator recording by agent ID. Needs validation in next live debate. (d) see below.
+- [ ] **End-to-end test the transcript + recording pipeline** — Run a full freeflow debate and verify: (a) turns appear interleaved/chronological, (b) audio seek works in debate room, (c) recording URL saved is the moderator's (full mixed audio), (d) debate transitions to playback after natural hang-up end. // (a)(b) confirmed. **(c) confirmed** — moderator recording selected by agent ID. **(d) confirmed** — debate transitions to playback after natural hang-up. Remaining: live transcript still not appearing in browser during live debates (all 3 delivery mechanisms failing silently — added error logging to diagnose).
 
-- [ ] **Verify live -> playback transition on natural agent hang-up** — Core user flow for when agents call `end_call` after closing statements. Confirm `onAllCallsDead` fires, `collectTranscripts` runs, debate room switches from live view to past-debate player. // `onAllCallsDead` and `collectTranscripts` confirmed working. Live -> playback page switch requires manual refresh (no auto-transition yet — page status is server-rendered).
+- [x] **Verify live -> playback transition on natural agent hang-up** — `onAllCallsDead` fires, `collectTranscripts` runs, page refreshes to past-debate player. Confirmed working. Note: requires manual page refresh (no auto-transition — page status is server-rendered).
 
 ---
 
 ## MEDIUM
 > Quality/reliability improvements. Should ship in the next sprint.
+
+- [ ] **Audio overlap in playback recordings** — Agents briefly speak over each other in the recording, but not during live audio. Likely a Retell recording mux timing issue (one agent's audio tail overlapping the next agent's start). Investigate Retell recording settings.
+
+- [ ] **Agents saying "silence" after points** — Agents occasionally say the word "silence" after finishing a point. Likely a prompt issue — the system prompt or Retell config may include an instruction that the agent is interpreting literally.
+
+- [ ] **Agents talking over the moderator** — Agents sometimes speak while the moderator is still talking. May need longer pause detection or explicit turn-taking signals in the agent prompts.
+
+- [ ] **Speech chopping at beginning of agent turns** — The first few words of an agent's speech get cut off in some scenarios, especially during closing arguments. May be a Retell call setup latency or audio relay timing issue.
+
+- [ ] **Disable or fix Classic Duel (structured) format** — Selecting "Classic Duel" routes to `runStructuredDebate()` which crashes with `[object Object]` after ~8s. The structured path uses LiveConversation + Orchestrator (not Retell) and is broken. Either disable it in the admin UI or fix the code path. Root cause: debate `fc219258` failed because it was scheduled as `style: structured`.
 
 - [ ] **Retell `call_ended` webhook** — Currently relying on LiveKit `Disconnected` events to detect agent hang-ups. Adding a `POST /api/retell/webhook` route that handles `call_ended` events provides a safety net for edge cases. Register in Retell dashboard -> route looks up debate by `call_id` in `retell_call_ids` JSONB. // Low practical risk: agents are configured to auto end_call after 35s silence or after final statement delivery. Orphaned calls in Retell's backend are the main concern, not stuck LiveKit sessions.
 
@@ -35,7 +45,7 @@
 
 - [ ] **Admin debate detail: show Retell IDs + recording status** — `retell_agent_id` and recording URLs are invisible in the admin UI. Debugging requires direct Supabase access. A small info card on the debate detail page would save time.
 
-- [ ] **Live debate: show live transcript + highlight current speaker** — During a live debate the transcript area showed "Waiting for the debate to begin..." the entire time. Fixed by adding a 3s polling fallback in `DebateRoom` that queries `debate_turns` directly and merges new rows into state. Needs validation in next live debate.
+- [ ] **Live debate: show live transcript + highlight current speaker** — Polling fallback, Supabase Realtime, and LiveKit data messages all fail silently during live debates. Added console.error logging to all 3 paths to diagnose which mechanism is broken. Most likely cause: browser Supabase client failing (missing anon key at build time?) or Realtime subscription not connecting. **Needs browser console check during next live test.**
 
 ---
 
@@ -74,6 +84,8 @@ Currently audience questions are injected into the moderator every 90s if OPENAI
 ## DONE
 > Recently completed. Trim periodically.
 
+- [x] Confirm moderator recording selection (agent ID-based)
+- [x] Confirm live → playback transition on natural hang-up (manual refresh)
 - [x] Fix recording URL: always use moderator's recording
 - [x] Fix live transcript + speaker highlighting
 - [x] Repair broken past debates (re-ran collectTranscripts)

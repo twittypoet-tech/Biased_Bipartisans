@@ -78,6 +78,7 @@ export function DebateRoom({
     try {
       const text = new TextDecoder().decode(payload)
       const data = JSON.parse(text)
+      console.log('[debate-room] LiveKit data message:', data.type)
 
       if (data.type === 'turn') {
         const newTurn: LiveTurnEntry = {
@@ -111,6 +112,7 @@ export function DebateRoom({
     const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL
 
     if (!livekitUrl) {
+      console.log('[debate-room] No NEXT_PUBLIC_LIVEKIT_URL — skipping LiveKit, using fallbacks only')
       setConnectionStatus('connected')
       return
     }
@@ -258,7 +260,13 @@ export function DebateRoom({
           setActiveSpeakerId(row.speaker_id)
         },
       )
-      .subscribe()
+      .subscribe((status, err) => {
+        if (err) {
+          console.error('[debate-room] Realtime subscription error:', err)
+        } else {
+          console.log('[debate-room] Realtime subscription status:', status)
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)
@@ -283,11 +291,16 @@ export function DebateRoom({
         transcript: string
       }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('debate_turns')
         .select('id, speaker_id, speaker_type, round_phase, turn_index, transcript')
         .eq('debate_id', debateId)
         .order('turn_index', { ascending: true })
+
+      if (error) {
+        console.error('[debate-room] Polling query error:', error.message, error.code)
+        return
+      }
 
       if (!data || data.length === 0) return
       const rows = data as unknown as TurnRow[]
@@ -312,6 +325,7 @@ export function DebateRoom({
           })
 
         if (incoming.length === 0) return prev
+        console.log(`[debate-room] Polling found ${incoming.length} new turns (total: ${prev.length + incoming.length})`)
         return [...prev, ...incoming].sort((a, b) => a.turnIndex - b.turnIndex)
       })
 
