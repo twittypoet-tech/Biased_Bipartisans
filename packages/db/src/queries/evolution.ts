@@ -4,6 +4,7 @@ import type {
   AgentTraitVector,
   AgentReflection,
   AgentEvalRun,
+  AgentEvalJudgeScore,
   AgentTopicConfidence,
   UUID,
 } from '@bipi/shared'
@@ -165,6 +166,41 @@ export async function insertEvalRun(
   const { data, error } = await db.from('agent_eval_runs').insert(evalRun).select().single()
   if (error) throw error
   return data
+}
+
+// ─── AI Judge Scores ───
+
+export async function insertJudgeScore(
+  db: SupabaseClient,
+  score: Omit<AgentEvalJudgeScore, 'id' | 'created_at'>,
+): Promise<AgentEvalJudgeScore> {
+  const { data, error } = await db.from('agent_eval_judge_scores').insert(score).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function getJudgeScoresForEvalRun(
+  db: SupabaseClient,
+  evalRunId: UUID,
+): Promise<AgentEvalJudgeScore[]> {
+  const { data, error } = await db
+    .from('agent_eval_judge_scores')
+    .select('*')
+    .eq('eval_run_id', evalRunId)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function updateEvalRunAiJudgeScore(
+  db: SupabaseClient,
+  evalRunId: UUID,
+  aiJudgeScore: number,
+): Promise<void> {
+  const { error } = await db
+    .from('agent_eval_runs')
+    .update({ ai_judge_score: aiJudgeScore })
+    .eq('id', evalRunId)
+  if (error) throw error
 }
 
 // ─── Topic Confidence ───

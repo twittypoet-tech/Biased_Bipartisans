@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '@bipi/db'
 import { createLogger } from '@bipi/shared'
 import { evaluateDebate } from './evaluate-debate.js'
+import { runAiJudgeEvaluation } from './ai-judge-evaluate.js'
 import { extractMemories } from './extract-memories.js'
 import { generateReflections } from './generate-reflection.js'
 import { updateTraits } from './update-traits.js'
@@ -12,7 +13,8 @@ const log = createLogger('jobs:pipeline')
  * Complete post-debate pipeline.
  *
  * Runs sequentially after a debate ends:
- * 1. Evaluate all agents (6-dimension scoring)
+ * 1. Evaluate all agents (6-dimension heuristic scoring)
+ * 1b. AI Judge Panel (Claude + GPT-4o scoring, Layer 1)
  * 2. Extract memory candidates from debate turns
  * 3. Generate structured reflections
  * 4. Update trait vectors based on eval scores
@@ -26,10 +28,15 @@ export async function runPostDebatePipeline(debateId: string): Promise<PipelineR
 
   log.info(`Starting post-debate pipeline for debate ${debateId}`)
 
-  // Step 1: Evaluate
+  // Step 1: Evaluate (heuristic scoring)
   log.info('Step 1/5: Evaluating agents...')
   const agentIds = await evaluateDebate(db, debateId)
   log.info(`Evaluated ${agentIds.length} agents`)
+
+  // Step 1b: AI Judge Panel (Layer 1)
+  log.info('Step 1b/5: Running AI judge evaluation...')
+  await runAiJudgeEvaluation(db, debateId)
+  log.info('AI judge evaluation complete')
 
   // Step 2: Extract memories
   log.info('Step 2/5: Extracting memory candidates...')

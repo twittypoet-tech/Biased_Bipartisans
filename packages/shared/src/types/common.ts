@@ -237,7 +237,25 @@ export interface AgentEvalRun {
   participation_balance_score: number | null
   cast_chemistry_score: number | null
   overall_score: number | null
+  ai_judge_score?: number | null
   scoring_details: Record<string, unknown>
+  created_at: Timestamp
+}
+
+export interface AgentEvalJudgeScore {
+  id: UUID
+  debate_id: UUID
+  agent_id: UUID
+  eval_run_id: UUID
+  judge_model: string
+  judge_provider: string
+  argument_strength: number
+  logical_coherence: number
+  evidence_quality: number
+  responsiveness: number
+  rhetorical_effectiveness: number
+  overall_score: number
+  reasoning: Record<string, string>
   created_at: Timestamp
 }
 
