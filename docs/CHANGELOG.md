@@ -4,6 +4,52 @@
 
 ---
 
+## 2026-03-22
+
+### feat: Layer 1 AI Judge Panel + Layer 2 Objective Metrics + auto-trigger pipeline
+
+#### `packages/eval` — New shared eval package
+- Created `@bipi/eval` workspace package housing all evaluation logic, importable from both `apps/web` and `apps/jobs`
+- Moved Layer 0 heuristic scorer (`evaluate-debate.ts`) from `apps/jobs` into the package
+
+#### Layer 1 — AI Judge Panel (`packages/eval/src/ai-judge-evaluate.ts`)
+- Multi-LLM judging: intended Claude Sonnet + GPT-4o; currently GPT-4o only (Claude disabled — Anthropic billing workspace issue; TODO comments mark where to restore)
+- 5 dimensions per judge: argument strength, logical coherence, evidence quality, responsiveness, rhetorical effectiveness
+- Zod-validated JSON output with per-dimension reasoning strings
+- Scores stored in `agent_eval_judge_scores` table (migration `00011_add_ai_judge_scores.sql`)
+
+#### Layer 2 — Objective Metrics (`packages/eval/src/objective-metrics-evaluate.ts`)
+- 7 dimensions: epistemic discipline, distinctiveness, factual accuracy, direct rebuttal, relevance, consistency, claim support
+- Single LLM (GPT-4o; Claude intended once billing resolved)
+- Distinctiveness passes full transcript + other debater names for cross-agent comparison
+- Scores stored in `agent_eval_objective_scores` table; `objective_score` column added to `agent_eval_runs` (migration `00012_add_layer2_objective_scores.sql`)
+
+#### Pipeline route — `apps/web/src/app/api/admin/debates/[id]/run-pipeline/route.ts`
+- Runs all 3 layers sequentially (Layer 0 → 1 → 2)
+- Authenticated via `x-internal-key` header; returns 400 if debate not `ended`
+
+#### Auto-trigger on debate end
+- `debate-conductor.ts` fires a fire-and-forget POST to `WEB_SERVICE_URL/api/admin/debates/[id]/run-pipeline` when a debate ends
+- `WEB_SERVICE_URL` and `INTERNAL_API_KEY` set as Railway env vars on agents service
+
+#### Admin UI (`/admin/evaluations`)
+- Layer 2 section: 7 score bars with reasoning tooltips
+- `objective_score` in agent header alongside heuristic + AI judge scores
+- "Run Evaluation Pipeline" button when no evals exist (`RunPipelineButton` component)
+- "Run AI Judges" re-runs Layers 1+2 on demand
+
+#### Supporting changes
+- `packages/shared/src/types/common.ts` — `AgentEvalObjectiveScore` type; `objective_score` on `AgentEvalRun`
+- `packages/db/src/queries/evolution.ts` — `insertObjectiveScore`, `getObjectiveScoresForEvalRun`, `updateEvalRunObjectiveScore`
+- `apps/web/src/app/api/admin/debates/[id]/run-ai-judges/route.ts` — rewritten to call `@bipi/eval` directly (was calling broken jobs service URL)
+- `apps/jobs/package.json` — added `@bipi/eval`, removed direct eval deps now in shared package
+
+#### Known issues
+- Claude disabled in Layers 1+2 pending Anthropic billing workspace resolution
+- `@bipi/jobs` Railway service misconfigured (root dir points to `apps/agents` Dockerfile); all deployments failing
+
+---
+
 ## 2026-03-21
 
 ### fix: silence moderator LLM during non-moderator turns

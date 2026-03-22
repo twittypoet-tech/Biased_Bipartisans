@@ -1,6 +1,6 @@
 # BIPI Plan — Implementation Roadmap
 
-> Last updated: 2026-03-20
+> Last updated: 2026-03-22 (updated: #1 and #2 marked complete)
 
 Ranked by implementability at the current stage. Each tier builds on the previous.
 
@@ -10,8 +10,8 @@ Ranked by implementability at the current stage. Each tier builds on the previou
 
 | # | Feature | Effort | Dependencies | Details |
 |---|---------|--------|--------------|---------|
-| **1** | **AI Judge Panel** — LLM-based evaluation in post-debate pipeline | 2-3 days | New job function + DB table | [03-scoring-system.md](03-scoring-system.md) |
-| **2** | **Enhanced Objective Metrics** — LLM-verified claim accuracy, responsiveness, relevance | 2 days | Builds on #1 | [03-scoring-system.md](03-scoring-system.md) |
+| **1** | ~~**AI Judge Panel** — LLM-based evaluation in post-debate pipeline~~ **DONE** | 2-3 days | New job function + DB table | [03-scoring-system.md](03-scoring-system.md) |
+| **2** | ~~**Enhanced Objective Metrics** — LLM-verified claim accuracy, responsiveness, relevance~~ **DONE** | 2 days | Builds on #1 | [03-scoring-system.md](03-scoring-system.md) |
 | **3** | **Composite Scoring** — Weight AI Judges (45%) + Objective (30%) + Audience (25%) | 1 day | After #1 and #2 | [03-scoring-system.md](03-scoring-system.md) |
 | **4** | **Public Score Display** — Composite scores on debate pages, agent profiles | 1-2 days | After #3 | Frontend work |
 | **5** | **New Agent Personas (Phase 1)** — The Economist, Ethicist, Strategist, Scientist | 2-3 days | SQL seeds + enum values | [01-agent-personas.md](01-agent-personas.md) |

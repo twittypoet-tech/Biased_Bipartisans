@@ -1,6 +1,6 @@
 # BIPI — Active Task Tracker
 
-> Last updated: 2026-03-21
+> Last updated: 2026-03-22
 > Priority spectrum: **CRITICAL > HIGH > MEDIUM > LOW > BACKLOG**
 
 ---
@@ -92,6 +92,21 @@ Currently audience questions are injected into the moderator every 90s if OPENAI
 ## DONE
 > Recently completed. Trim periodically.
 
+### Eval Pipeline (2026-03-22)
+- [x] Create `packages/eval` shared package — eval logic importable from web + jobs
+- [x] Move `evaluate-debate.ts` (Layer 0 heuristics) into `packages/eval`
+- [x] Build Layer 1 AI Judge Panel (`ai-judge-evaluate.ts`) — multi-LLM, Zod-validated, GPT-4o (Claude pending billing)
+- [x] Create `agent_eval_judge_scores` DB table + migration
+- [x] Build Layer 2 Objective Metrics (`objective-metrics-evaluate.ts`) — 7 dimensions, single LLM, GPT-4o
+- [x] Create `agent_eval_objective_scores` DB table + `objective_score` column on `agent_eval_runs`
+- [x] `/api/admin/debates/[id]/run-pipeline` route — runs all 3 layers, auth via `x-internal-key`
+- [x] Auto-trigger pipeline from debate-conductor on debate end (fire-and-forget fetch)
+- [x] Admin evaluations page — Layer 2 section, score bars, reasoning tooltips
+- [x] `RunPipelineButton` component — shown when no evals exist
+- [x] Add `AgentEvalObjectiveScore` type to shared package
+- [x] Add `insertObjectiveScore`, `getObjectiveScoresForEvalRun`, `updateEvalRunObjectiveScore` to `@bipi/db`
+
+### Audio / Debate Infra (earlier)
 - [x] Confirm moderator recording selection (agent ID-based)
 - [x] Confirm live → playback transition on natural hang-up (manual refresh)
 - [x] Fix recording URL: always use moderator's recording

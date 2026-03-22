@@ -1,10 +1,24 @@
 # BIPI Plan — Scoring System
 
-> Last updated: 2026-03-20
+> Last updated: 2026-03-22
 
-## Current System (1 Layer — Algorithmic Heuristics)
+## Current System (3 Layers — Fully Built, GPT-4o only)
 
-**File:** `apps/jobs/src/functions/evaluate-debate.ts`
+**Files:** `packages/eval/src/evaluate-debate.ts`, `packages/eval/src/ai-judge-evaluate.ts`, `packages/eval/src/objective-metrics-evaluate.ts`
+
+All three layers are live. The pipeline runs in two ways:
+1. **Auto-triggered** — `apps/agents/src/retell/debate-conductor.ts` fires a fire-and-forget POST to `/api/admin/debates/[id]/run-pipeline` when a debate ends
+2. **Manual** — Admin evaluations page has a "Run Evaluation Pipeline" button (shown when no evals exist) and "Run AI Judges" button (re-runs Layers 1+2 when evals already exist)
+
+**Note:** Claude is temporarily disabled in Layers 1 and 2 due to Anthropic billing workspace issue. Both layers currently use GPT-4o only. TODO comments in `ai-judge-evaluate.ts` and `objective-metrics-evaluate.ts` mark where to re-add `claude-sonnet-4-6` once resolved.
+
+**Architecture:** Eval logic lives in `packages/eval` (shared package) — importable from both `apps/web` (Vercel API routes) and `apps/jobs` (Inngest). This was necessary because the `@bipi/jobs` Railway service is misconfigured (pointing to `apps/agents` Dockerfile) and all deployments are failing.
+
+---
+
+## Layer 0 — Algorithmic Heuristics (BUILT, low weight)
+
+**File:** `packages/eval/src/evaluate-debate.ts` (moved from `apps/jobs`)
 
 The current scoring computes 6 dimensions using turn data + vote counts:
 
@@ -31,9 +45,9 @@ The current scoring computes 6 dimensions using turn data + vote counts:
 
 ---
 
-## Proposed: 3-Layer Scoring Model
+## 3-Layer Scoring Model (Built)
 
-### Layer 1 — AI Judge Panel (40-50% weight, NEW)
+### Layer 1 — AI Judge Panel (40-50% weight, BUILT)
 
 - Post-debate, send full transcript to 2-3 LLMs (Claude, GPT-4o, possibly Gemini)
 - Each judges on: argument strength, logical coherence, evidence quality, responsiveness, rhetorical effectiveness
@@ -42,7 +56,7 @@ The current scoring computes 6 dimensions using turn data + vote counts:
 
 **Why multi-LLM:** Subjective judging is where model bias matters most. Averaging across providers gives fairer scores.
 
-### Layer 2 — Objective Metrics (30% weight, ENHANCED)
+### Layer 2 — Objective Metrics (30% weight, BUILT)
 
 Keep existing 6-dimension heuristics PLUS add LLM-verified assessments:
 
@@ -56,7 +70,7 @@ Keep existing 6-dimension heuristics PLUS add LLM-verified assessments:
 
 **Why single LLM:** Objective/structural assessments have lower inter-model variance. Use Claude Sonnet for consistency.
 
-### Layer 3 — Audience Signal (20% weight, EXISTING)
+### Layer 3 — Audience Signal (20% weight, EXISTING/BUILT)
 
 Already built — 8 vote types map cleanly:
 - strongest_argument, best_evidence, best_rebuttal, best_concession (positive)
@@ -67,14 +81,24 @@ Already built — 8 vote types map cleanly:
 
 ---
 
-## What Needs Building
+## What's Built vs Still Needed
 
-1. **`ai-judge-evaluate.ts`** — New job function calling 2-3 LLMs with structured judging prompts (Zod-validated output)
-2. **`agent_eval_judge_scores` table** — Per-judge, per-dimension scores with model identifier
-3. **`objective-metrics-evaluate.ts`** — LLM-as-evaluator for the 5 objective metrics
-4. **Composite score computation** — Weighted combination of all 3 layers
-5. **Updated admin evaluations page** — Show layer breakdown, per-judge scores
-6. **New Inngest steps** in post-debate pipeline (after current evaluate step)
+### Done
+- [x] `packages/eval/src/ai-judge-evaluate.ts` — Layer 1 AI Judge Panel (GPT-4o; Claude pending billing fix)
+- [x] `agent_eval_judge_scores` table — Per-judge, per-dimension scores with model identifier
+- [x] `packages/eval/src/objective-metrics-evaluate.ts` — Layer 2: 7 objective dimensions (GPT-4o; Claude pending billing fix)
+- [x] `agent_eval_objective_scores` table + `objective_score` column on `agent_eval_runs`
+- [x] `/api/admin/debates/[id]/run-pipeline` route — Runs all 3 layers sequentially
+- [x] `/api/admin/debates/[id]/run-ai-judges` route — Re-runs Layers 1+2 only
+- [x] Auto-trigger from debate-conductor on debate end
+- [x] Admin evaluations page — Layer breakdown with score bars and reasoning tooltips
+- [x] `packages/eval` shared package — eval logic importable from web and jobs
+
+### Still Needed
+- [ ] **Composite score computation** — Weighted combination: AI Judge (45%) + Objective (30%) + Audience (25%)
+- [ ] **Public score display** — Composite scores on debate pages and agent profiles
+- [ ] **Restore Claude** — Re-add `claude-sonnet-4-6` to Layer 1 judges + Layer 2 evaluator once billing resolved
+- [ ] **Fix `@bipi/jobs` Railway config** — Root directory misconfigured (pointing to `apps/agents`); all deployments failing
 
 ---
 
