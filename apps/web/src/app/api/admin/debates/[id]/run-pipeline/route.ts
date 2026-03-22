@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { evaluateDebate, runAiJudgeEvaluation } from '@bipi/eval'
+import { evaluateDebate, runAiJudgeEvaluation, runObjectiveMetricsEvaluation } from '@bipi/eval'
 
 /**
  * POST /api/admin/debates/[id]/run-pipeline
@@ -47,8 +47,11 @@ export async function POST(
     // Step 1: Heuristic scoring
     const agentIds = await evaluateDebate(db, debateId)
 
-    // Step 2: AI judge panel
+    // Step 2: AI judge panel (Layer 1)
     await runAiJudgeEvaluation(db, debateId)
+
+    // Step 3: Objective metrics (Layer 2)
+    await runObjectiveMetricsEvaluation(db, debateId)
 
     return NextResponse.json({ ok: true, debateId, agentIds })
   } catch (err) {

@@ -5,6 +5,7 @@ import type {
   AgentReflection,
   AgentEvalRun,
   AgentEvalJudgeScore,
+  AgentEvalObjectiveScore,
   AgentTopicConfidence,
   UUID,
 } from '@bipi/shared'
@@ -199,6 +200,41 @@ export async function updateEvalRunAiJudgeScore(
   const { error } = await db
     .from('agent_eval_runs')
     .update({ ai_judge_score: aiJudgeScore })
+    .eq('id', evalRunId)
+  if (error) throw error
+}
+
+// ─── Objective Metric Scores (Layer 2) ───
+
+export async function insertObjectiveScore(
+  db: SupabaseClient,
+  score: Omit<AgentEvalObjectiveScore, 'id' | 'created_at'>,
+): Promise<AgentEvalObjectiveScore> {
+  const { data, error } = await db.from('agent_eval_objective_scores').insert(score).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function getObjectiveScoresForEvalRun(
+  db: SupabaseClient,
+  evalRunId: UUID,
+): Promise<AgentEvalObjectiveScore[]> {
+  const { data, error } = await db
+    .from('agent_eval_objective_scores')
+    .select('*')
+    .eq('eval_run_id', evalRunId)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function updateEvalRunObjectiveScore(
+  db: SupabaseClient,
+  evalRunId: UUID,
+  objectiveScore: number,
+): Promise<void> {
+  const { error } = await db
+    .from('agent_eval_runs')
+    .update({ objective_score: objectiveScore })
     .eq('id', evalRunId)
   if (error) throw error
 }

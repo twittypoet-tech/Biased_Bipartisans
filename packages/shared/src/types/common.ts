@@ -238,6 +238,7 @@ export interface AgentEvalRun {
   cast_chemistry_score: number | null
   overall_score: number | null
   ai_judge_score?: number | null
+  objective_score?: number | null
   scoring_details: Record<string, unknown>
   created_at: Timestamp
 }
@@ -254,6 +255,24 @@ export interface AgentEvalJudgeScore {
   evidence_quality: number
   responsiveness: number
   rhetorical_effectiveness: number
+  overall_score: number
+  reasoning: Record<string, string>
+  created_at: Timestamp
+}
+
+export interface AgentEvalObjectiveScore {
+  id: UUID
+  debate_id: UUID
+  agent_id: UUID
+  eval_run_id: UUID
+  evaluator_model: string
+  epistemic_discipline: number
+  distinctiveness: number
+  factual_accuracy: number
+  direct_rebuttal: number
+  relevance: number
+  consistency: number
+  claim_support: number
   overall_score: number
   reasoning: Record<string, string>
   created_at: Timestamp

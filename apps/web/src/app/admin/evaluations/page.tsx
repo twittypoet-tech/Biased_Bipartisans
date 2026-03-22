@@ -23,23 +23,29 @@ export default async function EvaluationsPage() {
     }),
   )
 
-  // Load all AI judge scores for every eval run in one query
+  // Load all judge + objective scores for every eval run in one query each
   const allEvalRunIds = debatesWithEvals.flatMap(({ evalRuns }) =>
     (evalRuns as Array<{ id: string }>).map((r) => r.id),
   )
 
   const judgeScoresByEvalRun = new Map<string, Array<Record<string, unknown>>>()
+  const objectiveScoreByEvalRun = new Map<string, Record<string, unknown>>()
+
   if (allEvalRunIds.length > 0) {
-    const { data: allJudgeScores } = await db
-      .from('agent_eval_judge_scores')
-      .select('*')
-      .in('eval_run_id', allEvalRunIds)
+    const [{ data: allJudgeScores }, { data: allObjectiveScores }] = await Promise.all([
+      db.from('agent_eval_judge_scores').select('*').in('eval_run_id', allEvalRunIds),
+      db.from('agent_eval_objective_scores').select('*').in('eval_run_id', allEvalRunIds),
+    ])
 
     for (const score of allJudgeScores ?? []) {
       const runId = score.eval_run_id as string
       const existing = judgeScoresByEvalRun.get(runId) ?? []
       existing.push(score as Record<string, unknown>)
       judgeScoresByEvalRun.set(runId, existing)
+    }
+
+    for (const score of allObjectiveScores ?? []) {
+      objectiveScoreByEvalRun.set(score.eval_run_id as string, score as Record<string, unknown>)
     }
   }
 
@@ -91,6 +97,7 @@ export default async function EvaluationsPage() {
                     const archetype = agent?.archetype ?? ''
                     const colors = getArchetypeColor(archetype)
                     const judgeScores = judgeScoresByEvalRun.get(run.id as string) ?? []
+                    const objectiveScore = objectiveScoreByEvalRun.get(run.id as string) ?? null
 
                     // Group judge scores by model
                     const byModel = new Map<string, Record<string, unknown>>()
@@ -115,6 +122,11 @@ export default async function EvaluationsPage() {
                                 AI Judge: {((run.ai_judge_score as number) * 100).toFixed(0)}%
                               </span>
                             )}
+                            {run.objective_score != null && (
+                              <span className="text-sky-400">
+                                Objective: {((run.objective_score as number) * 100).toFixed(0)}%
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -127,6 +139,32 @@ export default async function EvaluationsPage() {
                           <ScoreBar label="Balance" value={run.participation_balance_score as number | null} />
                           <ScoreBar label="Chemistry" value={run.cast_chemistry_score as number | null} />
                         </div>
+
+                        {/* Layer 2 — Objective Metrics */}
+                        {objectiveScore && (
+                          <div className="mt-4 space-y-2 border-t border-neutral-700/50 pt-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+                              Layer 2 — Objective Metrics
+                            </p>
+                            <div className="mb-1 flex items-center gap-2">
+                              <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium text-neutral-300">
+                                Claude Sonnet
+                              </span>
+                              <span className="text-[10px] text-neutral-500">
+                                {(((objectiveScore.overall_score as number) ?? 0) * 100).toFixed(0)}% overall
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <ScoreBar label="Epistemic" value={objectiveScore.epistemic_discipline as number} reasoning={(objectiveScore.reasoning as Record<string, string>)?.epistemic_discipline} />
+                              <ScoreBar label="Distinctive" value={objectiveScore.distinctiveness as number} reasoning={(objectiveScore.reasoning as Record<string, string>)?.distinctiveness} />
+                              <ScoreBar label="Factual" value={objectiveScore.factual_accuracy as number} reasoning={(objectiveScore.reasoning as Record<string, string>)?.factual_accuracy} />
+                              <ScoreBar label="Rebuttal" value={objectiveScore.direct_rebuttal as number} reasoning={(objectiveScore.reasoning as Record<string, string>)?.direct_rebuttal} />
+                              <ScoreBar label="Relevance" value={objectiveScore.relevance as number} reasoning={(objectiveScore.reasoning as Record<string, string>)?.relevance} />
+                              <ScoreBar label="Consistent" value={objectiveScore.consistency as number} reasoning={(objectiveScore.reasoning as Record<string, string>)?.consistency} />
+                              <ScoreBar label="Claim Support" value={objectiveScore.claim_support as number} reasoning={(objectiveScore.reasoning as Record<string, string>)?.claim_support} />
+                            </div>
+                          </div>
+                        )}
 
                         {/* AI Judge Panel */}
                         {judgeScores.length > 0 && (
