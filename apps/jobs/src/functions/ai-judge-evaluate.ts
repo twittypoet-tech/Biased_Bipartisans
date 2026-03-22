@@ -14,6 +14,20 @@ import type { UUID } from '@bipi/shared'
 
 const log = createLogger('jobs:ai-judge')
 
+// Lazy singletons — instantiated on first use so missing API keys fail at call time, not startup
+let _anthropic: Anthropic | null = null
+let _openai: OpenAI | null = null
+
+function getAnthropicClient(): Anthropic {
+  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  return _anthropic
+}
+
+function getOpenAIClient(): OpenAI {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return _openai
+}
+
 // ─── Zod Schema for Judge Output ───
 
 const JudgeScoreSchema = z.object({
@@ -157,9 +171,7 @@ async function runJudge(
 }
 
 async function runAnthropicJudge(model: string, prompt: string): Promise<JudgeScore> {
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-  const message = await anthropic.messages.create({
+  const message = await getAnthropicClient().messages.create({
     model,
     max_tokens: 1024,
     system: JUDGE_SYSTEM_PROMPT,
@@ -171,9 +183,7 @@ async function runAnthropicJudge(model: string, prompt: string): Promise<JudgeSc
 }
 
 async function runOpenAIJudge(model: string, prompt: string): Promise<JudgeScore> {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAIClient().chat.completions.create({
     model,
     max_tokens: 1024,
     response_format: { type: 'json_object' },

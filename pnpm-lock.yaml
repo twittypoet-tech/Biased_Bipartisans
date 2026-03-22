@@ -75,6 +75,9 @@ importers:
 
   apps/jobs:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@bipi/agent-core':
         specifier: workspace:*
         version: link:../../packages/agent-core
