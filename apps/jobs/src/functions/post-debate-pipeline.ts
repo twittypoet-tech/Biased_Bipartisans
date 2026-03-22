@@ -1,7 +1,6 @@
 import { getSupabaseClient } from '@bipi/db'
 import { createLogger } from '@bipi/shared'
-import { evaluateDebate } from './evaluate-debate.js'
-import { runAiJudgeEvaluation } from './ai-judge-evaluate.js'
+import { evaluateDebate, runAiJudgeEvaluation } from '@bipi/eval'
 import { extractMemories } from './extract-memories.js'
 import { generateReflections } from './generate-reflection.js'
 import { updateTraits } from './update-traits.js'

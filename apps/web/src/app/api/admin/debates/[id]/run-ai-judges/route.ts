@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { runAiJudgeEvaluation } from '@bipi/eval'
 
 /**
  * POST /api/admin/debates/[id]/run-ai-judges
  *
- * Triggers AI judge evaluation (Layer 1) for a debate.
- * Requires JOBS_SERVICE_URL to be set (points to the running jobs service).
- *
- * This calls the jobs service synchronously — the response comes back when
- * all judge scores are written (~15-30s for a 2-agent debate).
+ * Runs AI judge evaluation (Layer 1) directly — no jobs service needed.
+ * Requires eval runs to exist first (run /run-pipeline first).
  */
 export async function POST(
   _request: Request,
@@ -17,7 +15,6 @@ export async function POST(
   const { id: debateId } = await params
   const db = createServerClient()
 
-  // Verify debate exists and has eval runs (heuristic scoring must have run first)
   const { data: debate } = await db
     .from('debates')
     .select('id, title, status')
@@ -35,36 +32,19 @@ export async function POST(
 
   if (!evalRuns || evalRuns.length === 0) {
     return NextResponse.json(
-      { error: 'No eval runs found — run the full post-debate pipeline first' },
+      { error: 'No eval runs found — run the full pipeline first' },
       { status: 400 },
     )
   }
 
-  const jobsUrl = process.env.JOBS_SERVICE_URL
-  if (!jobsUrl) {
-    return NextResponse.json(
-      { error: 'JOBS_SERVICE_URL is not configured' },
-      { status: 503 },
-    )
-  }
-
   try {
-    const res = await fetch(`${jobsUrl}/api/run-ai-judges`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ debateId }),
-    })
-
-    if (!res.ok) {
-      const body = await res.text()
-      let message = 'Jobs service error'
-      try { message = JSON.parse(body).error ?? message } catch { /* ignore */ }
-      return NextResponse.json({ error: message }, { status: 502 })
-    }
-
+    await runAiJudgeEvaluation(db, debateId)
     return NextResponse.json({ ok: true, debateId })
   } catch (err) {
-    console.error('Failed to reach jobs service:', err)
-    return NextResponse.json({ error: 'Could not reach jobs service' }, { status: 503 })
+    console.error('AI judge evaluation failed:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'AI judge evaluation failed' },
+      { status: 500 },
+    )
   }
 }

@@ -452,6 +452,17 @@ export class DebateConductor {
       ended_at: new Date().toISOString(),
     })
 
+    // ── 12. Trigger post-debate evaluation pipeline ───────────────────────────
+    if (process.env.WEB_SERVICE_URL) {
+      fetch(`${process.env.WEB_SERVICE_URL}/api/admin/debates/${this.config.debateId}/run-pipeline`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-key': process.env.INTERNAL_API_KEY ?? '',
+        },
+      }).catch((err) => log.error('Failed to trigger post-debate pipeline', err instanceof Error ? err : new Error(String(err))))
+    }
+
     await this.cleanup(roomManager, debate.room_name)
     log.info(`Debate ${this.config.debateId} complete`)
   }

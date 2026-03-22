@@ -5,6 +5,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { listDebates } from '@bipi/db'
 import { getArchetypeColor, statusColors } from '@/lib/agent-colors'
 import { RunAiJudgesButton } from '@/components/admin/run-ai-judges-button'
+import { RunPipelineButton } from '@/components/admin/run-pipeline-button'
 
 export default async function EvaluationsPage() {
   const db = createServerClient()
@@ -79,7 +80,10 @@ export default async function EvaluationsPage() {
               </div>
 
               {evalRuns.length === 0 ? (
-                <p className="text-sm text-neutral-600">No evaluations yet. Run the post-debate pipeline.</p>
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-neutral-600">No evaluations yet.</p>
+                  <RunPipelineButton debateId={debate.id} />
+                </div>
               ) : (
                 <div className="space-y-3">
                   {(evalRuns as Array<Record<string, unknown>>).map((run) => {

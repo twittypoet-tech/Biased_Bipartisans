@@ -75,15 +75,15 @@ importers:
 
   apps/jobs:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.39.0
-        version: 0.39.0
       '@bipi/agent-core':
         specifier: workspace:*
         version: link:../../packages/agent-core
       '@bipi/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@bipi/eval':
+        specifier: workspace:*
+        version: link:../../packages/eval
       '@bipi/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -96,12 +96,6 @@ importers:
       inngest:
         specifier: ^3.27.0
         version: 3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(express@4.22.1)(next@15.5.12(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@3.25.76)
-      openai:
-        specifier: ^4.80.0
-        version: 4.104.0(ws@8.19.0)(zod@3.25.76)
-      zod:
-        specifier: ^3.23.0
-        version: 3.25.76
     devDependencies:
       '@types/express':
         specifier: ^5.0.0
@@ -118,12 +112,18 @@ importers:
 
   apps/web:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@bipi/agent-core':
         specifier: workspace:*
         version: link:../../packages/agent-core
       '@bipi/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@bipi/eval':
+        specifier: workspace:*
+        version: link:../../packages/eval
       '@bipi/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -213,6 +213,31 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.45.0
         version: 2.99.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.15
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
+  packages/eval:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.39.0
+        version: 0.39.0
+      '@bipi/db':
+        specifier: workspace:*
+        version: link:../db
+      '@bipi/shared':
+        specifier: workspace:*
+        version: link:../shared
+      openai:
+        specifier: ^4.80.0
+        version: 4.104.0(ws@8.19.0)(zod@3.25.76)
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

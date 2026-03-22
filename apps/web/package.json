@@ -10,8 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@bipi/agent-core": "workspace:*",
     "@bipi/db": "workspace:*",
+    "@bipi/eval": "workspace:*",
     "@bipi/shared": "workspace:*",
     "@livekit/components-react": "^2.7.0",
     "@supabase/ssr": "^0.5.0",

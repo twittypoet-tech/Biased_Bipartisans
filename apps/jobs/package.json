@@ -11,15 +11,13 @@
     "lint": "echo 'no lint configured yet'"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
     "@bipi/agent-core": "workspace:*",
     "@bipi/db": "workspace:*",
+    "@bipi/eval": "workspace:*",
     "@bipi/shared": "workspace:*",
     "@supabase/supabase-js": "^2.45.0",
     "express": "^4.21.0",
-    "inngest": "^3.27.0",
-    "openai": "^4.80.0",
-    "zod": "^3.23.0"
+    "inngest": "^3.27.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
