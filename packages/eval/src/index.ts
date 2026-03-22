@@ -1,2 +1,2 @@
-export { evaluateDebate } from './evaluate-debate.js'
-export { runAiJudgeEvaluation } from './ai-judge-evaluate.js'
+export { evaluateDebate } from './evaluate-debate'
+export { runAiJudgeEvaluation } from './ai-judge-evaluate'
