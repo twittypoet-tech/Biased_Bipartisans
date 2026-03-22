@@ -51,7 +51,7 @@ type JudgeScore = z.infer<typeof JudgeScoreSchema>
 // TODO: Add Gemini, DeepSeek, Mistral, Llama judges in future versions.
 // TODO: Add per-judge calibration weights after collecting data from 5-10 scored debates.
 const JUDGES = [
-  { provider: 'anthropic' as const, model: 'claude-3-5-haiku-20241022' },
+  // TODO: re-add { provider: 'anthropic' as const, model: 'claude-sonnet-4-6' } once Anthropic billing is resolved
   { provider: 'openai' as const, model: 'gpt-4o' },
 ]
 

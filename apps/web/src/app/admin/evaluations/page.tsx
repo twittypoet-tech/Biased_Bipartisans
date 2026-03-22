@@ -148,7 +148,7 @@ export default async function EvaluationsPage() {
                             </p>
                             <div className="mb-1 flex items-center gap-2">
                               <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium text-neutral-300">
-                                Claude Sonnet
+                                {(objectiveScore.evaluator_model as string) === 'gpt-4o' ? 'GPT-4o' : (objectiveScore.evaluator_model as string)}
                               </span>
                               <span className="text-[10px] text-neutral-500">
                                 {(((objectiveScore.overall_score as number) ?? 0) * 100).toFixed(0)}% overall

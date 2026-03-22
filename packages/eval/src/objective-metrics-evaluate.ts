@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { z } from 'zod'
 import {
   getDebateTurns,
@@ -13,13 +13,14 @@ import type { UUID } from '@bipi/shared'
 
 const log = createLogger('eval:objective-metrics')
 
-const EVALUATOR_MODEL = 'claude-3-5-haiku-20241022'
+// TODO: switch back to claude-sonnet-4-6 once Anthropic billing is resolved
+const EVALUATOR_MODEL = 'gpt-4o'
 
 // Lazy singleton
-let _anthropic: Anthropic | null = null
-function getAnthropicClient(): Anthropic {
-  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-  return _anthropic
+let _openai: OpenAI | null = null
+function getOpenAIClient(): OpenAI {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return _openai
 }
 
 // ─── Zod Schema ───
@@ -132,14 +133,17 @@ async function runEvaluator(
 ): Promise<ObjectiveScore> {
   const prompt = buildObjectivePrompt(transcript, agentName, agentUtterances, otherDebaterNames)
 
-  const message = await getAnthropicClient().messages.create({
+  const completion = await getOpenAIClient().chat.completions.create({
     model: EVALUATOR_MODEL,
     max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: prompt },
+    ],
   })
 
-  const text = message.content.find((c) => c.type === 'text')?.text ?? ''
+  const text = completion.choices[0]?.message?.content ?? ''
   const cleaned = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
   return ObjectiveScoreSchema.parse(JSON.parse(cleaned) as unknown)
 }
