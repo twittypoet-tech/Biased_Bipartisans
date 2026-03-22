@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { listDebates } from '@bipi/db'
 import { getArchetypeColor, statusColors } from '@/lib/agent-colors'
+import { RunAiJudgesButton } from '@/components/admin/run-ai-judges-button'
 
 export default async function EvaluationsPage() {
   const db = createServerClient()
 
-  // Get ended debates with their eval runs
   const debates = await listDebates(db, { status: 'ended' })
 
   // Load eval runs for each debate
@@ -22,6 +22,26 @@ export default async function EvaluationsPage() {
     }),
   )
 
+  // Load all AI judge scores for every eval run in one query
+  const allEvalRunIds = debatesWithEvals.flatMap(({ evalRuns }) =>
+    (evalRuns as Array<{ id: string }>).map((r) => r.id),
+  )
+
+  const judgeScoresByEvalRun = new Map<string, Array<Record<string, unknown>>>()
+  if (allEvalRunIds.length > 0) {
+    const { data: allJudgeScores } = await db
+      .from('agent_eval_judge_scores')
+      .select('*')
+      .in('eval_run_id', allEvalRunIds)
+
+    for (const score of allJudgeScores ?? []) {
+      const runId = score.eval_run_id as string
+      const existing = judgeScoresByEvalRun.get(runId) ?? []
+      existing.push(score as Record<string, unknown>)
+      judgeScoresByEvalRun.set(runId, existing)
+    }
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-bold">Evaluations</h1>
@@ -30,31 +50,53 @@ export default async function EvaluationsPage() {
       <div className="mt-6 space-y-6">
         {debatesWithEvals.map(({ debate, evalRuns }) => {
           const framing = debate.topic_framing as unknown as Record<string, string>
+          const hasAnyJudgeScores = (evalRuns as Array<{ id: string }>).some(
+            (r) => (judgeScoresByEvalRun.get(r.id)?.length ?? 0) > 0,
+          )
+
           return (
             <div key={debate.id} className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <Link href={`/admin/debates/${debate.slug}`} className="text-lg font-semibold hover:text-white transition">
+                  <Link
+                    href={`/admin/debates/${debate.slug}`}
+                    className="text-lg font-semibold hover:text-white transition"
+                  >
                     {debate.title}
                   </Link>
                   <p className="text-sm text-neutral-500">{framing?.headline}</p>
                 </div>
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[debate.status] ?? ''}`}>
-                  {debate.status.toUpperCase()}
-                </span>
+                <div className="flex items-center gap-3">
+                  {evalRuns.length > 0 && (
+                    <RunAiJudgesButton debateId={debate.id} hasScores={hasAnyJudgeScores} />
+                  )}
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[debate.status] ?? ''}`}
+                  >
+                    {debate.status.toUpperCase()}
+                  </span>
+                </div>
               </div>
 
               {evalRuns.length === 0 ? (
                 <p className="text-sm text-neutral-600">No evaluations yet. Run the post-debate pipeline.</p>
               ) : (
                 <div className="space-y-3">
-                  {evalRuns.map((run: Record<string, unknown>) => {
+                  {(evalRuns as Array<Record<string, unknown>>).map((run) => {
                     const agent = run.agents as Record<string, string> | null
                     const archetype = agent?.archetype ?? ''
                     const colors = getArchetypeColor(archetype)
+                    const judgeScores = judgeScoresByEvalRun.get(run.id as string) ?? []
+
+                    // Group judge scores by model
+                    const byModel = new Map<string, Record<string, unknown>>()
+                    for (const js of judgeScores) {
+                      byModel.set(js.judge_model as string, js)
+                    }
 
                     return (
                       <div key={run.id as string} className={`rounded-md border ${colors.border} ${colors.bg} p-4`}>
+                        {/* Agent header */}
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className={`font-semibold ${colors.text}`}>{agent?.name ?? 'Unknown'}</span>
@@ -62,10 +104,17 @@ export default async function EvaluationsPage() {
                               {archetype.replace('_', ' ')}
                             </span>
                           </div>
-                          <span className="text-sm font-mono text-neutral-400">
-                            Overall: {((run.overall_score as number) * 100).toFixed(0)}%
-                          </span>
+                          <div className="flex items-center gap-3 text-sm font-mono text-neutral-400">
+                            <span>Heuristic: {(((run.overall_score as number) ?? 0) * 100).toFixed(0)}%</span>
+                            {run.ai_judge_score != null && (
+                              <span className="text-violet-400">
+                                AI Judge: {((run.ai_judge_score as number) * 100).toFixed(0)}%
+                              </span>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Heuristic scores */}
                         <div className="grid grid-cols-3 gap-2 text-xs">
                           <ScoreBar label="Epistemic" value={run.epistemic_discipline_score as number | null} />
                           <ScoreBar label="Persuasion" value={run.persuasion_quality_score as number | null} />
@@ -74,6 +123,34 @@ export default async function EvaluationsPage() {
                           <ScoreBar label="Balance" value={run.participation_balance_score as number | null} />
                           <ScoreBar label="Chemistry" value={run.cast_chemistry_score as number | null} />
                         </div>
+
+                        {/* AI Judge Panel */}
+                        {judgeScores.length > 0 && (
+                          <div className="mt-4 space-y-3 border-t border-neutral-700/50 pt-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+                              AI Judge Panel
+                            </p>
+                            {Array.from(byModel.entries()).map(([model, score]) => (
+                              <div key={model}>
+                                <div className="mb-1.5 flex items-center gap-2">
+                                  <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium text-neutral-300">
+                                    {model === 'claude-sonnet-4-6' ? 'Claude Sonnet' : model === 'gpt-4o' ? 'GPT-4o' : model}
+                                  </span>
+                                  <span className="text-[10px] text-neutral-500">
+                                    {((score.overall_score as number) * 100).toFixed(0)}% overall
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                  <ScoreBar label="Argument" value={score.argument_strength as number} reasoning={(score.reasoning as Record<string, string>)?.argument_strength} />
+                                  <ScoreBar label="Coherence" value={score.logical_coherence as number} reasoning={(score.reasoning as Record<string, string>)?.logical_coherence} />
+                                  <ScoreBar label="Evidence" value={score.evidence_quality as number} reasoning={(score.reasoning as Record<string, string>)?.evidence_quality} />
+                                  <ScoreBar label="Responsive" value={score.responsiveness as number} reasoning={(score.reasoning as Record<string, string>)?.responsiveness} />
+                                  <ScoreBar label="Rhetoric" value={score.rhetorical_effectiveness as number} reasoning={(score.reasoning as Record<string, string>)?.rhetorical_effectiveness} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -93,12 +170,27 @@ export default async function EvaluationsPage() {
   )
 }
 
-function ScoreBar({ label, value }: { label: string; value: number | null }) {
+function ScoreBar({
+  label,
+  value,
+  reasoning,
+}: {
+  label: string
+  value: number | null
+  reasoning?: string
+}) {
   const pct = value !== null ? Math.round(value * 100) : 0
-  const color = value === null ? 'bg-neutral-700' : pct >= 70 ? 'bg-emerald-600' : pct >= 40 ? 'bg-amber-600' : 'bg-red-600'
+  const color =
+    value === null
+      ? 'bg-neutral-700'
+      : pct >= 70
+        ? 'bg-emerald-600'
+        : pct >= 40
+          ? 'bg-amber-600'
+          : 'bg-red-600'
 
   return (
-    <div>
+    <div title={reasoning}>
       <div className="flex justify-between mb-1">
         <span className="text-neutral-400">{label}</span>
         <span className="text-neutral-300">{value !== null ? `${pct}%` : '—'}</span>

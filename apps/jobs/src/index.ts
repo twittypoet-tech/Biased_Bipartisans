@@ -1,7 +1,9 @@
 import { serve } from 'inngest/express'
 import { createLogger, validateEnv, JOBS_ENV } from '@bipi/shared'
+import { getSupabaseClient } from '@bipi/db'
 import { inngest } from './inngest/client.js'
 import { runPostDebatePipeline } from './functions/post-debate-pipeline.js'
+import { runAiJudgeEvaluation } from './functions/ai-judge-evaluate.js'
 
 const log = createLogger('jobs')
 
@@ -59,6 +61,24 @@ async function main() {
     } catch (err) {
       log.error('Pipeline error', err)
       res.status(500).json({ error: 'Pipeline failed' })
+    }
+  })
+
+  // Run AI judge evaluation on a specific debate (Layer 1 scoring)
+  app.post('/api/run-ai-judges', express.json(), async (req, res) => {
+    const { debateId } = req.body
+    if (!debateId) {
+      res.status(400).json({ error: 'Missing debateId' })
+      return
+    }
+
+    try {
+      const db = getSupabaseClient()
+      await runAiJudgeEvaluation(db, debateId)
+      res.json({ ok: true, debateId })
+    } catch (err) {
+      log.error('AI judge error', err)
+      res.status(500).json({ error: 'AI judge evaluation failed' })
     }
   })
 
