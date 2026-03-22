@@ -239,6 +239,32 @@ export async function updateEvalRunObjectiveScore(
   if (error) throw error
 }
 
+// ─── Audience + Composite Scores ───
+
+export async function updateEvalRunAudienceScore(
+  db: SupabaseClient,
+  evalRunId: UUID,
+  audienceScore: number | null,
+): Promise<void> {
+  const { error } = await db
+    .from('agent_eval_runs')
+    .update({ audience_score: audienceScore })
+    .eq('id', evalRunId)
+  if (error) throw error
+}
+
+export async function updateEvalRunCompositeScore(
+  db: SupabaseClient,
+  evalRunId: UUID,
+  compositeScore: number | null,
+): Promise<void> {
+  const { error } = await db
+    .from('agent_eval_runs')
+    .update({ composite_score: compositeScore })
+    .eq('id', evalRunId)
+  if (error) throw error
+}
+
 // ─── Topic Confidence ───
 
 export async function getAgentTopicConfidence(

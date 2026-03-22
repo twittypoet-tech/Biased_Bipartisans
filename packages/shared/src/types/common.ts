@@ -239,6 +239,8 @@ export interface AgentEvalRun {
   overall_score: number | null
   ai_judge_score?: number | null
   objective_score?: number | null
+  audience_score?: number | null
+  composite_score?: number | null
   scoring_details: Record<string, unknown>
   created_at: Timestamp
 }

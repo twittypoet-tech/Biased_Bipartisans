@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { runAiJudgeEvaluation } from '@bipi/eval'
+import {
+  runAiJudgeEvaluation,
+  runObjectiveMetricsEvaluation,
+  computeAudienceScores,
+  computeCompositeScores,
+} from '@bipi/eval'
 
 /**
  * POST /api/admin/debates/[id]/run-ai-judges
@@ -39,6 +44,9 @@ export async function POST(
 
   try {
     await runAiJudgeEvaluation(db, debateId)
+    await runObjectiveMetricsEvaluation(db, debateId)
+    await computeAudienceScores(db, debateId)
+    await computeCompositeScores(db, debateId)
     return NextResponse.json({ ok: true, debateId })
   } catch (err) {
     console.error('AI judge evaluation failed:', err)

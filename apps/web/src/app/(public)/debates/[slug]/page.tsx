@@ -1,13 +1,14 @@
 export const dynamic = 'force-dynamic'
 
 import { createServerClient } from '@/lib/supabase/server'
-import { getDebateBySlug, getDebateFormat, getDebateParticipants, getDebateTurns, getDebateVotes } from '@bipi/db'
+import { getDebateBySlug, getDebateFormat, getDebateParticipants, getDebateTurns, getDebateVotes, getEvalRunsForDebate } from '@bipi/db'
 import { getArchetypeColor, statusColors } from '@/lib/agent-colors'
 import { VotingPanel } from '@/components/public/voting-panel'
 import { DebateRoom } from '@/components/public/debate-room'
 import { DebatePlayer } from '@/components/public/debate-player'
 import { DebateTimer } from '@/components/public/debate-timer'
 import { ScheduledDebatePoller } from '@/components/public/scheduled-debate-poller'
+import { CompositeScoreBadge, LayerBreakdown } from '@/components/public/score-display'
 import Link from 'next/link'
 
 interface Props {
@@ -42,6 +43,9 @@ export default async function DebateDetailPage({ params }: Props) {
   const isLive = debate.status === 'live'
   const isEnded = debate.status === 'ended'
   const isScheduled = debate.status === 'scheduled'
+
+  // Fetch eval runs for ended debates (for score display)
+  const evalRuns = isEnded ? await getEvalRunsForDebate(db, debate.id) : []
 
   // Build participant info with agent data from the join
   const participantAgents = participants.map((p) => {
@@ -218,6 +222,33 @@ export default async function DebateDetailPage({ params }: Props) {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Performance Scores (ended debates with eval data) */}
+      {isEnded && evalRuns.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">Performance Scores</h2>
+          <div className="space-y-3">
+            {evalRuns.map((run) => {
+              const agent = debaters.find((a) => a.id === run.agent_id)
+              const colors = getArchetypeColor(agent?.archetype ?? '')
+              return (
+                <div key={run.id} className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-sm font-semibold ${colors.text}`}>{agent?.name ?? 'Unknown'}</span>
+                    <CompositeScoreBadge score={run.composite_score ?? null} />
+                  </div>
+                  <LayerBreakdown
+                    aiJudgeScore={run.ai_judge_score ?? null}
+                    objectiveScore={run.objective_score ?? null}
+                    audienceScore={run.audience_score ?? null}
+                    compositeScore={run.composite_score ?? null}
+                  />
+                </div>
+              )
+            })}
           </div>
         </section>
       )}

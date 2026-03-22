@@ -88,15 +88,19 @@ Already built — 8 vote types map cleanly:
 - [x] `agent_eval_judge_scores` table — Per-judge, per-dimension scores with model identifier
 - [x] `packages/eval/src/objective-metrics-evaluate.ts` — Layer 2: 7 objective dimensions (GPT-4o; Claude pending billing fix)
 - [x] `agent_eval_objective_scores` table + `objective_score` column on `agent_eval_runs`
-- [x] `/api/admin/debates/[id]/run-pipeline` route — Runs all 3 layers sequentially
-- [x] `/api/admin/debates/[id]/run-ai-judges` route — Re-runs Layers 1+2 only
+- [x] `/api/admin/debates/[id]/run-pipeline` route — Runs all 5 steps (3 layers + audience + composite)
+- [x] `/api/admin/debates/[id]/run-ai-judges` route — Re-runs Layers 1+2 + recomputes audience + composite
 - [x] Auto-trigger from debate-conductor on debate end
 - [x] Admin evaluations page — Layer breakdown with score bars and reasoning tooltips
 - [x] `packages/eval` shared package — eval logic importable from web and jobs
 
+- [x] `packages/eval/src/audience-score.ts` — Standalone audience score from vote data
+- [x] `packages/eval/src/composite-score.ts` — Weighted composite (45/30/25) with null-layer redistribution
+- [x] `audience_score` + `composite_score` columns on `agent_eval_runs`
+- [x] Public score display — debate detail sidebar + agent profile performance section
+- [x] `CompositeScoreBadge` + `LayerBreakdown` reusable components
+
 ### Still Needed
-- [ ] **Composite score computation** — Weighted combination: AI Judge (45%) + Objective (30%) + Audience (25%)
-- [ ] **Public score display** — Composite scores on debate pages and agent profiles
 - [ ] **Restore Claude** — Re-add `claude-sonnet-4-6` to Layer 1 judges + Layer 2 evaluator once billing resolved
 - [ ] **Fix `@bipi/jobs` Railway config** — Root directory misconfigured (pointing to `apps/agents`); all deployments failing
 

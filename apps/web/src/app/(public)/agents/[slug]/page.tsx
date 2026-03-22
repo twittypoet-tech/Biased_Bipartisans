@@ -8,9 +8,11 @@ import {
   getActivePhraseBank,
   getActiveEpistemicProfile,
   getAgentRelationships,
+  getEvalRunsForAgent,
 } from '@bipi/db'
 import { getArchetypeColor } from '@/lib/agent-colors'
 import { AgentIntroPlayer } from '@/components/public/agent-intro-player'
+import { CompositeScoreBadge } from '@/components/public/score-display'
 import Link from 'next/link'
 
 interface Props {
@@ -44,13 +46,27 @@ export default async function AgentProfilePage({ params }: Props) {
     )
   }
 
-  const [worldview, style, phrases, epistemic, relationships] = await Promise.all([
+  const [worldview, style, phrases, epistemic, relationships, evalRuns] = await Promise.all([
     getActiveWorldview(db, agent.id),
     getActiveStyleProfile(db, agent.id),
     getActivePhraseBank(db, agent.id),
     getActiveEpistemicProfile(db, agent.id),
     getAgentRelationships(db, agent.id),
+    getEvalRunsForAgent(db, agent.id, 10),
   ])
+
+  // Fetch debate metadata for eval runs
+  const debateIds = [...new Set(evalRuns.map((r) => r.debate_id))]
+  const { data: relatedDebates } = debateIds.length > 0
+    ? await db.from('debates').select('id, title, slug, ended_at').in('id', debateIds)
+    : { data: [] as Array<{ id: string; title: string; slug: string; ended_at: string | null }> }
+  const debateMap = new Map((relatedDebates ?? []).map((d) => [d.id, d]))
+
+  // Compute average composite score
+  const scoredRuns = evalRuns.filter((r) => r.composite_score != null)
+  const avgComposite = scoredRuns.length > 0
+    ? scoredRuns.reduce((sum, r) => sum + (r.composite_score ?? 0), 0) / scoredRuns.length
+    : null
 
   const colors = getArchetypeColor(agent.archetype)
 
@@ -278,6 +294,47 @@ export default async function AgentProfilePage({ params }: Props) {
               <MeterRow label="Warmth" value={style.warmth} />
               <MeterRow label="Abstraction" value={style.abstraction_level} />
               <MeterRow label="Interruption" value={style.interruption_tendency} />
+            </MiniCard>
+          )}
+
+          {/* Performance */}
+          {scoredRuns.length > 0 && (
+            <MiniCard title="Performance">
+              {avgComposite !== null && (
+                <div className="flex items-center justify-between mb-3 pb-3 border-b border-neutral-800">
+                  <span className="text-xs text-neutral-500">Avg Score</span>
+                  <CompositeScoreBadge score={avgComposite} size="md" />
+                </div>
+              )}
+              <div className="space-y-2">
+                {scoredRuns.slice(0, 5).map((run) => {
+                  const debate = debateMap.get(run.debate_id)
+                  return (
+                    <div key={run.id} className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        {debate?.slug ? (
+                          <Link
+                            href={`/debates/${debate.slug}`}
+                            className="text-xs text-neutral-300 hover:text-white transition truncate block"
+                          >
+                            {debate?.title ?? 'Unknown'}
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-neutral-400 truncate block">
+                            {debate?.title ?? 'Unknown'}
+                          </span>
+                        )}
+                        {debate?.ended_at && (
+                          <span className="text-[10px] text-neutral-600">
+                            {new Date(debate.ended_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                      <CompositeScoreBadge score={run.composite_score ?? null} />
+                    </div>
+                  )
+                })}
+              </div>
             </MiniCard>
           )}
         </div>

@@ -6,6 +6,36 @@
 
 ## 2026-03-22
 
+### feat: Composite Scoring (#3) + Public Score Display (#4)
+
+#### Audience Score (`packages/eval/src/audience-score.ts`)
+- Extracts standalone 0-1 audience score from `debate_votes` table
+- Positive votes: strongest_argument, best_evidence, best_rebuttal, best_concession, round_winner, most_persuasive
+- Evasive penalty: most_evasive votes reduce score by up to 15%
+- Null when no votes exist (excluded from composite via weight redistribution)
+
+#### Composite Score (`packages/eval/src/composite-score.ts`)
+- Weighted average: AI Judge (45%) + Objective (30%) + Audience (25%)
+- When a layer is null, weights redistribute proportionally among available layers
+- Stored in `agent_eval_runs.composite_score`
+
+#### Pipeline updates
+- `run-pipeline/route.ts` now runs 5 steps: Layer 0 → Layer 1 → Layer 2 → Audience → Composite
+- `run-ai-judges/route.ts` re-runs all layers + recomputes audience + composite
+
+#### Public score display
+- **Debate detail page** — "Performance Scores" sidebar section for ended debates: composite badge + 3-layer breakdown per agent
+- **Agent profile page** — "Performance" MiniCard: average composite score + recent debate history (up to 5, linked)
+- **Admin evaluations** — audience + composite scores in agent header row
+
+#### DB migration
+- `00013_add_composite_audience_scores.sql` — `audience_score` + `composite_score` columns on `agent_eval_runs`
+
+#### New components
+- `apps/web/src/components/public/score-display.tsx` — `CompositeScoreBadge` (colored pill) + `LayerBreakdown` (3 meter bars with weights)
+
+---
+
 ### feat: Layer 1 AI Judge Panel + Layer 2 Objective Metrics + auto-trigger pipeline
 
 #### `packages/eval` — New shared eval package

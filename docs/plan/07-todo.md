@@ -92,6 +92,16 @@ Currently audience questions are injected into the moderator every 90s if OPENAI
 ## DONE
 > Recently completed. Trim periodically.
 
+### Composite Scoring + Public Display (2026-03-22)
+- [x] Add `audience_score` + `composite_score` columns to `agent_eval_runs` (migration 00013)
+- [x] Build audience score computation (`audience-score.ts`) — standalone 0-1 score from vote data
+- [x] Build composite score computation (`composite-score.ts`) — weighted 45/30/25 with null redistribution
+- [x] Pipeline integration — both `run-pipeline` and `run-ai-judges` routes run all 5 steps
+- [x] `CompositeScoreBadge` + `LayerBreakdown` public score display components
+- [x] Debate detail page — "Performance Scores" sidebar section for ended debates
+- [x] Agent profile page — "Performance" MiniCard with avg score + recent debate history
+- [x] Admin evaluations page — audience + composite scores in header row
+
 ### Eval Pipeline (2026-03-22)
 - [x] Create `packages/eval` shared package — eval logic importable from web + jobs
 - [x] Move `evaluate-debate.ts` (Layer 0 heuristics) into `packages/eval`

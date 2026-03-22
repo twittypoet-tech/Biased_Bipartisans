@@ -1,3 +1,5 @@
 export { evaluateDebate } from './evaluate-debate'
 export { runAiJudgeEvaluation } from './ai-judge-evaluate'
 export { runObjectiveMetricsEvaluation } from './objective-metrics-evaluate'
+export { computeAudienceScores } from './audience-score'
+export { computeCompositeScores } from './composite-score'

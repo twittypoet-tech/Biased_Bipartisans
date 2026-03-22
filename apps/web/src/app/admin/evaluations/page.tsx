@@ -127,6 +127,16 @@ export default async function EvaluationsPage() {
                                 Objective: {((run.objective_score as number) * 100).toFixed(0)}%
                               </span>
                             )}
+                            {(run as Record<string, unknown>).audience_score != null && (
+                              <span className="text-amber-400">
+                                Audience: {(((run as Record<string, unknown>).audience_score as number) * 100).toFixed(0)}%
+                              </span>
+                            )}
+                            {(run as Record<string, unknown>).composite_score != null && (
+                              <span className="text-emerald-400 font-semibold">
+                                Composite: {(((run as Record<string, unknown>).composite_score as number) * 100).toFixed(0)}%
+                              </span>
+                            )}
                           </div>
                         </div>
 

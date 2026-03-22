@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { evaluateDebate, runAiJudgeEvaluation, runObjectiveMetricsEvaluation } from '@bipi/eval'
+import {
+  evaluateDebate,
+  runAiJudgeEvaluation,
+  runObjectiveMetricsEvaluation,
+  computeAudienceScores,
+  computeCompositeScores,
+} from '@bipi/eval'
 
 /**
  * POST /api/admin/debates/[id]/run-pipeline
@@ -52,6 +58,12 @@ export async function POST(
 
     // Step 3: Objective metrics (Layer 2)
     await runObjectiveMetricsEvaluation(db, debateId)
+
+    // Step 4: Audience scoring (from vote data)
+    await computeAudienceScores(db, debateId)
+
+    // Step 5: Composite score (combines Layers 1-3)
+    await computeCompositeScores(db, debateId)
 
     return NextResponse.json({ ok: true, debateId, agentIds })
   } catch (err) {
