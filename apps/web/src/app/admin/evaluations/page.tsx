@@ -176,7 +176,7 @@ export default async function EvaluationsPage() {
                               <div key={model}>
                                 <div className="mb-1.5 flex items-center gap-2">
                                   <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium text-neutral-300">
-                                    {model === 'claude-sonnet-4-6' ? 'Claude Sonnet' : model === 'gpt-4o' ? 'GPT-4o' : model}
+                                    {model === 'claude-sonnet-4-6' ? 'Claude Sonnet' : model === 'claude-3-5-haiku-20241022' ? 'Claude Haiku' : model === 'gpt-4o' ? 'GPT-4o' : model}
                                   </span>
                                   <span className="text-[10px] text-neutral-500">
                                     {((score.overall_score as number) * 100).toFixed(0)}% overall

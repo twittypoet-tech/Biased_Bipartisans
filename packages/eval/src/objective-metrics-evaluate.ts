@@ -13,7 +13,7 @@ import type { UUID } from '@bipi/shared'
 
 const log = createLogger('eval:objective-metrics')
 
-const EVALUATOR_MODEL = 'claude-sonnet-4-6'
+const EVALUATOR_MODEL = 'claude-3-5-haiku-20241022'
 
 // Lazy singleton
 let _anthropic: Anthropic | null = null
