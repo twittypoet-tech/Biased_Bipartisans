@@ -1,6 +1,6 @@
 # BIPI — Active Task Tracker
 
-> Last updated: 2026-03-22
+> Last updated: 2026-03-23
 > Priority spectrum: **CRITICAL > HIGH > MEDIUM > LOW > BACKLOG**
 
 ---
@@ -91,6 +91,16 @@ Currently audience questions are injected into the moderator every 90s if OPENAI
 
 ## DONE
 > Recently completed. Trim periodically.
+
+### Full 30-Agent Roster Seeded (2026-03-23)
+- [x] Created `supabase/migrations/00014_expand_archetypes.sql` — adds 24 new `agent_archetype` enum values
+- [x] Applied migration to live DB
+- [x] Created `supabase/seed/008_expanded_roster.sql` — comprehensive seed for all 30 agents
+- [x] Seeded base agent records (30 agents: 5 updated + 25 new)
+- [x] Seeded worldviews, style profiles, phrasebanks, epistemic profiles for all 30
+- [x] Seeded key relationships (92 total pairings) from roster matchup file
+- [x] Updated `docs/plan/01-agent-personas.md` with full roster
+- [ ] **Remaining:** Add `retell_agent_id` values for all 25 new agents (manual — after Retell config)
 
 ### Composite Scoring + Public Display (2026-03-22)
 - [x] Add `audience_score` + `composite_score` columns to `agent_eval_runs` (migration 00013)
