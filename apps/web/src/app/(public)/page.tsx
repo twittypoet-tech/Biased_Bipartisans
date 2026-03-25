@@ -31,6 +31,8 @@ export default async function HomePage() {
       id: r.agent_id as string,
       name: (r.agents?.name ?? '') as string,
       archetype: (r.agents?.archetype ?? '') as string,
+      avatarUrl: (r.agents?.avatar_url ?? null) as string | null,
+      expertise: (r.agents?.expertise ?? []) as string[],
     }))
   }
 
@@ -138,7 +140,7 @@ export default async function HomePage() {
               const participantIds = retellCallIds ? Object.keys(retellCallIds) : []
               const participants = agents
                 .filter((a) => participantIds.includes(a.id))
-                .map((a) => ({ id: a.id, name: a.name, archetype: a.archetype }))
+                .map((a) => ({ id: a.id, name: a.name, archetype: a.archetype, avatarUrl: a.avatar_url, expertise: a.expertise }))
               return (
                 // Show all 4 on sm+, only first 2 on mobile
                 <div key={d.id} className={i >= 2 ? 'hidden sm:block' : ''}>
@@ -176,6 +178,8 @@ export default async function HomePage() {
               shortBio={a.short_bio}
               llmProvider={a.llm_provider}
               role={a.role}
+              avatarUrl={a.avatar_url}
+              expertise={a.expertise}
             />
           ))}
         </div>

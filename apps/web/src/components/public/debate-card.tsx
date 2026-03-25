@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 // ── Avatar palette (matches past-debate-card) ─────────────────────────────────
 
@@ -26,6 +27,8 @@ interface Participant {
   id: string
   name: string
   archetype: string
+  avatarUrl?: string | null
+  expertise?: string[]
 }
 
 interface DebateCardProps {
@@ -218,6 +221,26 @@ export function DebateCard({
           <div className="flex items-center -space-x-2">
             {debaters.slice(0, 5).map((p) => {
               const colors = getAvatarColors(p.archetype)
+              const initials = getInitials(p.name)
+
+              if (p.avatarUrl) {
+                return (
+                  <div
+                    key={p.id}
+                    title={p.name}
+                    className="relative inline-flex size-9 shrink-0 overflow-hidden rounded-full border-2 border-neutral-900"
+                  >
+                    <Image
+                      src={p.avatarUrl}
+                      alt={p.name}
+                      fill
+                      className="object-cover"
+                      sizes="36px"
+                    />
+                  </div>
+                )
+              }
+
               return (
                 <span
                   key={p.id}
@@ -225,7 +248,7 @@ export function DebateCard({
                   className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-neutral-900 text-[11px] font-bold"
                   style={{ background: colors.bg, color: colors.text }}
                 >
-                  {getInitials(p.name)}
+                  {initials}
                 </span>
               )
             })}
@@ -241,18 +264,33 @@ export function DebateCard({
             <div className="mt-3 space-y-2 rounded-lg bg-neutral-800/50 p-3">
               {debaters.map((p) => {
                 const colors = getAvatarColors(p.archetype)
+                const initials = getInitials(p.name)
+                const primaryExpertise = p.expertise?.[0] ?? p.archetype.replace(/_/g, ' ')
+
                 return (
                   <div key={p.id} className="flex items-center gap-2.5">
-                    <span
-                      className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                      style={{ background: colors.bg, color: colors.text }}
-                    >
-                      {getInitials(p.name)}
-                    </span>
+                    {p.avatarUrl ? (
+                      <div className="relative inline-flex size-7 shrink-0 overflow-hidden rounded-full">
+                        <Image
+                          src={p.avatarUrl}
+                          alt={p.name}
+                          fill
+                          className="object-cover"
+                          sizes="28px"
+                        />
+                      </div>
+                    ) : (
+                      <span
+                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                        style={{ background: colors.bg, color: colors.text }}
+                      >
+                        {initials}
+                      </span>
+                    )}
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-neutral-200">{p.name}</p>
                       <p className="text-xs capitalize text-neutral-500">
-                        {p.archetype.replace(/_/g, ' ')}
+                        {primaryExpertise}
                       </p>
                     </div>
                   </div>

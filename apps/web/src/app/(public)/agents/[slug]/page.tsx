@@ -87,6 +87,7 @@ export default async function AgentProfilePage({ params }: Props) {
       shortBio: agent.short_bio ?? null,
       introAudioUrl: agent.intro_audio_url ?? null,
       avatarUrl: agent.avatar_url ?? null,
+      expertise: (agent.expertise as string[]) ?? [],
     },
     worldview: worldview
       ? {

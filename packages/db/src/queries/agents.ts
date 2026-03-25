@@ -173,3 +173,40 @@ export async function updateAgentAvatar(
     .eq('id', agentId)
   if (error) throw error
 }
+
+export interface AgentWithDebateCount extends Agent {
+  debateCount: number
+}
+
+export async function getAgentsWithDebateCounts(
+  db: SupabaseClient,
+): Promise<AgentWithDebateCount[]> {
+  // Get all debater agents (excluding moderator role)
+  const { data: agents, error: agentError } = await db
+    .from('agents')
+    .select('*')
+    .neq('role', 'moderator')
+    .order('name')
+
+  if (agentError) throw agentError
+
+  // Get debate participant counts
+  const { data: participants, error: participantError } = await db
+    .from('debate_participants')
+    .select('agent_id')
+
+  if (participantError) throw participantError
+
+  // Build count map
+  const debateCountMap = new Map<UUID, number>()
+  for (const row of participants ?? []) {
+    const count = debateCountMap.get(row.agent_id) ?? 0
+    debateCountMap.set(row.agent_id, count + 1)
+  }
+
+  // Return agents with debate counts
+  return (agents ?? []).map((a) => ({
+    ...a,
+    debateCount: debateCountMap.get(a.id) ?? 0,
+  }))
+}

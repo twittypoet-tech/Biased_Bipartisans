@@ -16,6 +16,23 @@ export function getArchetypeColor(archetype: string): { bg: string; text: string
   return archetypeColors[archetype] ?? defaultColors
 }
 
+export const expertiseColors: Record<string, { bg: string; text: string; border: string; badge: string }> = {
+  'Environmental Science': { bg: 'bg-emerald-950/40', text: 'text-emerald-400', border: 'border-emerald-800/50', badge: 'bg-emerald-900/60 text-emerald-200' },
+  'History & Politics': { bg: 'bg-blue-950/40', text: 'text-blue-400', border: 'border-blue-800/50', badge: 'bg-blue-900/60 text-blue-200' },
+  'Law & Jurisprudence': { bg: 'bg-indigo-950/40', text: 'text-indigo-400', border: 'border-indigo-800/50', badge: 'bg-indigo-900/60 text-indigo-200' },
+  'Medicine & Healthcare': { bg: 'bg-teal-950/40', text: 'text-teal-400', border: 'border-teal-800/50', badge: 'bg-teal-900/60 text-teal-200' },
+  'Philosophy & Ethics': { bg: 'bg-violet-950/40', text: 'text-violet-400', border: 'border-violet-800/50', badge: 'bg-violet-900/60 text-violet-200' },
+  'Rhetoric & Persuasion': { bg: 'bg-amber-950/40', text: 'text-amber-400', border: 'border-amber-800/50', badge: 'bg-amber-900/60 text-amber-200' },
+  'Statistics & Data Science': { bg: 'bg-cyan-950/40', text: 'text-cyan-400', border: 'border-cyan-800/50', badge: 'bg-cyan-900/60 text-cyan-200' },
+  'Technology & Innovation': { bg: 'bg-purple-950/40', text: 'text-purple-400', border: 'border-purple-800/50', badge: 'bg-purple-900/60 text-purple-200' },
+}
+
+const defaultExpertiseColors = { bg: 'bg-neutral-900/40', text: 'text-neutral-400', border: 'border-neutral-700/50', badge: 'bg-neutral-800 text-neutral-400' }
+
+export function getExpertiseColor(domain: string): { bg: string; text: string; border: string; badge: string } {
+  return expertiseColors[domain] ?? defaultExpertiseColors
+}
+
 export const statusColors: Record<string, string> = {
   official: 'bg-emerald-900 text-emerald-200',
   guest: 'bg-blue-900 text-blue-200',

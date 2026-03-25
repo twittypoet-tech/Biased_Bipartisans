@@ -2,11 +2,14 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 interface Participant {
   id: string
   name: string
   archetype: string
+  avatarUrl?: string | null
+  expertise?: string[]
 }
 
 interface PastDebateCardProps {
@@ -213,28 +216,38 @@ export function PastDebateCard({
                   .join('')
                   .toUpperCase()
                   .slice(0, 2)
+
+                const avatarEl = p.avatarUrl ? (
+                  <div className="relative inline-flex size-7 shrink-0 overflow-hidden rounded-full">
+                    <Image
+                      src={p.avatarUrl}
+                      alt={p.name}
+                      fill
+                      className="object-cover"
+                      sizes="28px"
+                    />
+                  </div>
+                ) : (
+                  <span
+                    className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                    style={{ background: colors.bg, color: colors.text }}
+                  >
+                    {initials}
+                  </span>
+                )
+
                 return (
                   <div key={p.id} className={`flex items-center gap-1.5 ${i === 0 ? 'flex-1 justify-start' : 'flex-1 justify-end'}`}>
                     {i === 0 && (
                       <>
-                        <span
-                          className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                          style={{ background: colors.bg, color: colors.text }}
-                        >
-                          {initials}
-                        </span>
+                        {avatarEl}
                         <span className="truncate text-xs font-medium text-neutral-300">{p.name}</span>
                       </>
                     )}
                     {i === 1 && (
                       <>
                         <span className="truncate text-xs font-medium text-neutral-300">{p.name}</span>
-                        <span
-                          className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                          style={{ background: colors.bg, color: colors.text }}
-                        >
-                          {initials}
-                        </span>
+                        {avatarEl}
                       </>
                     )}
                   </div>
@@ -248,6 +261,25 @@ export function PastDebateCard({
               {debaters.map((p) => {
                 const colors = getAvatarColors(p.archetype)
                 const initials = p.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+
+                if (p.avatarUrl) {
+                  return (
+                    <div
+                      key={p.id}
+                      title={p.name}
+                      className="relative inline-flex size-7 shrink-0 overflow-hidden rounded-full"
+                    >
+                      <Image
+                        src={p.avatarUrl}
+                        alt={p.name}
+                        fill
+                        className="object-cover"
+                        sizes="28px"
+                      />
+                    </div>
+                  )
+                }
+
                 return (
                   <span
                     key={p.id}
