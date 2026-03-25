@@ -15,6 +15,7 @@ export interface AgentProfileData {
     evolutionStage: string
     shortBio: string | null
     introAudioUrl: string | null
+    avatarUrl: string | null
   }
   worldview: {
     coreThesis: string
@@ -92,9 +93,17 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start">
 
           {/* Avatar */}
-          <div className={`shrink-0 self-start flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 ${colors.border} bg-neutral-950/60 text-2xl sm:text-3xl font-bold ${colors.text}`}>
-            {initials}
-          </div>
+          {agent.avatarUrl ? (
+            <img
+              src={agent.avatarUrl}
+              alt={`${agent.name} avatar`}
+              className={`shrink-0 self-start w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 object-cover ${colors.border}`}
+            />
+          ) : (
+            <div className={`shrink-0 self-start flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 ${colors.border} bg-neutral-950/60 text-2xl sm:text-3xl font-bold ${colors.text}`}>
+              {initials}
+            </div>
+          )}
 
           {/* Info */}
           <div className="flex-1 min-w-0">
