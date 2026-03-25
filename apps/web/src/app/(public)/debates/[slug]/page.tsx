@@ -57,6 +57,8 @@ export default async function DebateDetailPage({ params }: Props) {
       archetype: (agent?.archetype as string) ?? 'unknown',
       role: p.role,
       shortBio: (agent?.short_bio as string) ?? '',
+      avatarUrl: (agent?.avatar_url as string | null) ?? null,
+      expertise: (agent?.expertise as string[]) ?? [],
     }
   })
 

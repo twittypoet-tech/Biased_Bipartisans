@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { getExpertiseColor } from '@/lib/agent-colors'
 import { AgentIntroPlayer } from './agent-intro-player'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -16,6 +17,7 @@ export interface AgentProfileData {
     shortBio: string | null
     introAudioUrl: string | null
     avatarUrl: string | null
+    expertise: string[]
   }
   worldview: {
     coreThesis: string
@@ -67,6 +69,67 @@ export interface AgentProfileData {
 
 type Tab = 'overview' | 'debates' | 'voice'
 
+// ── Expertise Badges Component ─────────────────────────────────────────────────
+
+function ExpertiseBadges({ expertise }: { expertise: string[] }) {
+  const [openPopup, setOpenPopup] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setOpenPopup(false)
+      }
+    }
+
+    if (openPopup) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [openPopup])
+
+  if (!expertise || expertise.length === 0) return null
+
+  return (
+    <div className="relative flex items-center gap-2 flex-wrap">
+      {expertise[0] && (
+        <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getExpertiseColor(expertise[0]).badge}`}>
+          {expertise[0]}
+        </span>
+      )}
+      {expertise.length > 1 && (
+        <div className="relative">
+          <button
+            onClick={() => setOpenPopup(!openPopup)}
+            className="text-xs text-neutral-400 hover:text-neutral-300 font-medium uppercase tracking-wider"
+            type="button"
+          >
+            +{expertise.length - 1} more
+          </button>
+          {openPopup && (
+            <div
+              ref={popoverRef}
+              className="absolute top-full left-0 z-50 mt-2 w-72 rounded-lg border border-neutral-700 bg-neutral-800 p-3 shadow-lg"
+            >
+              <p className="mb-2 text-xs font-semibold text-neutral-400">Expertise Domains</p>
+              <div className="flex flex-wrap gap-2">
+                {expertise.map((domain) => (
+                  <span
+                    key={domain}
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getExpertiseColor(domain).badge}`}
+                  >
+                    {domain}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function AgentProfileClient({ data }: { data: AgentProfileData }) {
@@ -108,9 +171,16 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${colors.badge}`}>
-                {agent.archetypeLabel}
-              </span>
+              {/* Expertise Badges */}
+              {agent.expertise && agent.expertise.length > 0 ? (
+                <ExpertiseBadges
+                  expertise={agent.expertise}
+                />
+              ) : (
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${colors.badge}`}>
+                  {agent.archetypeLabel}
+                </span>
+              )}
               <span className="rounded-full border border-neutral-700/50 bg-neutral-900/40 px-2.5 py-0.5 text-[10px] text-neutral-500 uppercase tracking-wider">
                 {agent.evolutionStage.replace(/_/g, ' ')}
               </span>
