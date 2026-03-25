@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { getArchetypeColor } from '@/lib/agent-colors'
 import { AudioWaveform } from './audio-waveform'
 
@@ -8,6 +9,9 @@ export interface StageParticipant {
   name: string
   archetype: string
   role: 'debater' | 'moderator'
+  avatarUrl?: string | null
+  expertise?: string[]
+  shortBio?: string
 }
 
 interface SpeakerStageProps {
@@ -78,13 +82,27 @@ export function SpeakerStage({ participants, activeSpeakerId, currentPhase, isPl
 
               <div className="flex flex-col items-center gap-2 text-center">
                 {/* Avatar circle */}
-                <div
-                  className={`flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold transition-all duration-500 ${
-                    isSpeaking ? `${colors.badge} ring-2 ring-white/20` : 'bg-neutral-800 text-neutral-500'
-                  }`}
-                >
-                  {participant.name.charAt(0)}
-                </div>
+                {participant.avatarUrl ? (
+                  <div className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 transition-all duration-500 ${
+                    isSpeaking ? `${colors.border} ring-2 ring-white/20` : 'border-neutral-800/50'
+                  }`}>
+                    <Image
+                      src={participant.avatarUrl}
+                      alt={participant.name}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className={`flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold transition-all duration-500 ${
+                      isSpeaking ? `${colors.badge} ring-2 ring-white/20` : 'bg-neutral-800 text-neutral-500'
+                    }`}
+                  >
+                    {participant.name.charAt(0)}
+                  </div>
+                )}
 
                 {/* Name + archetype */}
                 <div>

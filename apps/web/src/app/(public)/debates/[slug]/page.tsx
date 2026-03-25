@@ -112,6 +112,9 @@ export default async function DebateDetailPage({ params }: Props) {
     name: p.name,
     archetype: p.archetype,
     role: p.role as 'debater' | 'moderator',
+    avatarUrl: p.avatarUrl,
+    expertise: p.expertise,
+    shortBio: p.shortBio,
   }))
 
   // Initial turns for live room
