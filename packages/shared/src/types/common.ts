@@ -171,6 +171,7 @@ export interface Debate {
   duration_override_minutes: number | null // per-debate timing override (migration 006)
   recordings: Record<string, string>       // agentId → retellRecordingUrl (migration 008)
   turn_config: unknown | null              // per-debate playbook override (migration 010)
+  expertise: string[]                      // knowledge domain tags (migration 016)
   created_at: Timestamp
   updated_at: Timestamp
 }
