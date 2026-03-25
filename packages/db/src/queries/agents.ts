@@ -181,11 +181,10 @@ export interface AgentWithDebateCount extends Agent {
 export async function getAgentsWithDebateCounts(
   db: SupabaseClient,
 ): Promise<AgentWithDebateCount[]> {
-  // Get all active debater agents
+  // Get all debater agents (excluding moderator role)
   const { data: agents, error: agentError } = await db
     .from('agents')
     .select('*')
-    .eq('status', 'active')
     .neq('role', 'moderator')
     .order('name')
 
