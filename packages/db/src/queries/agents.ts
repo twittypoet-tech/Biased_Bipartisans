@@ -161,3 +161,15 @@ export async function getFullAgentConfig(
 
   return { agent, worldview, style, phrases, epistemic, relationships }
 }
+
+export async function updateAgentAvatar(
+  db: SupabaseClient,
+  agentId: UUID,
+  avatarUrl: string,
+): Promise<void> {
+  const { error } = await db
+    .from('agents')
+    .update({ avatar_url: avatarUrl })
+    .eq('id', agentId)
+  if (error) throw error
+}

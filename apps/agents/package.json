@@ -21,6 +21,9 @@
     "@bipi/agent-core": "workspace:*",
     "@bipi/db": "workspace:*",
     "@bipi/shared": "workspace:*",
+    "@dicebear/bottts": "^9.4.2",
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.2",
     "@livekit/agents": "^1.0.50",
     "@livekit/agents-plugin-deepgram": "^1.0.0",
     "@livekit/agents-plugin-elevenlabs": "^1.0.0",
@@ -28,6 +31,7 @@
     "@livekit/agents-plugin-silero": "^1.0.0",
     "@livekit/rtc-node": "^0.13.24",
     "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^17.3.1",
     "livekit-server-sdk": "^2.9.0",
     "openai": "^4.80.0",
     "retell-sdk": "^5.9.0"
