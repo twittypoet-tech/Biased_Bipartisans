@@ -33,13 +33,16 @@ export default async function HomePage() {
   function parseParticipants(debateId: string) {
     const rows = participantsMap[debateId] ?? []
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (rows as any[]).map((r) => ({
-      id:        r.agent_id as string,
-      name:      (r.agents?.name     ?? '') as string,
-      archetype: (r.agents?.archetype ?? '') as string,
-      avatarUrl: (r.agents?.avatar_url ?? null) as string | null,
-      expertise: (r.agents?.expertise  ?? []) as string[],
-    }))
+    return (rows as any[])
+      .filter((r) => r.role !== 'moderator')
+      .map((r) => ({
+        id:        r.agent_id as string,
+        name:      (r.agents?.name     ?? '') as string,
+        archetype: (r.agents?.archetype ?? '') as string,
+        avatarUrl: (r.agents?.avatar_url ?? null) as string | null,
+        role:      (r.role ?? '') as string,
+        expertise: (r.agents?.expertise  ?? []) as string[],
+      }))
   }
 
   function getRecordingUrl(debate: typeof debates[0]): string | null {
