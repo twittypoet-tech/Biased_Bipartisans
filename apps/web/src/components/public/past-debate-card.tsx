@@ -20,6 +20,8 @@ interface PastDebateCardProps {
   startedAt: string | null
   recordingUrl: string | null
   participants: Participant[]
+  /** When false, pause any playing audio (used by card stack) */
+  isActive?: boolean
 }
 
 // Per-archetype avatar palette (solid colors for the initials bubble)
@@ -108,10 +110,19 @@ export function PastDebateCard({
   startedAt,
   recordingUrl,
   participants,
+  isActive = true,
 }: PastDebateCardProps) {
   const router = useRouter()
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+
+  // Pause audio when this card is no longer active (e.g. moved out of stack front)
+  useEffect(() => {
+    if (!isActive && audioRef.current && isPlaying) {
+      audioRef.current.pause()
+      setIsPlaying(false)
+    }
+  }, [isActive, isPlaying])
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
 
