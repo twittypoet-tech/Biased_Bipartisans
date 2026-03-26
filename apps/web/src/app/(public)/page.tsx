@@ -3,11 +3,11 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { listDebates, listAgents, listDebateParticipants } from '@bipi/db'
-import { PastDebateCard } from '@/components/public/past-debate-card'
 import { DebateCard } from '@/components/public/debate-card'
 import { HeroShader } from '@/components/home/hero-shader'
 import { AgentMarquee } from '@/components/home/agent-marquee'
 import { FeaturesSection } from '@/components/home/features-section'
+import { DebateCardStack, type DebateCardData } from '@/components/home/debate-card-stack'
 
 export default async function HomePage() {
   const db = createServerClient()
@@ -16,67 +16,77 @@ export default async function HomePage() {
     listAgents(db),
   ])
 
-  const liveDebates = debates.filter((d) => d.status === 'live')
-  const endedDebates = debates.filter((d) => d.status === 'ended')
-  const debaters = agents.filter((a) => a.role !== 'moderator')
+  const liveDebates   = debates.filter((d) => d.status === 'live')
+  const endedDebates  = debates.filter((d) => d.status === 'ended')
+  const debaters      = agents.filter((a) => a.role !== 'moderator')
 
-  // Featured debate: prioritize live, then pick a random ended one
-  const featuredLive = liveDebates[0] ?? null
-  const featuredEnded = endedDebates.length > 0
-    ? endedDebates[Math.floor(Math.random() * endedDebates.length)]
-    : null
-  const featuredDebate = featuredLive ?? featuredEnded
-
-  // Fetch participants for the featured debate
-  const featuredParticipants = featuredDebate
-    ? await listDebateParticipants(db, [featuredDebate.id])
+  // Participants for live debate(s) + all ended debates
+  const participantDebateIds = [
+    ...liveDebates.map((d) => d.id),
+    ...endedDebates.map((d) => d.id),
+  ]
+  const participantsMap = participantDebateIds.length > 0
+    ? await listDebateParticipants(db, participantDebateIds)
     : {}
 
-  function getFeaturedParticipants(debateId: string) {
-    const rows = featuredParticipants[debateId] ?? []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function parseParticipants(debateId: string) {
+    const rows = participantsMap[debateId] ?? []
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return rows.map((r: any) => ({
-      id: r.agent_id as string,
-      name: (r.agents?.name ?? '') as string,
-      archetype: (r.agents?.archetype ?? '') as string,
-      avatarUrl: (r.agents?.avatar_url ?? null) as string | null,
-      expertise: (r.agents?.expertise ?? []) as string[],
-    }))
+    return (rows as any[])
+      .filter((r) => r.role !== 'moderator')
+      .map((r) => ({
+        id:        r.agent_id as string,
+        name:      (r.agents?.name     ?? '') as string,
+        archetype: (r.agents?.archetype ?? '') as string,
+        avatarUrl: (r.agents?.avatar_url ?? null) as string | null,
+        role:      (r.role ?? '') as string,
+        expertise: (r.agents?.expertise  ?? []) as string[],
+      }))
   }
 
-  // Build featured ended debate recording URL
-  let featuredRecordingUrl: string | null = null
-  if (featuredEnded && !featuredLive) {
-    const recordings = featuredEnded.recordings as Record<string, string> | null
-    const rows = featuredParticipants[featuredEnded.id] ?? []
+  function getRecordingUrl(debate: typeof debates[0]): string | null {
+    const recordings  = debate.recordings as Record<string, string> | null
+    if (!recordings) return null
+    const rows        = participantsMap[debate.id] ?? []
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const moderator = rows.find((r: any) => r.role === 'moderator')
-    featuredRecordingUrl = recordings
-      ? (recordings[moderator?.agent_id ?? ''] ?? Object.values(recordings)[0] ?? null)
-      : null
+    const moderator   = (rows as any[]).find((r) => r.role === 'moderator')
+    return recordings[moderator?.agent_id ?? ''] ?? Object.values(recordings)[0] ?? null
   }
 
-  // Marquee agents: debaters with avatar/name/slug
+  // Build the stack data for all ended debates (most recent first)
+  const stackDebates: DebateCardData[] = endedDebates.map((d) => ({
+    id:           d.id,
+    title:        d.title,
+    slug:         d.slug,
+    headline:     (d.topic_framing as unknown as Record<string, string> | null)?.headline ?? '',
+    endedAt:      d.ended_at,
+    startedAt:    d.started_at,
+    recordingUrl: getRecordingUrl(d),
+    participants: parseParticipants(d.id),
+  }))
+
+  // Marquee agents
   const marqueeAgents = debaters.map((a) => ({
-    id: a.id,
-    name: a.name,
-    slug: a.slug,
+    id:        a.id,
+    name:      a.name,
+    slug:      a.slug,
     avatarUrl: a.avatar_url,
     archetype: a.archetype,
   }))
 
+  // Featured live debate (shown above the stack when live)
+  const featuredLive = liveDebates[0] ?? null
+
   return (
     <div className="bg-neutral-950">
-      {/* ── Hero ──────────────────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-[85vh] items-center justify-center overflow-hidden">
-        {/* WebGL shader background */}
-        <HeroShader />
 
-        {/* Gradient overlays for text legibility */}
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <section className="relative flex min-h-[85vh] items-center justify-center overflow-hidden">
+        <HeroShader />
         <div className="pointer-events-none absolute inset-0 bg-neutral-950/55" />
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-neutral-950 to-transparent" />
 
-        {/* Hero content */}
         <div className="relative z-10 mx-auto max-w-3xl px-4 text-center">
           <div className="animate-fade-in-down mb-5">
             <span className="inline-flex items-center gap-2 rounded-full border border-neutral-600/60 bg-neutral-900/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-300 backdrop-blur-sm">
@@ -115,7 +125,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Agent Marquee ─────────────────────────────────────────────────────── */}
+      {/* ── Agent Marquee ─────────────────────────────────────────────────── */}
       {marqueeAgents.length > 0 && (
         <section className="border-b border-neutral-800/60 bg-neutral-950 py-10">
           <div className="mb-6 px-4 text-center">
@@ -127,58 +137,55 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── Featured Debate ───────────────────────────────────────────────────── */}
-      {featuredDebate && (
-        <section className="py-20 sm:py-28 bg-neutral-950">
-          <div className="mx-auto max-w-2xl px-4 sm:px-6">
-            <div className="mb-10 text-center">
-              <span className="inline-block rounded-full border border-neutral-700 bg-neutral-800/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-4">
-                {featuredLive ? 'Happening Now' : 'Featured Debate'}
+      {/* ── Live Debate Banner (when live) ────────────────────────────────── */}
+      {featuredLive && (
+        <section className="py-12 bg-neutral-950">
+          <div className="mx-auto max-w-xl px-4 sm:px-6">
+            <div className="mb-6 text-center">
+              <span className="inline-flex items-center gap-2 rounded-full border border-red-800/60 bg-red-950/40 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-400">
+                <span className="size-1.5 rounded-full bg-red-400 animate-ping" />
+                Happening Now
               </span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                See Debates in Action
-              </h2>
-              <p className="mt-3 text-neutral-400">
-                {featuredLive
-                  ? 'A live debate is happening right now. Join the audience.'
-                  : 'Replay a recent debate and hear both sides make their case.'}
-              </p>
+              <h2 className="mt-3 text-2xl font-bold text-white">A Debate is Live</h2>
             </div>
-
-            {featuredLive ? (
-              <DebateCard
-                title={featuredLive.title}
-                slug={featuredLive.slug}
-                headline={
-                  (featuredLive.topic_framing as unknown as Record<string, string> | null)?.headline ?? ''
-                }
-                status={featuredLive.status}
-                scheduledAt={featuredLive.scheduled_at}
-                startedAt={featuredLive.started_at}
-                durationMinutes={featuredLive.duration_override_minutes}
-                participants={getFeaturedParticipants(featuredLive.id)}
-              />
-            ) : (
-              featuredEnded && (
-                <PastDebateCard
-                  title={featuredEnded.title}
-                  slug={featuredEnded.slug}
-                  headline={
-                    (featuredEnded.topic_framing as unknown as Record<string, string> | null)?.headline ?? ''
-                  }
-                  endedAt={featuredEnded.ended_at}
-                  startedAt={featuredEnded.started_at}
-                  recordingUrl={featuredRecordingUrl}
-                  participants={getFeaturedParticipants(featuredEnded.id)}
-                />
-              )
-            )}
+            <DebateCard
+              title={featuredLive.title}
+              slug={featuredLive.slug}
+              headline={(featuredLive.topic_framing as unknown as Record<string, string> | null)?.headline ?? ''}
+              status={featuredLive.status}
+              scheduledAt={featuredLive.scheduled_at}
+              startedAt={featuredLive.started_at}
+              durationMinutes={featuredLive.duration_override_minutes}
+              participants={parseParticipants(featuredLive.id)}
+            />
           </div>
         </section>
       )}
 
-      {/* ── Features + Use Cases ──────────────────────────────────────────────── */}
+      {/* ── Debate Card Stack ─────────────────────────────────────────────── */}
+      {stackDebates.length > 0 && (
+        <section className="py-20 sm:py-28 bg-neutral-950">
+          <div className="mx-auto max-w-2xl px-4 sm:px-6">
+            <div className="mb-12 text-center">
+              <span className="inline-block rounded-full border border-neutral-700 bg-neutral-800/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-4">
+                Debate Archive
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                See Debates in Action
+              </h2>
+              <p className="mt-3 text-neutral-400 max-w-md mx-auto">
+                Browse through past debates. Play the audio, or open the full debate room.
+              </p>
+            </div>
+
+            <DebateCardStack debates={stackDebates} />
+          </div>
+        </section>
+      )}
+
+      {/* ── Features + Use Cases ──────────────────────────────────────────── */}
       <FeaturesSection />
+
     </div>
   )
 }
