@@ -201,6 +201,28 @@ export function ParticipantManager({
         </div>
       )}
 
+      {/* Add Moderator (if missing) */}
+      {isEditable && !hasModerator && moderatorId && (
+        <div className="space-y-2">
+          <h4 className="text-xs font-medium text-neutral-500">Moderator</h4>
+          <button
+            onClick={() => addParticipant(moderatorId, 'moderator')}
+            disabled={loading === moderatorId}
+            className="flex w-full items-center justify-between rounded-lg border border-neutral-800 p-3 text-left transition hover:border-neutral-600 disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-sm">
+                {availableAgents.find((a) => a.id === moderatorId)?.name ?? 'Moderator'}
+              </span>
+              <span className="rounded-full bg-neutral-800 px-2 py-0.5 text-xs text-neutral-400">
+                moderator
+              </span>
+            </div>
+            <span className="text-xs text-neutral-500">+ Add</span>
+          </button>
+        </div>
+      )}
+
       {/* Status + Start Now */}
       {isEditable && (
         <div className="space-y-2">
