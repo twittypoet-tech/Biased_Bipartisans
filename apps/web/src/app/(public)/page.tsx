@@ -8,6 +8,7 @@ import { HeroShader } from '@/components/home/hero-shader'
 import { AgentMarquee } from '@/components/home/agent-marquee'
 import { FeaturesSection } from '@/components/home/features-section'
 import { DebateCardStack, type DebateCardData } from '@/components/home/debate-card-stack'
+import { CTASection } from '@/components/home/cta-section'
 
 export default async function HomePage() {
   const db = createServerClient()
@@ -185,6 +186,9 @@ export default async function HomePage() {
 
       {/* ── Features + Use Cases ──────────────────────────────────────────── */}
       <FeaturesSection />
+
+      {/* ── CTA ───────────────────────────────────────────────────────────── */}
+      <CTASection />
 
     </div>
   )
