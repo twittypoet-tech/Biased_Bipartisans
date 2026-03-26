@@ -325,36 +325,50 @@ const VISIBLE    = 3
 const OFFSET_PX  = 10
 const SCALE_STEP = 0.04
 const DIM_STEP   = 0.35
-const SPRING     = { type: 'spring' as const, stiffness: 200, damping: 30 }
+
+const slideVariants = {
+  enter: (dir: 'next' | 'prev') => ({
+    x: dir === 'next' ? '106%' : '-106%',
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (dir: 'next' | 'prev') => ({
+    x: dir === 'next' ? '-106%' : '106%',
+    opacity: 0,
+  }),
+}
+
+const SPRING = { type: 'spring' as const, stiffness: 300, damping: 34 }
 
 // ── DebateCardStack ────────────────────────────────────────────────────────────
 
 export function DebateCardStack({ debates }: { debates: DebateCardData[] }) {
-  const [cards, setCards]     = useState(debates)
-  const [frontId, setFrontId] = useState(debates[0]?.id ?? null)
+  const [index, setIndex]         = useState(0)
+  const [direction, setDirection] = useState<'next' | 'prev'>('next')
+
+  const moveNext = useCallback(() => {
+    setDirection('next')
+    setIndex(prev => (prev + 1) % debates.length)
+  }, [debates.length])
+
+  const movePrev = useCallback(() => {
+    setDirection('prev')
+    setIndex(prev => (prev - 1 + debates.length) % debates.length)
+  }, [debates.length])
 
   if (debates.length === 0) return null
 
-  const moveToEnd = useCallback(() => {
-    setCards(prev => {
-      if (prev.length < 2) return prev
-      const next: DebateCardData[] = [...prev.slice(1), prev[0]!]
-      setFrontId(next[0]?.id ?? null)
-      return next
-    })
-  }, [])
+  const frontDebate = debates[index]!
 
-  const moveToPrev = useCallback(() => {
-    setCards(prev => {
-      if (prev.length < 2) return prev
-      const next: DebateCardData[] = [prev[prev.length - 1]!, ...prev.slice(0, -1)]
-      setFrontId(next[0]?.id ?? null)
-      return next
-    })
-  }, [])
+  // Back cards: next 2 debates after the front one
+  const backDebates = Array.from({ length: VISIBLE - 1 }, (_, i) =>
+    debates[(index + i + 1) % debates.length]!,
+  )
 
-  const visible = cards.slice(0, VISIBLE)
-  const pos     = Math.max(1, debates.findIndex(d => d.id === cards[0]?.id) + 1)
+  const pos = index + 1
 
   return (
     <div className="flex flex-col items-center gap-5 w-full">
@@ -364,43 +378,57 @@ export function DebateCardStack({ debates }: { debates: DebateCardData[] }) {
         className="relative w-full max-w-[440px] mx-auto"
         style={{ paddingBottom: `${(VISIBLE - 1) * OFFSET_PX}px` }}
       >
-        <AnimatePresence initial={false}>
-          {visible.map((debate, i) => {
-            const isFront    = i === 0
-            const brightness = Math.max(0.3, 1 - i * DIM_STEP)
+        {/* Back cards — static depth cues, no animation */}
+        {backDebates.map((debate, i) => {
+          const depth      = i + 1
+          const brightness = Math.max(0.3, 1 - depth * DIM_STEP)
+          return (
+            <div
+              key={debate.id}
+              style={{
+                position:        'absolute',
+                top:             `${depth * OFFSET_PX}px`,
+                left:            0,
+                right:           0,
+                zIndex:          VISIBLE - depth,
+                borderRadius:    16,
+                overflow:        'hidden',
+                transform:       `scale(${1 - depth * SCALE_STEP})`,
+                transformOrigin: 'top center',
+                filter:          `brightness(${brightness})`,
+                pointerEvents:   'none',
+              }}
+            >
+              <StackDebateCard debate={debate} isActive={false} />
+            </div>
+          )
+        })}
 
-            return (
-              <motion.div
-                key={debate.id}
-                style={{
-                  position: i === 0 ? 'relative' : 'absolute',
-                  top:      i === 0 ? undefined : `${i * OFFSET_PX}px`,
-                  left: 0,
-                  right: 0,
-                  zIndex: VISIBLE - i,
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  pointerEvents: isFront ? 'auto' : 'none',
-                }}
-                animate={{
-                  scale:  isFront ? 1 : 1 - i * SCALE_STEP,
-                  filter: isFront ? 'brightness(1)' : `brightness(${brightness})`,
-                  opacity: 1,
-                }}
-                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.18 } }}
-                transition={SPRING}
-              >
-                <StackDebateCard debate={debate} isActive={debate.id === frontId} />
-              </motion.div>
-            )
-          })}
-        </AnimatePresence>
+        {/* Front card — directional slide animation */}
+        <div
+          className="relative overflow-hidden rounded-2xl"
+          style={{ zIndex: VISIBLE }}
+        >
+          <AnimatePresence initial={false} custom={direction} mode="wait">
+            <motion.div
+              key={frontDebate.id}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={SPRING}
+            >
+              <StackDebateCard debate={frontDebate} isActive />
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* ── Nav ───────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-5">
         <motion.button
-          onClick={moveToPrev}
+          onClick={movePrev}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
           className="flex size-9 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900 text-neutral-400 transition hover:border-neutral-700 hover:text-neutral-200"
@@ -414,7 +442,7 @@ export function DebateCardStack({ debates }: { debates: DebateCardData[] }) {
         </span>
 
         <motion.button
-          onClick={moveToEnd}
+          onClick={moveNext}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
           className="flex size-9 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900 text-neutral-400 transition hover:border-neutral-700 hover:text-neutral-200"

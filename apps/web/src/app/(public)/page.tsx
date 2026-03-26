@@ -92,7 +92,7 @@ export default async function HomePage() {
           <div className="animate-fade-in-down mb-5">
             <span className="inline-flex items-center gap-2 rounded-full border border-neutral-600/60 bg-neutral-900/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-300 backdrop-blur-sm">
               <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
-              Powered by Advanced AI Technology
+              Powered By Claude
             </span>
           </div>
 
@@ -169,7 +169,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-2xl px-4 sm:px-6">
             <div className="mb-12 text-center">
               <span className="inline-block rounded-full border border-neutral-700 bg-neutral-800/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-4">
-                Debate Archive
+                Playlist
               </span>
               <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 See Debates in Action
