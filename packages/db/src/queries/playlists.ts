@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { UUID } from '@bipi/shared'
-import { listDebateParticipants } from './debates.js'
+import { listDebateParticipants } from './debates'
 
 export interface Playlist {
   id: UUID
