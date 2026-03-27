@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { createServerClient } from '@/lib/supabase/server'
-import { getDebateBySlug, getDebateFormat, getDebateParticipants, getDebateTurns, getDebateVotes, getEvalRunsForDebate } from '@bipi/db'
+import { getDebateBySlug, getDebateFormat, getDebateParticipants, getDebateTurns, getDebateVotes, getEvalRunsForDebate, getTournamentMatchupByDebateId, getTournamentById, getPlaylistBySlug } from '@bipi/db'
 import { getArchetypeColor, statusColors } from '@/lib/agent-colors'
 import { VotingPanel } from '@/components/public/voting-panel'
 import { DebateRoom } from '@/components/public/debate-room'
@@ -31,11 +31,29 @@ export default async function DebateDetailPage({ params }: Props) {
     )
   }
 
-  const [format, participants, turns, votes] = await Promise.all([
+  const debateRecord = debate as unknown as Record<string, unknown>
+
+  const [format, participants, turns, votes, tournamentMatchup] = await Promise.all([
     getDebateFormat(db, debate.format_id),
     getDebateParticipants(db, debate.id),
     getDebateTurns(db, debate.id),
     getDebateVotes(db, debate.id),
+    debateRecord.tournament_id
+      ? getTournamentMatchupByDebateId(db, debate.id)
+      : Promise.resolve(null),
+  ])
+
+  // Fetch tournament + playlist context for badges (parallel)
+  const [tournamentContext, playlistContext] = await Promise.all([
+    tournamentMatchup?.tournament_id
+      ? getTournamentById(db, tournamentMatchup.tournament_id)
+      : Promise.resolve(null),
+    debateRecord.playlist_id
+      ? (async () => {
+          const { data } = await db.from('playlists').select('id,title,slug').eq('id', debateRecord.playlist_id).single()
+          return data as { id: string; title: string; slug: string } | null
+        })()
+      : Promise.resolve(null),
   ])
 
   const framing = debate.topic_framing as unknown as Record<string, string>
@@ -287,7 +305,7 @@ export default async function DebateDetailPage({ params }: Props) {
     <div className="mx-auto max-w-6xl px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex flex-wrap items-center gap-2 mb-2">
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor} ${isLive ? 'animate-pulse' : ''}`}>
             {isLive ? 'LIVE' : debate.status.toUpperCase()}
           </span>
@@ -302,6 +320,29 @@ export default async function DebateDetailPage({ params }: Props) {
               estimatedDurationSec={estimatedDurationSec}
               mode="static"
             />
+          )}
+          {/* Tournament context badge */}
+          {tournamentContext && (
+            <Link
+              href={`/tournaments/${tournamentContext.slug}`}
+              className="flex items-center gap-1.5 rounded-full border border-amber-700/40 bg-amber-950/30 px-2.5 py-0.5 text-xs font-medium text-amber-400 hover:bg-amber-950/50 transition-colors"
+            >
+              <span aria-hidden>🏆</span>
+              {tournamentContext.title}
+              {tournamentMatchup && (
+                <span className="text-amber-600">· R{tournamentMatchup.round_number}</span>
+              )}
+            </Link>
+          )}
+          {/* Playlist context badge */}
+          {playlistContext && (
+            <Link
+              href={`/playlists/${playlistContext.slug}`}
+              className="flex items-center gap-1.5 rounded-full border border-blue-700/40 bg-blue-950/30 px-2.5 py-0.5 text-xs font-medium text-blue-400 hover:bg-blue-950/50 transition-colors"
+            >
+              <span aria-hidden>🎵</span>
+              {playlistContext.title}
+            </Link>
           )}
         </div>
         <h1 className="text-3xl font-bold tracking-tight">{debate.title}</h1>

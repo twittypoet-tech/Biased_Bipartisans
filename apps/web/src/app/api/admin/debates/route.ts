@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { generateDebateSlug, generateRoomName } from '@bipi/agent-core'
+import { generateUniqueDebateSlug } from '@bipi/db'
 
 export async function POST(request: Request) {
   const db = createServerClient()
@@ -8,7 +9,8 @@ export async function POST(request: Request) {
 
   const { title, topicFraming, formatId, scheduledAt, durationOverrideMinutes } = body
 
-  const slug = generateDebateSlug(title)
+  const baseSlug = generateDebateSlug(title)
+  const slug = await generateUniqueDebateSlug(db, baseSlug)
   const roomName = generateRoomName(slug)
 
   const { data, error } = await db

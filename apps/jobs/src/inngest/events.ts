@@ -31,8 +31,31 @@ export interface ReflectionsCompleteEvent {
   }
 }
 
+export interface TournamentMatchupCompletedEvent {
+  name: 'tournament/matchup-completed'
+  data: {
+    matchupId: string
+    tournamentId: string
+    debateId: string
+    winnerAgentId: string
+    roundNumber: number
+  }
+}
+
+export interface TournamentRoundCompletedEvent {
+  name: 'tournament/round-completed'
+  data: {
+    tournamentId: string
+    roundNumber: number
+    isFinal: boolean
+    winnerAgentId: string
+  }
+}
+
 export type Events =
   | DebateEndedEvent
   | EvalCompleteEvent
   | MemoriesExtractedEvent
   | ReflectionsCompleteEvent
+  | TournamentMatchupCompletedEvent
+  | TournamentRoundCompletedEvent

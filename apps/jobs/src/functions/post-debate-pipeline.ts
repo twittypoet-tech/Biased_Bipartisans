@@ -1,10 +1,11 @@
-import { getSupabaseClient } from '@bipi/db'
+import { getSupabaseClient, getTournamentMatchupByDebateId } from '@bipi/db'
 import { createLogger } from '@bipi/shared'
 import { evaluateDebate, runAiJudgeEvaluation } from '@bipi/eval'
 import { extractMemories } from './extract-memories.js'
 import { generateReflections } from './generate-reflection.js'
 import { updateTraits } from './update-traits.js'
 import { checkConvergence } from './check-convergence.js'
+import { inngest } from '../inngest/client.js'
 
 const log = createLogger('jobs:pipeline')
 
@@ -18,6 +19,7 @@ const log = createLogger('jobs:pipeline')
  * 3. Generate structured reflections
  * 4. Update trait vectors based on eval scores
  * 5. Check for convergence between agents
+ * 6. (conditional) Advance tournament bracket if debate is part of a tournament
  *
  * Can be triggered by Inngest event or called directly.
  */
@@ -26,6 +28,9 @@ export async function runPostDebatePipeline(debateId: string): Promise<PipelineR
   const startTime = Date.now()
 
   log.info(`Starting post-debate pipeline for debate ${debateId}`)
+
+  // Check if this debate is part of a tournament (do early so matchup data is available)
+  const tournamentMatchup = await getTournamentMatchupByDebateId(db, debateId)
 
   // Step 1: Evaluate (heuristic scoring)
   log.info('Step 1/5: Evaluating agents...')
@@ -64,6 +69,45 @@ export async function runPostDebatePipeline(debateId: string): Promise<PipelineR
     log.info('No convergence issues detected')
   }
 
+  // Step 6: Tournament bracket advancement (if applicable)
+  let tournamentAdvanced = false
+  if (tournamentMatchup) {
+    log.info('Step 6: Advancing tournament bracket...')
+
+    // Determine the winner from composite scores
+    // Pick agent with highest composite_score; fall back to ai_judge_score; then speaking_order
+    const { data: evalRuns } = await db
+      .from('agent_eval_runs')
+      .select('agent_id, composite_score, ai_judge_score')
+      .eq('debate_id', debateId)
+
+    const { data: participants } = await db
+      .from('debate_participants')
+      .select('agent_id, speaking_order')
+      .eq('debate_id', debateId)
+      .eq('role', 'debater')
+      .order('speaking_order')
+
+    const winnerAgentId = determineWinner(evalRuns ?? [], participants ?? [])
+
+    if (winnerAgentId) {
+      await inngest.send({
+        name: 'tournament/matchup-completed',
+        data: {
+          matchupId: tournamentMatchup.id,
+          tournamentId: tournamentMatchup.tournament_id,
+          debateId,
+          winnerAgentId,
+          roundNumber: tournamentMatchup.round_number,
+        },
+      })
+      log.info(`Tournament event emitted. Winner: ${winnerAgentId}`)
+      tournamentAdvanced = true
+    } else {
+      log.warn('Could not determine tournament winner — no eval data')
+    }
+  }
+
   const durationMs = Date.now() - startTime
   log.info(`Pipeline complete in ${(durationMs / 1000).toFixed(1)}s`)
 
@@ -71,13 +115,37 @@ export async function runPostDebatePipeline(debateId: string): Promise<PipelineR
     debateId,
     agentIds,
     convergenceAlerts: alerts.length,
+    tournamentAdvanced,
     durationMs,
   }
+}
+
+function determineWinner(
+  evalRuns: Array<{ agent_id: string; composite_score: number | null; ai_judge_score: number | null }>,
+  participants: Array<{ agent_id: string; speaking_order: number }>,
+): string | null {
+  if (evalRuns.length === 0) return null
+
+  const sorted = [...evalRuns].sort((a, b) => {
+    const compDiff = (b.composite_score ?? 0) - (a.composite_score ?? 0)
+    if (compDiff !== 0) return compDiff
+
+    const judgeDiff = (b.ai_judge_score ?? 0) - (a.ai_judge_score ?? 0)
+    if (judgeDiff !== 0) return judgeDiff
+
+    // Tiebreak: lower speaking_order wins
+    const aOrder = participants.find((p) => p.agent_id === a.agent_id)?.speaking_order ?? 999
+    const bOrder = participants.find((p) => p.agent_id === b.agent_id)?.speaking_order ?? 999
+    return aOrder - bOrder
+  })
+
+  return sorted[0]?.agent_id ?? null
 }
 
 export interface PipelineResult {
   debateId: string
   agentIds: string[]
   convergenceAlerts: number
+  tournamentAdvanced: boolean
   durationMs: number
 }

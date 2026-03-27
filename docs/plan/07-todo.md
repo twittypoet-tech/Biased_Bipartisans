@@ -1,6 +1,6 @@
 # BIPI — Active Task Tracker
 
-> Last updated: 2026-03-23
+> Last updated: 2026-03-27
 > Priority spectrum: **CRITICAL > HIGH > MEDIUM > LOW > BACKLOG**
 
 ---
@@ -46,6 +46,18 @@
 - [ ] **Admin debate detail: show Retell IDs + recording status** — `retell_agent_id` and recording URLs are invisible in the admin UI. Debugging requires direct Supabase access. A small info card on the debate detail page would save time.
 
 - [ ] **Live debate: speaker highlighting** — Fixed: DebateConductor now sends `speaker_change` data messages via LiveKit on each turn start. Browser handles `speaker_change` to update `activeSpeakerId`. Needs validation in next live test.
+
+---
+
+## DONE
+
+- [x] **Playlists + Tournaments (2026-03-27)** — Full implementation shipped:
+  - DB migration 00017: `playlists`, `playlist_debates`, `tournaments`, `tournament_rounds`, `tournament_matchups`, `agent_trophies` tables. FK columns `tournament_id`/`playlist_id` on `debates`, `trophy_count` on `agents`.
+  - Slug dedup: `generateUniqueDebateSlug()` in `packages/db/src/utils/slugs.ts` — appends `-2`, `-3` etc. on collision.
+  - DB queries: `packages/db/src/queries/playlists.ts` + `tournaments.ts`
+  - Admin API: `POST /api/admin/tournaments` (full bracket builder), `POST /api/admin/tournaments/[slug]/advance`
+  - Inngest jobs: `advance-tournament-round` (auto-advances bracket after each debate), `award-trophy` (champion/finalist/semifinalist trophies). `post-debate-pipeline` now detects tournament debates and emits `tournament/matchup-completed`.
+  - Frontend: `/tournaments` (listing), `/tournaments/[slug]` (bracket + champion banner), `/tournaments/[slug]/round-[n]` (round deep-link), `/playlists` (hub), `/playlists/[slug]` (debate list). Tournament/playlist context badges on `/debates/[slug]`. Tournaments + Playlists added to nav.
 
 ---
 

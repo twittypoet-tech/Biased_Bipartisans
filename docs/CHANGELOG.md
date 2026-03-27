@@ -4,6 +4,46 @@
 
 ---
 
+## 2026-03-27
+
+### feat: Playlists & Tournaments
+
+#### Database — Migration `00017_playlists_tournaments.sql`
+- New tables: `playlists`, `playlist_debates`, `tournaments`, `tournament_rounds`, `tournament_matchups`, `agent_trophies`
+- New FK columns: `tournament_id` + `playlist_id` on `debates`; `trophy_count` on `agents`
+- Full RLS policies (public read, service-role write) + indexes
+
+#### Slug deduplication (`packages/db/src/utils/slugs.ts`)
+- `generateUniqueDebateSlug(db, baseSlug)` — checks DB and appends `-2`, `-3`, etc. on collision; prevents unique-constraint crashes on duplicate debate titles
+- `generateTournamentDebateSlug(slug, round, matchup)` — deterministic, always-unique tournament debate slug
+- Updated `apps/web/src/app/api/admin/debates/route.ts` to use the new DB-aware slug function
+
+#### DB query functions
+- `packages/db/src/queries/playlists.ts` — `listPublishedPlaylists`, `getPlaylistBySlug`, `getPlaylistDebates`, `getPlaylistWithDebates`, `getPlaylistDebateCount`
+- `packages/db/src/queries/tournaments.ts` — `listTournaments`, `getTournamentBySlug`, `getTournamentRounds`, `getTournamentMatchups`, `getTournamentMatchupByDebateId`, `getAgentTrophies`, `createTournamentDebate`, `advanceTournamentWinner` (race-safe conditional UPDATE), `awardTournamentTrophy`, `isRoundComplete`
+
+#### Admin API
+- `POST /api/admin/tournaments` — builds a full bracket: Fisher-Yates seeding, all rounds + matchups created upfront (later rounds first for self-referential FK), `next_matchup_id` wiring, bye handling, round-1 debate creation
+- `POST /api/admin/tournaments/[slug]/advance` — manual matchup advance for testing/admin override
+
+#### Inngest jobs
+- `advance-tournament-round.ts` — listens to `tournament/matchup-completed`; advances winner to next slot, creates next-round debate when both agents filled, marks round complete, emits `tournament/round-completed` for the final
+- `award-trophy.ts` — listens to `tournament/round-completed` (final only); awards champion/finalist/semifinalist trophies, marks tournament completed with `champion_agent_id`
+- Updated `post-debate-pipeline.ts` — detects tournament debates via `getTournamentMatchupByDebateId`, determines winner from `composite_score` (fallback: `ai_judge_score`, then `speaking_order`), emits `tournament/matchup-completed`
+- Registered both new functions in `apps/jobs/src/index.ts`
+
+#### Frontend (mobile-first, fully responsive)
+- `/playlists` — Playlist Hub: themed grid cards with debate count
+- `/playlists/[slug]` — Individual playlist: ordered debate list with participant chips and status badges
+- `/tournaments` — Tournament listing grouped by status (active/upcoming/completed) with champion display and progress info
+- `/tournaments/[slug]` — Bracket page: `TournamentBracket` client component, champion banner, progress bar, round quick-nav
+- `/tournaments/[slug]/round-[n]` — Round deep-link: VS layout, agent chips with archetype colors, debate links, round navigation
+- `TournamentBracket` component (`apps/web/src/components/public/tournament-bracket.tsx`) — horizontal-scroll bracket, winner highlights, BYE/TBD slots, archetype color accents
+- `/debates/[slug]` — Tournament context badge (🏆) + playlist badge (🎵) in debate header
+- Nav: added **Tournaments** and **Playlists** links
+
+---
+
 ## 2026-03-22
 
 ### feat: Composite Scoring (#3) + Public Score Display (#4)
