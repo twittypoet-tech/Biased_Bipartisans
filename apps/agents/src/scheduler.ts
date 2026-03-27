@@ -10,7 +10,7 @@ import {
 import { LiveKitRoomManager } from './livekit/room-manager.js'
 import { LiveConversation } from './debate/live-conversation.js'
 import { AudioPublisher } from './livekit/audio-publisher.js'
-import { createTTSPublishers } from './workers/streaming-tts.js'
+import type { StreamingTTSPublisher } from './workers/streaming-tts.js'
 import { DebateConductor } from './retell/debate-conductor.js'
 
 const log = createLogger('agents:scheduler')
@@ -46,8 +46,11 @@ export class DebateScheduler {
       log.warn('Orphan cleanup failed on startup', { error: String(err) })
     })
 
-    this.poll()
-    this.timer = setInterval(() => this.poll(), POLL_INTERVAL_MS)
+    this.poll().catch((err) => log.error('Scheduler poll crashed', { error: String(err) }))
+    this.timer = setInterval(
+      () => this.poll().catch((err) => log.error('Scheduler poll crashed', { error: String(err) })),
+      POLL_INTERVAL_MS,
+    )
   }
 
   /**
@@ -169,20 +172,7 @@ export class DebateScheduler {
     participants: Array<{ agent_id: string; role: string; agents?: unknown }>,
   ): Promise<void> {
     const audioPublishers = new Map<string, AudioPublisher>()
-    const ttsPublishers = (() => {
-      if (!process.env.ELEVENLABS_API_KEY) return new Map()
-      const meta = participants.map((p) => {
-        const agent = (p as unknown as Record<string, unknown>).agents as
-          | Record<string, unknown>
-          | undefined
-        return {
-          agentId: p.agent_id,
-          archetype: (agent?.archetype as string) ?? 'moderator',
-          voiceId: null,
-        }
-      })
-      return createTTSPublishers(meta)
-    })()
+    const ttsPublishers = new Map<string, StreamingTTSPublisher>()
 
     try {
       const roomManager = LiveKitRoomManager.isConfigured() ? new LiveKitRoomManager() : null

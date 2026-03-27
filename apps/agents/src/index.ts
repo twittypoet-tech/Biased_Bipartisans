@@ -66,6 +66,15 @@ export {
  * LiveKit audio publishing enabled when LIVEKIT_URL is configured.
  */
 async function main() {
+  process.on('uncaughtException', (err) => {
+    log.error('Uncaught exception — exiting', { error: err.message, stack: err.stack })
+    process.exit(1)
+  })
+  process.on('unhandledRejection', (reason) => {
+    log.error('Unhandled promise rejection — exiting', { reason: String(reason) })
+    process.exit(1)
+  })
+
   validateEnv(AGENTS_ENV, 'agents')
 
   const scheduler = new DebateScheduler()
