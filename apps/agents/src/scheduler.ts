@@ -9,7 +9,7 @@ import {
 } from '@bipi/db'
 import { LiveKitRoomManager } from './livekit/room-manager.js'
 import { LiveConversation } from './debate/live-conversation.js'
-import { AudioPublisher } from './livekit/audio-publisher.js'
+import type { AudioPublisher } from './livekit/audio-publisher.js'
 import type { StreamingTTSPublisher } from './workers/streaming-tts.js'
 import { DebateConductor } from './retell/debate-conductor.js'
 
@@ -188,12 +188,13 @@ export class DebateScheduler {
         }
 
         const livekitUrl = process.env.LIVEKIT_URL!
+        const { AudioPublisher: AP } = await import('./livekit/audio-publisher.js')
         for (const p of participants) {
           const agent = (p as unknown as Record<string, unknown>).agents as
             | Record<string, unknown>
             | undefined
           const name = (agent?.name as string) ?? 'Unknown'
-          const publisher = new AudioPublisher(name)
+          const publisher = new AP(name)
           const token = await roomManager.generateToken(
             roomName,
             name,
