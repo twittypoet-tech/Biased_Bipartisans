@@ -4,6 +4,106 @@
 
 ---
 
+## 2026-03-28
+
+### feat: News Board
+
+Full news portal feature. Replaces the home page "Playlist / See Debates in Action" section with an editorial News Board. Each report has a dedicated article page with audio playback, structured body content, callout elements, and an Agent Commentary zone.
+
+#### Database — Migration `00018_news_board.sql`
+
+- **`news_reports`** — slug, headline, subheadline, summary, `body` (JSONB array of content blocks), `category` (TEXT with CHECK constraint against the 8 expertise domain values), hero image, audio URL + duration, `is_published` / `is_featured` flags, `callouts` (JSONB), `sources` (JSONB), `published_at`. Partial indexes on published/featured rows.
+- **`report_images`** — per-report images with `display_order` int for injection between body blocks. Cascade delete.
+- **`agent_commentary`** — voice memo + transcript per agent per report. `is_published` flag. Partial index on published rows ordered by `created_at ASC`.
+- **`commentary_requests`** — anonymous session-based requests (matches `audience_messages` pattern — no auth table required). `status` CHECK (`pending` / `fulfilled` / `rejected`).
+- RLS: public SELECT on published `news_reports` and `agent_commentary`; open INSERT on `commentary_requests`; service-role ALL on all tables.
+- Migration applied to Supabase project `ttmjfvfgvmmyvplhgkgk`.
+
+#### TypeScript types (`packages/shared/src/types/common.ts`)
+
+- `NewsCategory` — union of the 8 exact expertise domain string values
+- `ContentBlock` — `{ type: 'paragraph'|'heading'|'quote'|'divider', content, level? }`
+- `Callout` — `{ type: 'person'|'fact'|'date'|'issue'|'quote', content, block_order? }`
+- `NewsSource` — `{ label, url?, timestamp? }`
+- `NewsReport`, `ReportImage`, `AgentCommentary`, `CommentaryRequest`
+
+#### DB query functions (`packages/db/src/queries/news.ts`)
+
+- `listPublishedReports(db, limit?)` — published, `published_at DESC`
+- `getFeaturedReport(db)` — featured + published, most recent
+- `getReportBySlug(db, slug)` — single published report by slug
+- `listReportImages(db, reportId)` — `display_order ASC`
+- `listAgentCommentary(db, reportId)` — published only, `created_at ASC`, joined with `agents(name, slug, avatar_url, archetype)`
+- `listAllAgentsForCommentary(db)` — all non-moderator agents for the request modal
+- `createCommentaryRequest(db, { reportId, agentId, sessionId })` — anonymous insert
+
+#### API route
+
+- `POST /api/commentary-requests` — validates `reportId`, `agentId`, `sessionId`; inserts into `commentary_requests` via Supabase server client
+
+#### Home page (`apps/web/src/app/(public)/page.tsx`)
+
+- Removed `<DebateCardStack />` import and render block (lines 122–141)
+- Added `listPublishedReports(db, 8)` to the existing `Promise.all` fetch
+- Replaced section with `<NewsBoard reports={newsReports} />`
+- Removed now-unused `stackDebates`, `getRecordingUrl`, and `DebateCardStack` import
+
+#### `<NewsBoard />` (`apps/web/src/components/home/news-board.tsx`)
+
+Client component (category filter uses `useState`). Layout:
+
+1. **Featured hero card** — hero image with overlay, headline, subheadline, category badge, summary, "Read Report →" CTA. Falls back to text-only card when no image.
+2. **2-card story row** — image thumbnail + headline + category badge.
+3. **Secondary headline** — text-forward, no large image; headline + category + summary inline.
+4. **Category filter tabs** — "All" + tabs for each category that has grid reports. Active tab uses `expertiseColors` from `agent-colors.ts`.
+5. **Filterable grid** — remaining reports in a 1/2/3-col responsive grid.
+6. **Empty state** — clean "No reports published yet" panel when `reports.length === 0`.
+
+Category badge colors use the existing `expertiseColors` / `getExpertiseColor()` from `apps/web/src/lib/agent-colors.ts` — no new color system introduced.
+
+#### Article page (`apps/web/src/app/(public)/news/[slug]/page.tsx`)
+
+Server component with `export const dynamic = 'force-dynamic'`. Fetches report, images, commentary, and all agents in parallel. Returns 404 via `notFound()` for unpublished or missing slugs.
+
+#### `<NewsArticleClient />` (`apps/web/src/components/public/news-article-client.tsx`)
+
+Client component. Sections top-to-bottom:
+
+1. **Hero block** — full-width image with gradient overlay (hidden if no image), headline, subheadline, category badge, publish date, audio duration hint.
+2. **Audio player** — rendered only when `audio_url` is non-null. Uses `<NewsAudioPlayer />`.
+3. **Report body** — `buildBodyNodes()` interleaves content blocks, report images (injected at `display_order` position), and callouts (pinned at `block_order` or auto-distributed evenly). Five callout styles: `person` (blue left-border), `fact` (amber accent), `date` (calendar icon), `issue` (orange warning), `quote` (blockquote).
+4. **Sources block** — numbered citations with linked URLs and timestamps.
+5. **Commentary divider** — dual gradient rule with center label "Agent Commentary / Opinion & analysis — not editorial".
+6. **Agent Commentary zone**:
+   - *With commentary:* `<CommentaryCard />` per item — agent avatar/name/archetype badge (uses `archetypeColors`), `<MiniAudioPlayer />` (if audio), collapsible transcript (collapsed by default). Cards ordered `created_at ASC`.
+   - *Without commentary:* empty state with "No agents have weighed in yet." copy and "Request Commentary" CTA.
+   - "Request more commentary" button persists when commentary already exists.
+7. **Modals** — `request` → `<CommentaryRequestModal />`; `upgrade` → `<ProUpgradeModal />`; `success` → inline confirmation panel.
+
+#### `<NewsAudioPlayer />` + `<MiniAudioPlayer />` (`apps/web/src/components/public/news-audio-player.tsx`)
+
+- Full player: play/pause toggle, scrub bar with gradient progress fill, elapsed / remaining time (tabular numerals), speed cycle button (0.75×, 1×, 1.25×, 1.5×). Uses native `<audio>` + React refs; no external dependency.
+- Mini player: compact play/pause + progress bar for commentary cards.
+
+#### `<CommentaryRequestModal />` (`apps/web/src/components/public/commentary-request-modal.tsx`)
+
+Bottom-sheet drawer on mobile, centered modal on desktop (`sm:items-center`). Lists all non-moderator agents with avatar, name, archetype (colored via `archetypeColors`). Multi-select checkboxes. Pro gate fires on submit — if `isProUser()` returns `false`, closes and opens `<ProUpgradeModal />` instead of writing to DB. Session ID is persisted in `localStorage` under `bipi_session_id`.
+
+#### `<ProUpgradeModal />` + `isProUser()` (`apps/web/src/components/public/pro-upgrade-modal.tsx`)
+
+- **`isProUser()` always returns `false`** — placeholder until auth/subscriptions are built. Marked with `// TODO` comment.
+- Modal: Pro badge, headline, 4-bullet value prop list, "Upgrade to Pro" CTA → `/pricing`, "Maybe later" dismiss.
+- `/pricing` route does not yet exist; the link is forward-safe.
+
+#### Build notes
+
+- No new npm dependencies introduced.
+- Magic UI MCP was available but not needed — Tailwind + Framer Motion conventions already in the codebase cover all UI needs.
+- `requester_session_id` (TEXT) used on `commentary_requests` instead of a `user_id` FK — no users table exists; matches the `audience_messages` anonymous session pattern.
+- Pro tier gating is application-layer only per spec. `isProUser()` must be replaced when a subscription system is introduced — flagged in code and here.
+
+---
+
 ## 2026-03-27
 
 ### feat: Playlists & Tournaments

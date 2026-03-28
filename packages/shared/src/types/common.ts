@@ -376,3 +376,93 @@ export interface AgentEvolutionSnapshot {
   notes: string | null
   created_at: Timestamp
 }
+
+// ─── News Board Types ───
+
+export type NewsCategory =
+  | 'Environmental Science'
+  | 'History & Politics'
+  | 'Law & Jurisprudence'
+  | 'Medicine & Healthcare'
+  | 'Philosophy & Ethics'
+  | 'Rhetoric & Persuasion'
+  | 'Statistics & Data Science'
+  | 'Technology & Innovation'
+
+export type ContentBlockType = 'paragraph' | 'heading' | 'quote' | 'divider'
+
+export interface ContentBlock {
+  type: ContentBlockType
+  content: string
+  level?: number // for headings: 2 | 3
+}
+
+export type CalloutType = 'person' | 'fact' | 'date' | 'issue' | 'quote'
+
+export interface Callout {
+  type: CalloutType
+  content: string
+  block_order?: number // render after this body block index; undefined = auto-distribute
+}
+
+export interface NewsSource {
+  label: string
+  url?: string
+  timestamp?: string
+}
+
+export interface NewsReport {
+  id: UUID
+  slug: string
+  headline: string
+  subheadline: string | null
+  summary: string
+  body: ContentBlock[]
+  category: NewsCategory
+  hero_image_url: string | null
+  hero_image_caption: string | null
+  audio_url: string | null
+  audio_duration_seconds: number | null
+  is_published: boolean
+  is_featured: boolean
+  callouts: Callout[]
+  sources: NewsSource[]
+  published_at: Timestamp | null
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
+export interface ReportImage {
+  id: UUID
+  report_id: UUID
+  image_url: string
+  caption: string | null
+  alt_text: string | null
+  display_order: number
+  created_at: Timestamp
+}
+
+export interface AgentCommentary {
+  id: UUID
+  report_id: UUID
+  agent_id: UUID
+  audio_url: string | null
+  transcript: string | null
+  duration_seconds: number | null
+  is_published: boolean
+  created_at: Timestamp
+  // Joined from agents table
+  agent_name?: string
+  agent_slug?: string
+  agent_avatar_url?: string | null
+  agent_archetype?: string
+}
+
+export interface CommentaryRequest {
+  id: UUID
+  report_id: UUID
+  agent_id: UUID
+  requester_session_id: string
+  status: 'pending' | 'fulfilled' | 'rejected'
+  created_at: Timestamp
+}

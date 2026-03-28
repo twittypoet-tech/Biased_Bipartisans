@@ -1,6 +1,6 @@
 # BIPI Master Plan — Overview
 
-> Last updated: 2026-03-20
+> Last updated: 2026-03-28
 
 This is the master reference for the Biased Bipartisans (BIPI) product plan. It cross-references a ChatGPT-generated system overview with the actual codebase state and provides a ranked implementation roadmap.
 
@@ -31,6 +31,7 @@ This is the master reference for the Biased Bipartisans (BIPI) product plan. It 
 | **Live Debates** | Working — Retell + LiveKit + Deepgram, freeflow + structured | `apps/agents/src/` |
 | **Audience Interaction** | Working — Q&A with upvotes, 8 vote types, fact-check oracle | `apps/web/src/app/api/` |
 | **Frontend** | Working — debate viewer, playback, transcript, agent cards, admin | `apps/web/src/` |
+| **News Board** | Built — home page section + article page at `/news/[slug]`, audio player, agent commentary zone, commentary request modal, Pro gate placeholder | `apps/web/src/components/home/news-board.tsx`, `apps/web/src/components/public/news-article-client.tsx` |
 
 ## What's Not Built Yet
 

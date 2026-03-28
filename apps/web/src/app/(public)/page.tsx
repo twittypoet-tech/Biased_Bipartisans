@@ -7,14 +7,16 @@ import { DebateCard } from '@/components/public/debate-card'
 import { HeroShader } from '@/components/home/hero-shader'
 import { AgentMarquee } from '@/components/home/agent-marquee'
 import { FeaturesSection } from '@/components/home/features-section'
-import { DebateCardStack, type DebateCardData } from '@/components/home/debate-card-stack'
 import { CTASection } from '@/components/home/cta-section'
+import { NewsBoard } from '@/components/home/news-board'
+import { listPublishedReports } from '@bipi/db'
 
 export default async function HomePage() {
   const db = createServerClient()
-  const [debates, agents] = await Promise.all([
+  const [debates, agents, newsReports] = await Promise.all([
     listDebates(db),
     listAgents(db),
+    listPublishedReports(db, 8),
   ])
 
   const liveDebates   = debates.filter((d) => d.status === 'live')
@@ -45,27 +47,6 @@ export default async function HomePage() {
         expertise: (r.agents?.expertise  ?? []) as string[],
       }))
   }
-
-  function getRecordingUrl(debate: typeof debates[0]): string | null {
-    const recordings  = debate.recordings as Record<string, string> | null
-    if (!recordings) return null
-    const rows        = participantsMap[debate.id] ?? []
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const moderator   = (rows as any[]).find((r) => r.role === 'moderator')
-    return recordings[moderator?.agent_id ?? ''] ?? Object.values(recordings)[0] ?? null
-  }
-
-  // Build the stack data for all ended debates (most recent first)
-  const stackDebates: DebateCardData[] = endedDebates.map((d) => ({
-    id:           d.id,
-    title:        d.title,
-    slug:         d.slug,
-    headline:     (d.topic_framing as unknown as Record<string, string> | null)?.headline ?? '',
-    endedAt:      d.ended_at,
-    startedAt:    d.started_at,
-    recordingUrl: getRecordingUrl(d),
-    participants: parseParticipants(d.id),
-  }))
 
   // Marquee agents
   const marqueeAgents = debaters.map((a) => ({
@@ -163,26 +144,8 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── Debate Card Stack ─────────────────────────────────────────────── */}
-      {stackDebates.length > 0 && (
-        <section className="py-20 sm:py-28 bg-neutral-950">
-          <div className="mx-auto max-w-2xl px-4 sm:px-6">
-            <div className="mb-12 text-center">
-              <span className="inline-block rounded-full border border-neutral-700 bg-neutral-800/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-4">
-                Playlist
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                See Debates in Action
-              </h2>
-              <p className="mt-3 text-neutral-400 max-w-md mx-auto">
-                Browse through past debates. Play the audio, or open the full debate room.
-              </p>
-            </div>
-
-            <DebateCardStack debates={stackDebates} />
-          </div>
-        </section>
-      )}
+      {/* ── News Board ────────────────────────────────────────────────────── */}
+      <NewsBoard reports={newsReports} />
 
       {/* ── Features + Use Cases ──────────────────────────────────────────── */}
       <FeaturesSection />

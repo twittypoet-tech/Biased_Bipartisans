@@ -1,6 +1,6 @@
 # BIPI — Active Task Tracker
 
-> Last updated: 2026-03-27
+> Last updated: 2026-03-28
 > Priority spectrum: **CRITICAL > HIGH > MEDIUM > LOW > BACKLOG**
 
 ---
@@ -50,6 +50,16 @@
 ---
 
 ## DONE
+
+- [x] **News Board (2026-03-28)** — Full implementation shipped:
+  - DB migration 00018: `news_reports`, `report_images`, `agent_commentary`, `commentary_requests` tables with RLS.
+  - TypeScript types added to `packages/shared/src/types/common.ts`: `NewsReport`, `ReportImage`, `AgentCommentary`, `CommentaryRequest`, `ContentBlock`, `Callout`, `NewsSource`, `NewsCategory`.
+  - DB queries: `packages/db/src/queries/news.ts` — `listPublishedReports`, `getFeaturedReport`, `getReportBySlug`, `listReportImages`, `listAgentCommentary`, `listAllAgentsForCommentary`, `createCommentaryRequest`.
+  - API route: `POST /api/commentary-requests` (session-based, anonymous insert).
+  - Home page: replaced Playlist/DebateCardStack section with `<NewsBoard />` — featured hero, 2-story row, secondary text headline, category filter tabs + grid. Clean empty state.
+  - Article page: `/news/[slug]` — hero block, audio player (play/pause/scrub/speed), structured body renderer (paragraphs/headings/quotes/dividers), inline image injection, 5 callout types, sources block, commentary divider, agent commentary cards with mini audio player and collapsible transcript, "Request Commentary" CTA.
+  - Pro gate: `isProUser()` placeholder always returns `false`; `<ProUpgradeModal />` wired forward to `/pricing`. **FLAG: wire to real subscription check when auth is built.**
+  - Commentary request: agent browse modal → Pro gate on submit → write to `commentary_requests`.
 
 - [x] **Playlists + Tournaments (2026-03-27)** — Full implementation shipped:
   - DB migration 00017: `playlists`, `playlist_debates`, `tournaments`, `tournament_rounds`, `tournament_matchups`, `agent_trophies` tables. FK columns `tournament_id`/`playlist_id` on `debates`, `trophy_count` on `agents`.
