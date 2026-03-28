@@ -150,6 +150,7 @@ export async function getAgentTrophies(
 /**
  * Create a debate for a tournament matchup, then link it back to the matchup.
  * The debate slug is pre-computed by generateTournamentDebateSlug.
+ * Optionally inserts debate_participants rows (agent + moderator).
  */
 export async function createTournamentDebate(
   db: SupabaseClient,
@@ -162,12 +163,15 @@ export async function createTournamentDebate(
     format_id: UUID
     room_name: string
     scheduled_at?: string | null
+    participants?: Array<{ agent_id: UUID; role: string; speaking_order: number }>
   },
 ): Promise<{ debateId: UUID; slug: string }> {
+  const { participants, ...insertData } = debateData
+
   const { data: debate, error: debateErr } = await db
     .from('debates')
     .insert({
-      ...debateData,
+      ...insertData,
       status: 'draft',
       tournament_id: tournamentId,
     })
@@ -175,13 +179,22 @@ export async function createTournamentDebate(
     .single()
   if (debateErr) throw debateErr
 
+  const debateId = debate.id as UUID
+
+  if (participants && participants.length > 0) {
+    const { error: participantErr } = await db
+      .from('debate_participants')
+      .insert(participants.map((p) => ({ ...p, debate_id: debateId })))
+    if (participantErr) throw participantErr
+  }
+
   const { error: matchupErr } = await db
     .from('tournament_matchups')
-    .update({ debate_id: debate.id, status: 'scheduled' })
+    .update({ debate_id: debateId, status: 'scheduled' })
     .eq('id', matchupId)
   if (matchupErr) throw matchupErr
 
-  return { debateId: debate.id as UUID, slug: debate.slug as string }
+  return { debateId, slug: debate.slug as string }
 }
 
 /**

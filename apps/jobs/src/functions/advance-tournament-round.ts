@@ -48,7 +48,7 @@ export const advanceTournamentRoundFn = inngest.createFunction(
       await step.run('maybe-create-next-debate', async () => {
         const { data: nextMatchup } = await db
           .from('tournament_matchups')
-          .select('id, agent_a_id, agent_b_id, round_number, matchup_number, status')
+          .select('id, agent_a_id, agent_b_id, round_number, matchup_number, status, scheduled_at')
           .eq('id', nextMatchupId)
           .single()
 
@@ -61,6 +61,15 @@ export const advanceTournamentRoundFn = inngest.createFunction(
           const tournament = await getTournamentById(db, tournamentId)
           if (!tournament) return
 
+          // Find moderator from an existing R1 debate in this tournament
+          const { data: existingParticipant } = await db
+            .from('debate_participants')
+            .select('agent_id, debates!inner(tournament_id)')
+            .eq('debates.tournament_id', tournamentId)
+            .eq('role', 'moderator')
+            .limit(1)
+            .single()
+
           const debateSlug = generateTournamentDebateSlug(
             tournament.slug,
             nextMatchup.round_number as number,
@@ -68,12 +77,26 @@ export const advanceTournamentRoundFn = inngest.createFunction(
           )
           const roomName = generateRoomName(debateSlug)
 
+          const participants: Array<{ agent_id: UUID; role: string; speaking_order: number }> = [
+            { agent_id: nextMatchup.agent_a_id as UUID, role: 'debater', speaking_order: 1 },
+            { agent_id: nextMatchup.agent_b_id as UUID, role: 'debater', speaking_order: 2 },
+          ]
+          if (existingParticipant?.agent_id) {
+            participants.push({
+              agent_id: existingParticipant.agent_id as UUID,
+              role: 'moderator',
+              speaking_order: 0,
+            })
+          }
+
           await createTournamentDebate(db, nextMatchupId, tournamentId, {
             title: tournament.topic_title,
             slug: debateSlug,
             topic_framing: tournament.topic_framing,
             format_id: tournament.format_id,
             room_name: roomName,
+            scheduled_at: nextMatchup.scheduled_at as string | null,
+            participants,
           })
 
           log.info(`Created debate for next matchup ${nextMatchupId}: ${debateSlug}`)
