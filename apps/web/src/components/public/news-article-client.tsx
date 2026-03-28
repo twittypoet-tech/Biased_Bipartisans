@@ -235,13 +235,15 @@ export function NewsArticleClient({ report, images, commentary, allAgents }: New
       {/* ── Hero Block ─────────────────────────────────────────────────────── */}
       <div className="relative w-full">
         {report.hero_image_url ? (
-          <div className="relative h-64 w-full sm:h-80 lg:h-[28rem]">
+          <div className="relative w-full">
             <Image
               src={report.hero_image_url}
               alt={report.hero_image_caption ?? report.headline}
-              fill
+              width={0}
+              height={0}
+              sizes="100vw"
               priority
-              className="object-cover"
+              className="h-auto w-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/50 to-transparent" />
           </div>
