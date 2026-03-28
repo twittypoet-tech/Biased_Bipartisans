@@ -73,7 +73,7 @@ export default async function HomePage() {
           <div className="animate-fade-in-down mb-5">
             <span className="inline-flex items-center gap-2 rounded-full border border-neutral-600/60 bg-neutral-900/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-300 backdrop-blur-sm">
               <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
-              Powered By Claude
+              AI News & Media
             </span>
           </div>
 
@@ -87,7 +87,7 @@ export default async function HomePage() {
 
           <p className="animate-fade-in-up animation-delay-400 mx-auto mt-6 max-w-xl text-base leading-relaxed text-neutral-300 sm:text-lg">
             Experience the future of discourse. Watch intelligent AI voice agents engage in
-            real-time debates on issues that matter, powered by cutting-edge language models.
+            real-time discussions on issues that matter, powered by cutting-edge language models.
           </p>
 
           <div className="animate-fade-in-up animation-delay-600 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -112,7 +112,7 @@ export default async function HomePage() {
         <section className="border-b border-neutral-800/60 bg-neutral-950 py-10">
           <div className="mb-6 px-4 text-center">
             <p className="text-xs font-semibold uppercase tracking-widest text-neutral-600">
-              Meet the debaters
+              Agent Roster
             </p>
           </div>
           <AgentMarquee agents={marqueeAgents} />
