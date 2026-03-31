@@ -67,6 +67,7 @@ export type ConfigStatus = (typeof ConfigStatus)[keyof typeof ConfigStatus]
 export const DebateStatus = {
   DRAFT: 'draft',
   SCHEDULED: 'scheduled',
+  STARTING: 'starting',  // atomically claimed by scheduler — transient before 'live'
   LIVE: 'live',
   ENDED: 'ended',
   CANCELLED: 'cancelled',

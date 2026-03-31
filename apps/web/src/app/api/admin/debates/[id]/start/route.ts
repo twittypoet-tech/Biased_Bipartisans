@@ -14,8 +14,8 @@ export async function POST(
     return NextResponse.json({ error: 'Debate not found' }, { status: 404 })
   }
 
-  if (debate.status === 'live') {
-    return NextResponse.json({ error: 'Debate is already live' }, { status: 400 })
+  if (debate.status === 'live' || debate.status === 'starting') {
+    return NextResponse.json({ error: 'Debate is already starting' }, { status: 400 })
   }
 
   if (debate.status === 'ended') {

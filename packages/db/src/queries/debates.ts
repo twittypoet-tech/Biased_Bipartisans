@@ -202,13 +202,23 @@ export async function updateTurnAudioUrl(
   if (error) throw error
 }
 
-export async function getScheduledDebatesDue(db: SupabaseClient): Promise<Debate[]> {
+/**
+ * Atomically claim all scheduled debates that are due to start.
+ *
+ * Uses a single UPDATE … WHERE status='scheduled' … RETURNING * so that
+ * concurrent agents service instances each only receive the rows they won —
+ * Postgres row-level locking ensures a row can only be claimed by one UPDATE.
+ * Claimed rows are immediately set to 'starting'; the conductor upgrades them
+ * to 'live' once Retell calls are connected.
+ */
+export async function claimScheduledDebates(db: SupabaseClient): Promise<Debate[]> {
   const { data, error } = await db
     .from('debates')
-    .select('*')
+    .update({ status: 'starting' })
     .eq('status', 'scheduled')
     .lte('scheduled_at', new Date().toISOString())
     .order('scheduled_at', { ascending: true })
+    .select()
   if (error) throw error
   return data ?? []
 }

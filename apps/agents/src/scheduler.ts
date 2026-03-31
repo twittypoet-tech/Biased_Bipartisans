@@ -1,7 +1,7 @@
 import { createLogger } from '@bipi/shared'
 import {
   getSupabaseClient,
-  getScheduledDebatesDue,
+  claimScheduledDebates,
   getDebateParticipants,
   getDebateFormat,
   updateDebateStatus,
@@ -60,15 +60,20 @@ export class DebateScheduler {
    */
   private async cleanupOrphanedDebates(): Promise<void> {
     const db = getSupabaseClient()
-    const liveDebates = await listDebates(db, { status: 'live' })
-    for (const debate of liveDebates) {
-      if (!this.conductors.has(debate.id)) {
-        log.warn(`Orphaned live debate on startup: ${debate.id} ("${debate.title}") — marking ended`)
-        await updateDebateStatus(db, debate.id, 'ended', {
-          ended_at: new Date().toISOString(),
-        }).catch((err) => {
-          log.warn(`Failed to mark orphan ${debate.id} as ended`, { error: String(err) })
-        })
+    // Clean up both 'live' and 'starting' debates with no running conductor —
+    // 'starting' can be left behind if a previous instance crashed after claiming
+    // but before marking the debate live.
+    for (const status of ['live', 'starting'] as const) {
+      const debates = await listDebates(db, { status })
+      for (const debate of debates) {
+        if (!this.conductors.has(debate.id)) {
+          log.warn(`Orphaned ${status} debate on startup: ${debate.id} ("${debate.title}") — marking ended`)
+          await updateDebateStatus(db, debate.id, 'ended', {
+            ended_at: new Date().toISOString(),
+          }).catch((err) => {
+            log.warn(`Failed to mark orphan ${debate.id} as ended`, { error: String(err) })
+          })
+        }
       }
     }
   }
@@ -89,7 +94,7 @@ export class DebateScheduler {
   private async poll(): Promise<void> {
     try {
       const db = getSupabaseClient()
-      const dueDebates = await getScheduledDebatesDue(db)
+      const dueDebates = await claimScheduledDebates(db)
 
       for (const debate of dueDebates) {
         if (this.activeDebates.has(debate.id)) continue
@@ -99,7 +104,8 @@ export class DebateScheduler {
         const hasModerator = participants.some((p) => p.role === 'moderator')
 
         if (!hasDebaters || !hasModerator) {
-          log.warn(`Debate ${debate.id} is due but missing participants — skipping`)
+          log.warn(`Debate ${debate.id} is due but missing participants — cancelling`)
+          await updateDebateStatus(db, debate.id, 'cancelled').catch(() => {})
           continue
         }
 
