@@ -5,8 +5,8 @@ import type { ReporterCall } from '@bipi/shared'
 import { ReporterCallCard } from './reporter-call-card'
 import { MakeCallModal } from './make-call-modal'
 
-const CATEGORIES = [
-  'All',
+// Base categories — new ones from post-call analysis are appended dynamically
+const BASE_CATEGORIES = [
   'Environmental Science',
   'History & Politics',
   'Law & Jurisprudence',
@@ -15,7 +15,7 @@ const CATEGORIES = [
   'Rhetoric & Persuasion',
   'Statistics & Data Science',
   'Technology & Innovation',
-] as const
+]
 
 type SortMode = 'hot' | 'new' | 'top'
 
@@ -30,6 +30,16 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
   const [category, setCategory]     = useState<string>('All')
   const [sort, setSort]             = useState<SortMode>('hot')
   const [userVotes, setUserVotes]   = useState<Record<string, 'up' | 'down' | null>>({})
+
+  // Build category tabs from base list + any new categories found in the data
+  const categories = useMemo(() => {
+    const dataCategories = new Set(
+      calls.map((c) => c.report_category).filter(Boolean) as string[],
+    )
+    const merged = new Set(BASE_CATEGORIES)
+    for (const cat of dataCategories) merged.add(cat)
+    return ['All', ...Array.from(merged).sort()]
+  }, [calls])
 
   const filtered = useMemo(() => {
     let result = calls
@@ -129,7 +139,7 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
 
       {/* ── Category tabs ── */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3 scrollbar-none">
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setCategory(cat)}
