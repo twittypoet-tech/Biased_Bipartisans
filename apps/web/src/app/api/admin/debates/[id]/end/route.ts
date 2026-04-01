@@ -29,8 +29,8 @@ export async function POST(
   if (retellApiKey && retellCallIds && Object.keys(retellCallIds).length > 0) {
     await Promise.allSettled(
       Object.values(retellCallIds).map((callId) =>
-        fetch(`${RETELL_API_BASE}/v2/delete-call/${callId}`, {
-          method: 'DELETE',
+        fetch(`${RETELL_API_BASE}/v2/end-call/${callId}`, {
+          method: 'POST',
           headers: { Authorization: `Bearer ${retellApiKey}` },
         }).catch(() => {}),
       ),
