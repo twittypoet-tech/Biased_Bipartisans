@@ -102,7 +102,10 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ callId: id }),
-      }).catch(() => {})
+      })
+        .then((r) => r.json())
+        .then((data) => { if (!data.ok) console.warn('end-call failed:', id, data) })
+        .catch((err) => console.error('end-call error:', id, err))
     }
     callIdRef.current = null
     wireCallIdRef.current = null
