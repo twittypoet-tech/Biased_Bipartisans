@@ -22,11 +22,10 @@ export async function POST(request: Request) {
   console.log(`reporter end-call: ending call ${callId}`)
 
   try {
-    const res = await fetch(`https://api.retellai.com/v2/end-call/${callId}`, {
-      method: 'POST',
+    const res = await fetch(`https://api.retellai.com/v2/delete-call/${callId}`, {
+      method: 'DELETE',
       headers: {
         Authorization: `Bearer ${retellApiKey}`,
-        'Content-Type': 'application/json',
       },
     })
     const responseText = await res.text()
