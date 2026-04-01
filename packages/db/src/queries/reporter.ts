@@ -47,6 +47,7 @@ export interface InsertReporterCallData {
   report_delivered?: boolean | null
   sources_cited?: boolean | null
   report_quality?: string | null
+  publish_to_bipi?: boolean | null
   recording_url?: string | null
   call_language?: string
   user_query?: string | null

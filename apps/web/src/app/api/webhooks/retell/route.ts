@@ -77,6 +77,7 @@ export async function POST(request: Request) {
     (merged[' sources_cited'] as boolean | undefined)
   ) ?? null
   const reportQuality    = (merged.report_quality    as string  | undefined) ?? null
+  const publishToBipi    = (merged.publish_to_bipi   as boolean | undefined) ?? null
 
   // ── Extract call metadata ─────────────────────────────────────────────────
   const recordingUrl    = (call.recording_url as string | undefined) ?? null
@@ -88,8 +89,11 @@ export async function POST(request: Request) {
   const userQuery    = (dynamicVars.user_query as string | undefined) ?? null
   const callLanguage = (call.language as string | undefined) ?? 'en-US'
 
-  // ── Visibility gate ───────────────────────────────────────────────────────
-  const isPublished = callSuccessful === true && reportDelivered === true
+  // ── Visibility gate — all three must be true to auto-publish ────────────
+  const isPublished =
+    reportDelivered === true &&
+    reportQuality === 'Complete' &&
+    publishToBipi === true
 
   // ── Write to DB ───────────────────────────────────────────────────────────
   try {
@@ -107,6 +111,7 @@ export async function POST(request: Request) {
       report_delivered:  reportDelivered,
       sources_cited:     sourcesCited,
       report_quality:    reportQuality,
+      publish_to_bipi:  publishToBipi,
       recording_url:    recordingUrl,
       call_language:    callLanguage,
       user_query:       userQuery,

@@ -490,6 +490,7 @@ export interface ReporterCall {
   report_delivered: boolean | null
   sources_cited: boolean | null
   report_quality: ReportQuality | null
+  publish_to_bipi: boolean | null
 
   // Call metadata
   recording_url: string | null
