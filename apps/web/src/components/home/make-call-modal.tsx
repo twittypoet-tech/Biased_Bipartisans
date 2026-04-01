@@ -24,7 +24,8 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
   const [query, setQuery]     = useState('')
   const [language, setLanguage] = useState('en-US')
   const [errorMsg, setErrorMsg] = useState('')
-  const roomRef = useRef<{ disconnect: () => void } | null>(null)
+  const reporterRoomRef = useRef<{ disconnect: () => void } | null>(null)
+  const wireRoomRef     = useRef<{ disconnect: () => void } | null>(null)
 
   async function handleConnect() {
     setStep('connecting')
@@ -39,31 +40,48 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
         const e = await res.json().catch(() => ({}))
         throw new Error(e.error ?? 'Failed to connect')
       }
-      const { accessToken, retellUrl } = await res.json()
+      const { reporterToken, wireToken, retellUrl } = await res.json()
 
       const { Room, RoomEvent, Track } = await import('livekit-client')
-      const room = new Room({ adaptiveStream: false, dynacast: false })
-      roomRef.current = room
 
-      room.on(RoomEvent.TrackSubscribed, (track) => {
-        if (track.kind === Track.Kind.Audio) {
-          const el = track.attach()
-          el.autoplay = true
-          el.style.display = 'none'
-          document.body.appendChild(el)
-          setStep('live')
-        }
-      })
+      function attachAudio(room: InstanceType<typeof Room>, onLive?: () => void) {
+        room.on(RoomEvent.TrackSubscribed, (track) => {
+          if (track.kind === Track.Kind.Audio) {
+            const el = track.attach()
+            el.autoplay = true
+            el.style.display = 'none'
+            document.body.appendChild(el)
+            onLive?.()
+          }
+        })
+      }
 
-      room.on(RoomEvent.Disconnected, () => {
+      // Connect Wire Host room first so greeting plays immediately
+      if (wireToken) {
+        const wireRoom = new Room({ adaptiveStream: false, dynacast: false })
+        wireRoomRef.current = wireRoom
+        attachAudio(wireRoom, () => setStep('live'))
+        wireRoom.on(RoomEvent.Disconnected, () => { wireRoomRef.current = null })
+        await wireRoom.connect(retellUrl, wireToken)
+      }
+
+      // Connect Reporter room — this is the primary call
+      const reporterRoom = new Room({ adaptiveStream: false, dynacast: false })
+      reporterRoomRef.current = reporterRoom
+
+      attachAudio(reporterRoom, () => setStep('live'))
+
+      reporterRoom.on(RoomEvent.Disconnected, () => {
         setStep('done')
-        roomRef.current = null
+        reporterRoomRef.current = null
+        wireRoomRef.current?.disconnect()
+        wireRoomRef.current = null
       })
 
-      await room.connect(retellUrl, accessToken)
+      await reporterRoom.connect(retellUrl, reporterToken)
 
       // Safety timeout: 10 min max
-      setTimeout(() => room.disconnect(), 10 * 60 * 1000)
+      setTimeout(() => reporterRoom.disconnect(), 10 * 60 * 1000)
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
       setStep('error')
@@ -71,7 +89,10 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
   }
 
   function handleEndCall() {
-    roomRef.current?.disconnect()
+    reporterRoomRef.current?.disconnect()
+    wireRoomRef.current?.disconnect()
+    reporterRoomRef.current = null
+    wireRoomRef.current = null
     setStep('done')
   }
 

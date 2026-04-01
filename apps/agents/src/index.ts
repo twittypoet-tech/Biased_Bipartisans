@@ -1,6 +1,7 @@
 import http from 'node:http'
 import { createLogger, validateEnv, AGENTS_ENV } from '@bipi/shared'
 import { DebateScheduler } from './scheduler.js'
+import { ReporterRelay } from './retell/reporter-relay.js'
 
 const log = createLogger('agents')
 
@@ -141,6 +142,52 @@ async function main() {
       scheduler.stopDebate(debateId)
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ ok: true, debateId, message: 'Debate stop signal sent' }))
+      return
+    }
+
+    // Reporter relay: POST /reporter/relay
+    // Connects the Wire Host and The Reporter in the same audio session so
+    // The Reporter hears the Wire's greeting and Retell doesn't time out.
+    if (req.method === 'POST' && url === '/reporter/relay') {
+      if (triggerSecret) {
+        const auth = req.headers.authorization ?? ''
+        if (auth !== `Bearer ${triggerSecret}`) {
+          res.writeHead(401, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Unauthorized' }))
+          return
+        }
+      }
+
+      let body: { wireAccessToken?: string; reporterAccessToken?: string } = {}
+      try {
+        const raw = await new Promise<string>((resolve, reject) => {
+          let data = ''
+          req.on('data', (chunk) => { data += chunk })
+          req.on('end', () => resolve(data))
+          req.on('error', reject)
+        })
+        body = JSON.parse(raw)
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Invalid JSON' }))
+        return
+      }
+
+      const { wireAccessToken, reporterAccessToken } = body
+      if (!wireAccessToken || !reporterAccessToken) {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'wireAccessToken and reporterAccessToken required' }))
+        return
+      }
+
+      // Respond immediately — relay runs in background
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ ok: true }))
+
+      const relay = new ReporterRelay()
+      relay.start({ wireAccessToken, reporterAccessToken }).catch((err) => {
+        log.error('ReporterRelay failed to start', { error: String(err) })
+      })
       return
     }
 

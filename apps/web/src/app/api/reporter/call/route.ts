@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server'
 
 const REPORTER_AGENT_ID  = 'agent_0fd7ecb17c2e5717f23ed69511'
 const WIRE_HOST_AGENT_ID = 'agent_21b5d4660d86a45abad2492cf7'
+
+async function createRetellCall(apiKey: string, agentId: string, dynamicVars: Record<string, string>, language: string) {
+  const res = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ agent_id: agentId, retell_llm_dynamic_variables: dynamicVars, language }),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json() as Promise<{ access_token: string; call_id: string }>
+}
 const RETELL_API_BASE   = 'https://api.retellai.com'
 
 const SUPPORTED_LANGUAGES = new Set([
@@ -44,33 +54,48 @@ export async function POST(request: Request) {
     ' at ' +
     now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' })
 
-  const res = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${retellApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      agent_id: REPORTER_AGENT_ID,
-      retell_llm_dynamic_variables: {
-        user_query:   userQuery,
-        current_date: currentDate,
-      },
-      language,
-    }),
-  })
+  const dynamicVars = { user_query: userQuery, current_date: currentDate }
 
-  if (!res.ok) {
-    const err = await res.text()
-    console.error('Retell create-web-call error:', err)
+  let reporterCall: { access_token: string; call_id: string }
+  let wireCall:     { access_token: string; call_id: string } | null = null
+
+  try {
+    reporterCall = await createRetellCall(retellApiKey, REPORTER_AGENT_ID, dynamicVars, language as string)
+  } catch (err) {
+    console.error('Retell create-web-call error (Reporter):', err)
     return NextResponse.json({ error: 'Failed to create call' }, { status: 500 })
   }
 
-  const call = await res.json()
+  // Create Wire Host call — fire-and-forget; non-fatal if it fails
+  try {
+    wireCall = await createRetellCall(retellApiKey, WIRE_HOST_AGENT_ID, dynamicVars, language as string)
+  } catch (err) {
+    console.warn('Retell create-web-call warning (Wire Host):', err)
+  }
+
+  // Trigger the agents service to relay Wire's audio into Reporter's call
+  if (wireCall) {
+    const agentsUrl      = process.env.AGENTS_SERVICE_URL
+    const triggerSecret  = process.env.AGENTS_TRIGGER_SECRET
+    if (agentsUrl) {
+      fetch(`${agentsUrl}/reporter/relay`, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          ...(triggerSecret ? { Authorization: `Bearer ${triggerSecret}` } : {}),
+        },
+        body: JSON.stringify({
+          wireAccessToken:     wireCall.access_token,
+          reporterAccessToken: reporterCall.access_token,
+        }),
+      }).catch((err) => console.warn('Reporter relay trigger failed:', err))
+    }
+  }
 
   return NextResponse.json({
-    accessToken: call.access_token,
-    callId:      call.call_id,
-    retellUrl:   'wss://retell-ai-4ihahnq7.livekit.cloud',
+    reporterToken: reporterCall.access_token,
+    wireToken:     wireCall?.access_token ?? null,
+    callId:        reporterCall.call_id,
+    retellUrl:     'wss://retell-ai-4ihahnq7.livekit.cloud',
   })
 }
