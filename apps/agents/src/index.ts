@@ -1,8 +1,6 @@
 import http from 'node:http'
 import { createLogger, validateEnv, AGENTS_ENV } from '@bipi/shared'
 import { DebateScheduler } from './scheduler.js'
-// ReporterRelay is lazily imported inside the /reporter/relay handler
-// to avoid loading @livekit/rtc-node at startup (same pattern as AudioPublisher)
 
 const log = createLogger('agents')
 
@@ -143,67 +141,6 @@ async function main() {
       scheduler.stopDebate(debateId)
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ ok: true, debateId, message: 'Debate stop signal sent' }))
-      return
-    }
-
-    // Reporter relay: POST /reporter/relay
-    // Connects the Wire Host and The Reporter in the same audio session so
-    // The Reporter hears the Wire's greeting and Retell doesn't time out.
-    if (req.method === 'POST' && url === '/reporter/relay') {
-      log.info('Reporter relay request received')
-      if (triggerSecret) {
-        const auth = req.headers.authorization ?? ''
-        if (auth !== `Bearer ${triggerSecret}`) {
-          log.warn('Reporter relay: unauthorized request')
-          res.writeHead(401, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({ error: 'Unauthorized' }))
-          return
-        }
-      }
-
-      let body: { wireAccessToken?: string; reporterAccessToken?: string } = {}
-      try {
-        const raw = await new Promise<string>((resolve, reject) => {
-          let data = ''
-          req.on('data', (chunk) => { data += chunk })
-          req.on('end', () => resolve(data))
-          req.on('error', reject)
-        })
-        body = JSON.parse(raw)
-      } catch {
-        res.writeHead(400, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: 'Invalid JSON' }))
-        return
-      }
-
-      const { wireAccessToken, reporterAccessToken } = body
-      if (!wireAccessToken || !reporterAccessToken) {
-        res.writeHead(400, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: 'wireAccessToken and reporterAccessToken required' }))
-        return
-      }
-
-      try {
-        const { ReporterRelay } = await import('./retell/reporter-relay.js')
-        const relay = new ReporterRelay()
-
-        // prepare() creates the public LiveKit room + browser token synchronously
-        const { publicRoomUrl, browserToken } = await relay.prepare()
-
-        // start() connects to Retell rooms + public room in background
-        relay.start({ wireAccessToken, reporterAccessToken }).catch((err) => {
-          log.error('ReporterRelay failed to start', { error: String(err) })
-          relay.stop()
-        })
-
-        res.writeHead(200, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ ok: true, publicRoomUrl, browserToken }))
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        log.error('ReporterRelay prepare failed', { error: msg })
-        res.writeHead(500, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: msg }))
-      }
       return
     }
 
