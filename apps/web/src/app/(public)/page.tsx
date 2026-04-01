@@ -58,11 +58,11 @@ export default async function HomePage() {
           <div className="animate-fade-in-down mb-5">
             <span className="inline-flex items-center gap-2 rounded-full border border-neutral-600/60 bg-neutral-900/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-300 backdrop-blur-sm">
               <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
-              Personally Curated News powered by cutting-edge language models
+              AI News Agent
             </span>
           </div>
 
-          <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
+          <h1 className="animate-fade-in-up animation-delay-200 text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
           Live & On-Demand News Reporting Personalized to Your Interests
             <br />
             <span className="bg-gradient-to-r from-amber-300 via-orange-300 to-amber-400 bg-clip-text text-transparent">
