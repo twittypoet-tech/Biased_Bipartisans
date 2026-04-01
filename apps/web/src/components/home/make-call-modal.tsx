@@ -29,10 +29,11 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
   async function handleConnect() {
     setStep('connecting')
     try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const res = await fetch('/api/reporter/call', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userQuery: query.trim(), language }),
+        body: JSON.stringify({ userQuery: query.trim(), language, timezone }),
       })
       if (!res.ok) {
         const e = await res.json().catch(() => ({}))

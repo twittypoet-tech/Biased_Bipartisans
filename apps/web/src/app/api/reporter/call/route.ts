@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Retell not configured' }, { status: 500 })
   }
 
-  let body: { userQuery?: string; language?: string }
+  let body: { userQuery?: string; language?: string; timezone?: string }
   try {
     body = await request.json()
   } catch {
@@ -24,19 +24,24 @@ export async function POST(request: Request) {
   const userQuery = (body.userQuery ?? '').trim() || 'breaking news today'
   const language  = SUPPORTED_LANGUAGES.has(body.language ?? '') ? body.language : 'en-US'
 
-  // Format current date + time: "April 1, 2026 at 3:42 PM UTC"
+  // Validate timezone from client; fall back to UTC if unrecognised
+  let timezone = 'UTC'
+  if (body.timezone) {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: body.timezone })
+      timezone = body.timezone
+    } catch {
+      // invalid tz string — stay on UTC
+    }
+  }
+
+  // Format current date + time in the user's local timezone
+  // e.g. "April 1, 2026 at 3:42 PM EDT"
   const now = new Date()
-  const currentDate = now.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }) + ' at ' + now.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'UTC',
-    timeZoneName: 'short',
-  })
+  const currentDate =
+    now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: timezone }) +
+    ' at ' +
+    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' })
 
   const res = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
     method: 'POST',
