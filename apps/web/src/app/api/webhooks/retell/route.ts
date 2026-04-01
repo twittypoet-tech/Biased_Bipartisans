@@ -89,11 +89,11 @@ export async function POST(request: Request) {
   const userQuery    = (dynamicVars.user_query as string | undefined) ?? null
   const callLanguage = (call.language as string | undefined) ?? 'en-US'
 
-  // ── Visibility gate — all three must be true to auto-publish ────────────
+  // ── Visibility gate ────────────────────────────────────────────────────
   const isPublished =
     reportDelivered === true &&
     reportQuality === 'Complete' &&
-    publishToBipi === true
+    (sourceCount ?? 0) > 4
 
   // ── Write to DB ───────────────────────────────────────────────────────────
   try {
