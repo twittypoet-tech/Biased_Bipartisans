@@ -180,14 +180,26 @@ async function main() {
         return
       }
 
-      // Respond immediately — relay runs in background
-      res.writeHead(200, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ ok: true }))
+      try {
+        const relay = new ReporterRelay()
 
-      const relay = new ReporterRelay()
-      relay.start({ wireAccessToken, reporterAccessToken }).catch((err) => {
-        log.error('ReporterRelay failed to start', { error: String(err) })
-      })
+        // prepare() creates the public LiveKit room + browser token synchronously
+        const { publicRoomUrl, browserToken } = await relay.prepare()
+
+        // start() connects to Retell rooms + public room in background
+        relay.start({ wireAccessToken, reporterAccessToken }).catch((err) => {
+          log.error('ReporterRelay failed to start', { error: String(err) })
+          relay.stop()
+        })
+
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: true, publicRoomUrl, browserToken }))
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        log.error('ReporterRelay prepare failed', { error: msg })
+        res.writeHead(500, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: msg }))
+      }
       return
     }
 

@@ -2,4 +2,4 @@ export { AudioRelay, RETELL_LIVEKIT_URL, type RelayAgent } from './audio-relay.j
 export { DebateConductor, type DebateConductorConfig } from './debate-conductor.js'
 export { LiveTranscriptPoller, type PollerAgent } from './live-transcript-poller.js'
 export { collectTranscripts } from './transcript-collector.js'
-export { ReporterRelay, type ReporterRelayConfig } from './reporter-relay.js'
+export { ReporterRelay, type ReporterRelayConfig, type ReporterRelayResult } from './reporter-relay.js'

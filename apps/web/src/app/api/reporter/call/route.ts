@@ -73,29 +73,45 @@ export async function POST(request: Request) {
     console.warn('Retell create-web-call warning (Wire Host):', err)
   }
 
-  // Trigger the agents service to relay Wire's audio into Reporter's call
+  // Trigger the agents service to relay Wire ↔ Reporter audio and create a
+  // public LiveKit room the browser can subscribe to (same pattern as debates).
+  let publicRoomUrl:  string | null = null
+  let browserToken:   string | null = null
+
   if (wireCall) {
-    const agentsUrl      = process.env.AGENTS_SERVICE_URL
-    const triggerSecret  = process.env.AGENTS_TRIGGER_SECRET
+    const agentsUrl     = process.env.AGENTS_SERVICE_URL
+    const triggerSecret = process.env.AGENTS_TRIGGER_SECRET
     if (agentsUrl) {
-      fetch(`${agentsUrl}/reporter/relay`, {
-        method:  'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          ...(triggerSecret ? { Authorization: `Bearer ${triggerSecret}` } : {}),
-        },
-        body: JSON.stringify({
-          wireAccessToken:     wireCall.access_token,
-          reporterAccessToken: reporterCall.access_token,
-        }),
-      }).catch((err) => console.warn('Reporter relay trigger failed:', err))
+      try {
+        const relayRes = await fetch(`${agentsUrl}/reporter/relay`, {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            ...(triggerSecret ? { Authorization: `Bearer ${triggerSecret}` } : {}),
+          },
+          body: JSON.stringify({
+            wireAccessToken:     wireCall.access_token,
+            reporterAccessToken: reporterCall.access_token,
+          }),
+        })
+        if (relayRes.ok) {
+          const relayData = await relayRes.json()
+          publicRoomUrl = relayData.publicRoomUrl ?? null
+          browserToken  = relayData.browserToken  ?? null
+        }
+      } catch (err) {
+        console.warn('Reporter relay trigger failed:', err)
+      }
     }
   }
 
   return NextResponse.json({
-    reporterToken: reporterCall.access_token,
-    wireToken:     wireCall?.access_token ?? null,
     callId:        reporterCall.call_id,
+    // If relay is active, browser connects to public LiveKit room (hears both agents).
+    // Fallback: connect directly to Reporter's Retell room (no Wire audio).
+    publicRoomUrl: publicRoomUrl ?? null,
+    browserToken:  browserToken  ?? null,
     retellUrl:     'wss://retell-ai-4ihahnq7.livekit.cloud',
+    reporterToken: publicRoomUrl ? null : reporterCall.access_token,
   })
 }
