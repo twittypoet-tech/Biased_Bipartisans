@@ -51,13 +51,10 @@ export async function POST(request: Request) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      // Start with the Wire Host so audio plays immediately and prevents
-      // Error_no_audio_received. The Wire Host transfers to The Reporter.
-      agent_id: WIRE_HOST_AGENT_ID,
+      agent_id: REPORTER_AGENT_ID,
       retell_llm_dynamic_variables: {
-        user_query:    userQuery,
-        current_date:  currentDate,
-        reporter_agent_id: REPORTER_AGENT_ID,
+        user_query:   userQuery,
+        current_date: currentDate,
       },
       language,
     }),
