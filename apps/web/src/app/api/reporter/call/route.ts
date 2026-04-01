@@ -107,6 +107,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     callId:        reporterCall.call_id,
+    wireCallId:    wireCall?.call_id ?? null,
     // If relay is active, browser connects to public LiveKit room (hears both agents).
     // Fallback: connect directly to Reporter's Retell room (no Wire audio).
     publicRoomUrl: publicRoomUrl ?? null,

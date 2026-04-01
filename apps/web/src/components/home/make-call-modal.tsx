@@ -24,8 +24,9 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
   const [query, setQuery]     = useState('')
   const [language, setLanguage] = useState('en-US')
   const [errorMsg, setErrorMsg] = useState('')
-  const roomRef   = useRef<{ disconnect: () => void } | null>(null)
-  const callIdRef = useRef<string | null>(null)
+  const roomRef       = useRef<{ disconnect: () => void } | null>(null)
+  const callIdRef     = useRef<string | null>(null)
+  const wireCallIdRef = useRef<string | null>(null)
 
   async function handleConnect() {
     setStep('connecting')
@@ -40,8 +41,9 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
         const e = await res.json().catch(() => ({}))
         throw new Error(e.error ?? 'Failed to connect')
       }
-      const { publicRoomUrl, browserToken, retellUrl, reporterToken, callId } = await res.json()
+      const { publicRoomUrl, browserToken, retellUrl, reporterToken, callId, wireCallId } = await res.json()
       callIdRef.current = callId
+      wireCallIdRef.current = wireCallId
 
       const { Room, RoomEvent, Track } = await import('livekit-client')
       const room = new Room({ adaptiveStream: false, dynacast: false })
@@ -66,6 +68,18 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
       // Fallback: connect directly to Reporter's Retell room (no Wire greeting).
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
+        // Attach any tracks already published before we subscribed
+        for (const p of room.remoteParticipants.values()) {
+          for (const pub of p.audioTrackPublications.values()) {
+            if (pub.track && pub.isSubscribed) {
+              const el = pub.track.attach()
+              el.autoplay = true
+              el.style.display = 'none'
+              document.body.appendChild(el)
+              setStep('live')
+            }
+          }
+        }
       } else if (reporterToken) {
         await room.connect(retellUrl, reporterToken)
       }
@@ -81,15 +95,17 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
   function handleEndCall() {
     roomRef.current?.disconnect()
     roomRef.current = null
-    // End the Retell call so the relay stops and post-call analysis triggers
-    if (callIdRef.current) {
+    // End BOTH Retell calls so the relay stops and post-call analysis triggers
+    const callIds = [callIdRef.current, wireCallIdRef.current].filter(Boolean)
+    for (const id of callIds) {
       fetch('/api/reporter/end-call', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ callId: callIdRef.current }),
+        body: JSON.stringify({ callId: id }),
       }).catch(() => {})
-      callIdRef.current = null
     }
+    callIdRef.current = null
+    wireCallIdRef.current = null
     setStep('done')
   }
 
