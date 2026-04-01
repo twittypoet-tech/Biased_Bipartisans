@@ -8,12 +8,15 @@ import type {
   EvolutionStage,
   LLMProvider,
   MemoryStatus,
+  ReportCategory,
+  ReportQuality,
   RhetoricalOS,
   RoomFormat,
   RoundPhase,
   SpeakerType,
   Temperament,
   UpdateClass,
+  UserSentiment,
   VoteType,
 } from './enums'
 
@@ -464,5 +467,40 @@ export interface CommentaryRequest {
   agent_id: UUID
   requester_session_id: string
   status: 'pending' | 'fulfilled' | 'rejected'
+  created_at: Timestamp
+}
+
+// ─── Reporter Call (post-call news feed) ───
+
+export interface ReporterCall {
+  id: UUID
+  retell_call_id: string
+
+  // Retell preset analysis
+  call_summary: string | null
+  call_successful: boolean | null
+  user_sentiment: UserSentiment | null
+
+  // Custom post-call analysis
+  report_headline: string | null
+  report_category: ReportCategory | null
+  source_count: number | null
+  key_entities: string | null
+  sources_mentioned: string | null
+  report_delivered: boolean | null
+  sources_cited: boolean | null
+  report_quality: ReportQuality | null
+
+  // Call metadata
+  recording_url: string | null
+  call_language: string
+  user_query: string | null
+  duration_seconds: number | null
+
+  // Forum engagement
+  upvotes: number
+  downvotes: number
+
+  is_published: boolean
   created_at: Timestamp
 }

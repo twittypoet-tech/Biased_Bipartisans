@@ -2,26 +2,20 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
-import { listDebates, listAgents, listDebateParticipants } from '@bipi/db'
+import { listDebates, listDebateParticipants, listPublishedReporterCalls } from '@bipi/db'
 import { DebateCard } from '@/components/public/debate-card'
 import { HeroShader } from '@/components/home/hero-shader'
-import { AgentMarquee } from '@/components/home/agent-marquee'
-import { FeaturesSection } from '@/components/home/features-section'
-import { CTASection } from '@/components/home/cta-section'
-import { NewsBoard } from '@/components/home/news-board'
-import { listPublishedReports } from '@bipi/db'
+import { ReporterForum } from '@/components/home/reporter-forum'
 
 export default async function HomePage() {
   const db = createServerClient()
-  const [debates, agents, newsReports] = await Promise.all([
+  const [debates, reporterCalls] = await Promise.all([
     listDebates(db),
-    listAgents(db),
-    listPublishedReports(db, 8),
+    listPublishedReporterCalls(db, { limit: 30, sort: 'hot' }),
   ])
 
-  const liveDebates   = debates.filter((d) => d.status === 'live')
-  const endedDebates  = debates.filter((d) => d.status === 'ended')
-  const debaters      = agents.filter((a) => a.role !== 'moderator')
+  const liveDebates  = debates.filter((d) => d.status === 'live')
+  const endedDebates = debates.filter((d) => d.status === 'ended')
 
   // Participants for live debate(s) + all ended debates
   const participantDebateIds = [
@@ -47,15 +41,6 @@ export default async function HomePage() {
         expertise: (r.agents?.expertise  ?? []) as string[],
       }))
   }
-
-  // Marquee agents
-  const marqueeAgents = debaters.map((a) => ({
-    id:        a.id,
-    name:      a.name,
-    slug:      a.slug,
-    avatarUrl: a.avatar_url,
-    archetype: a.archetype,
-  }))
 
   // Featured live debate (shown above the stack when live)
   const featuredLive = liveDebates[0] ?? null
@@ -107,18 +92,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Agent Marquee ─────────────────────────────────────────────────── */}
-      {marqueeAgents.length > 0 && (
-        <section className="border-b border-neutral-800/60 bg-neutral-950 py-10">
-          <div className="mb-6 px-4 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-neutral-600">
-              Agent Roster
-            </p>
-          </div>
-          <AgentMarquee agents={marqueeAgents} />
-        </section>
-      )}
-
       {/* ── Live Debate Banner (when live) ────────────────────────────────── */}
       {featuredLive && (
         <section className="py-12 bg-neutral-950">
@@ -144,14 +117,8 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── News Board ────────────────────────────────────────────────────── */}
-      <NewsBoard reports={newsReports} />
-
-      {/* ── Features + Use Cases ──────────────────────────────────────────── */}
-      <FeaturesSection />
-
-      {/* ── CTA ───────────────────────────────────────────────────────────── */}
-      <CTASection />
+      {/* ── Reporter Forum ────────────────────────────────────────────────── */}
+      <ReporterForum initialCalls={reporterCalls} />
 
     </div>
   )

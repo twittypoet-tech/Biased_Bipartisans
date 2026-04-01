@@ -1,4 +1,4 @@
-// Agent archetypes — the 8 defined in the Persona Constitution
+// Agent archetypes — the 8 defined in the Persona Constitution + reporter
 export const AgentArchetype = {
   HAWK: 'hawk',
   DOVE: 'dove',
@@ -8,6 +8,7 @@ export const AgentArchetype = {
   CONSPIRACY_THEORIST: 'conspiracy_theorist',
   INSTITUTIONALIST: 'institutionalist',
   LIBERTARIAN: 'libertarian',
+  REPORTER: 'reporter',
 } as const
 export type AgentArchetype = (typeof AgentArchetype)[keyof typeof AgentArchetype]
 
@@ -52,8 +53,38 @@ export type AgentStatus = (typeof AgentStatus)[keyof typeof AgentStatus]
 export const AgentRole = {
   DEBATER: 'debater',
   MODERATOR: 'moderator',
+  REPORTER: 'reporter',
 } as const
 export type AgentRole = (typeof AgentRole)[keyof typeof AgentRole]
+
+// Report categories — shared between news_reports and reporter_calls
+export const ReportCategory = {
+  ENVIRONMENTAL_SCIENCE: 'Environmental Science',
+  HISTORY_POLITICS: 'History & Politics',
+  LAW_JURISPRUDENCE: 'Law & Jurisprudence',
+  MEDICINE_HEALTHCARE: 'Medicine & Healthcare',
+  PHILOSOPHY_ETHICS: 'Philosophy & Ethics',
+  RHETORIC_PERSUASION: 'Rhetoric & Persuasion',
+  STATISTICS_DATA_SCIENCE: 'Statistics & Data Science',
+  TECHNOLOGY_INNOVATION: 'Technology & Innovation',
+} as const
+export type ReportCategory = (typeof ReportCategory)[keyof typeof ReportCategory]
+
+// Report quality from Retell post-call analysis
+export const ReportQuality = {
+  COMPLETE: 'Complete',
+  PARTIAL: 'Partial',
+  FAILED: 'Failed',
+} as const
+export type ReportQuality = (typeof ReportQuality)[keyof typeof ReportQuality]
+
+// User sentiment from Retell post-call analysis
+export const UserSentiment = {
+  POSITIVE: 'Positive',
+  NEUTRAL: 'Neutral',
+  NEGATIVE: 'Negative',
+} as const
+export type UserSentiment = (typeof UserSentiment)[keyof typeof UserSentiment]
 
 // Config version status
 export const ConfigStatus = {
