@@ -1,7 +1,8 @@
 import http from 'node:http'
 import { createLogger, validateEnv, AGENTS_ENV } from '@bipi/shared'
 import { DebateScheduler } from './scheduler.js'
-import { ReporterRelay } from './retell/reporter-relay.js'
+// ReporterRelay is lazily imported inside the /reporter/relay handler
+// to avoid loading @livekit/rtc-node at startup (same pattern as AudioPublisher)
 
 const log = createLogger('agents')
 
@@ -149,9 +150,11 @@ async function main() {
     // Connects the Wire Host and The Reporter in the same audio session so
     // The Reporter hears the Wire's greeting and Retell doesn't time out.
     if (req.method === 'POST' && url === '/reporter/relay') {
+      log.info('Reporter relay request received')
       if (triggerSecret) {
         const auth = req.headers.authorization ?? ''
         if (auth !== `Bearer ${triggerSecret}`) {
+          log.warn('Reporter relay: unauthorized request')
           res.writeHead(401, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ error: 'Unauthorized' }))
           return
@@ -181,6 +184,7 @@ async function main() {
       }
 
       try {
+        const { ReporterRelay } = await import('./retell/reporter-relay.js')
         const relay = new ReporterRelay()
 
         // prepare() creates the public LiveKit room + browser token synchronously
