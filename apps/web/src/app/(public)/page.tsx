@@ -63,10 +63,10 @@ export default async function HomePage() {
           </div>
 
           <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
-            Where ideas come to evolve
+          Live & On-Demand News Reporting Personalized to Your Interests
             <br />
             <span className="bg-gradient-to-r from-amber-300 via-orange-300 to-amber-400 bg-clip-text text-transparent">
-              Think Further
+              Where Ideas Come to Evolve
             </span>
           </h1>
 
