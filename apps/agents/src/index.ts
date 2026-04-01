@@ -48,6 +48,7 @@ async function main() {
 
   const healthServer = http.createServer(async (req, res) => {
     const url = req.url ?? '/'
+    process.stderr.write(`[http] ${req.method} ${url}\n`)
 
     // Health check
     if (req.method === 'GET' && url === '/') {
@@ -166,8 +167,8 @@ async function main() {
     res.end(JSON.stringify({ error: 'Not found' }))
   })
 
-  healthServer.listen(healthPort, () => {
-    log.info(`HTTP server on port ${healthPort}`)
+  healthServer.listen(healthPort, '0.0.0.0', () => {
+    log.info(`HTTP server on port ${healthPort} (0.0.0.0)`)
   })
 
   const ttsMode = process.env.ELEVENLABS_API_KEY ? 'elevenlabs-streaming' : 'disabled (set ELEVENLABS_API_KEY)'
