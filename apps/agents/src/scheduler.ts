@@ -11,7 +11,9 @@ import { LiveKitRoomManager } from './livekit/room-manager.js'
 import { LiveConversation } from './debate/live-conversation.js'
 import type { AudioPublisher } from './livekit/audio-publisher.js'
 import type { StreamingTTSPublisher } from './workers/streaming-tts.js'
-import { DebateConductor } from './retell/debate-conductor.js'
+// DebateConductor is dynamically imported in runFreeflowDebate() to avoid
+// loading @livekit/rtc-node at startup (native addon causes SIGSEGV)
+import type { DebateConductor as DebateConductorType } from './retell/debate-conductor.js'
 
 const log = createLogger('agents:scheduler')
 
@@ -29,7 +31,7 @@ export class DebateScheduler {
   private running = false
   private activeDebates = new Set<string>()
   private timer: ReturnType<typeof setInterval> | null = null
-  private conductors = new Map<string, DebateConductor>()
+  private conductors = new Map<string, DebateConductorType>()
 
   start(): void {
     if (this.running) return
@@ -138,8 +140,9 @@ export class DebateScheduler {
   // ── Freeflow: Retell-based ────────────────────────────────────────────────
 
   private async runFreeflowDebate(debateId: string): Promise<void> {
-    let conductor: DebateConductor
+    let conductor: DebateConductorType
     try {
+      const { DebateConductor } = await import('./retell/debate-conductor.js')
       conductor = new DebateConductor({ debateId })
     } catch (err) {
       // Constructor throws when env vars are missing — mark failed and stop retrying

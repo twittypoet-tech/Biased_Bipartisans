@@ -4,56 +4,10 @@ import { DebateScheduler } from './scheduler.js'
 
 const log = createLogger('agents')
 
-// Debate engine
-export { DebateOrchestrator, type DebateOrchestratorConfig, type TurnResult as OrchestratorTurnResult, type DebateCompleteSummary } from './debate/orchestrator.js'
-export { TurnController, type TurnResult, type TurnControllerConfig, type DebateCompleteSummary as TurnControllerSummary } from './debate/turn-controller.js'
-export { AgentRunner } from './debate/agent-runner.js'
-export { ModeratorRunner, type ModeratorParticipant } from './debate/moderator-runner.js'
-
-// LLM providers
-export { getLLMProvider } from './llm/index.js'
-export type { LLMProvider, LLMMessage, LLMCompletionRequest, LLMCompletionResponse } from './llm/types.js'
-
-// Services
-export { DebateStateManager, type DebateParticipantInfo, type DebateSummary } from './services/debate-state.js'
-export { persistTurn, extractClaimTier, buildRoundSummary } from './services/turn-persistence.js'
-export { VoiceSynthesizer, type SynthesizedTurn } from './services/voice-synthesizer.js'
-export { uploadTurnAudio } from './services/audio-storage.js'
-
-// Tools
-export type { AgentTool, AgentToolResult } from './tools/types.js'
-export { DebateTimerTool } from './tools/debate-timer.js'
-export { VoteStateTool } from './tools/vote-state.js'
-
-// Voice
-export type { VoiceProvider, Voice, SynthesisResult } from './voice/types.js'
-export { OpenAITTSProvider } from './voice/openai-tts.js'
-export { PlaceholderVoiceProvider } from './voice/placeholder-provider.js'
-export { getVoiceProvider, ARCHETYPE_VOICE_MAP, getVoiceId } from './voice/index.js'
-
-// LiveKit
-export { LiveKitRoomManager, DebateRoomBridge, AudioPublisher, type VoiceAgent } from './livekit/index.js'
-
-// Retell
-export { AudioRelay, DebateConductor, collectTranscripts, RETELL_LIVEKIT_URL } from './retell/index.js'
-export type { RelayAgent, DebateConductorConfig } from './retell/index.js'
-
-// Scheduler
-export { DebateScheduler } from './scheduler.js'
-
-// Research tool
-export { ResearchTool } from './tools/research.js'
-
-// Prompt builders
-export {
-  buildOpeningPrompt,
-  buildRebuttalPrompt,
-  buildPressurePrompt,
-  buildClosingPrompt,
-  formatTurnsAsContext,
-  buildContextUpdate,
-  type TurnRecord,
-} from './debate/turn-prompt-builder.js'
+// NOTE: This is a standalone service, not a library. No re-exports needed.
+// All @livekit/rtc-node consumers (AudioRelay, AudioPublisher, ReporterRelay)
+// are loaded lazily via dynamic import() to prevent the native addon from
+// crashing the process at startup (SIGSEGV from Rust binary init).
 
 /**
  * Main entry point for the agents service.
@@ -141,6 +95,61 @@ async function main() {
       scheduler.stopDebate(debateId)
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ ok: true, debateId, message: 'Debate stop signal sent' }))
+      return
+    }
+
+    // Reporter relay: POST /reporter/relay
+    if (req.method === 'POST' && url === '/reporter/relay') {
+      log.info('Reporter relay request received')
+      if (triggerSecret) {
+        const auth = req.headers.authorization ?? ''
+        if (auth !== `Bearer ${triggerSecret}`) {
+          res.writeHead(401, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Unauthorized' }))
+          return
+        }
+      }
+
+      let body: { wireAccessToken?: string; reporterAccessToken?: string } = {}
+      try {
+        const raw = await new Promise<string>((resolve, reject) => {
+          let data = ''
+          req.on('data', (chunk) => { data += chunk })
+          req.on('end', () => resolve(data))
+          req.on('error', reject)
+        })
+        body = JSON.parse(raw)
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Invalid JSON' }))
+        return
+      }
+
+      const { wireAccessToken, reporterAccessToken } = body
+      if (!wireAccessToken || !reporterAccessToken) {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'wireAccessToken and reporterAccessToken required' }))
+        return
+      }
+
+      try {
+        const { ReporterRelay } = await import('./retell/reporter-relay.js')
+        const relay = new ReporterRelay()
+        const { publicRoomUrl, browserToken } = await relay.prepare()
+
+        relay.start({ wireAccessToken, reporterAccessToken }).catch((err) => {
+          log.error('ReporterRelay failed to start', { error: String(err) })
+          relay.stop()
+        })
+
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: true, publicRoomUrl, browserToken }))
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        log.error('ReporterRelay prepare failed', { error: msg })
+        res.writeHead(500, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: msg }))
+      }
       return
     }
 
