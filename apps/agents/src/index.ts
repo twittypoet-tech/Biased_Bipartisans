@@ -20,11 +20,20 @@ const log = createLogger('agents')
  * LiveKit audio publishing enabled when LIVEKIT_URL is configured.
  */
 async function main() {
+  // Diagnostic heartbeat — writes to stderr (unbuffered) every 5s.
+  // If heartbeats stop in Railway logs, the process died (likely SIGSEGV).
+  const heartbeat = setInterval(() => {
+    process.stderr.write(`[heartbeat] ${new Date().toISOString()} pid=${process.pid}\n`)
+  }, 5000)
+  heartbeat.unref()
+
   process.on('uncaughtException', (err) => {
+    process.stderr.write(`[CRASH] uncaughtException: ${err.message}\n${err.stack}\n`)
     log.error('Uncaught exception — exiting', { error: err.message, stack: err.stack })
     process.exit(1)
   })
   process.on('unhandledRejection', (reason) => {
+    process.stderr.write(`[CRASH] unhandledRejection: ${String(reason)}\n`)
     log.error('Unhandled promise rejection — exiting', { reason: String(reason) })
     process.exit(1)
   })

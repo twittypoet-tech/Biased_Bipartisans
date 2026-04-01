@@ -1,4 +1,4 @@
-FROM node:20-slim AS base
+FROM node:20.11.1-slim AS base
 # @livekit/rtc-node ships a Rust-compiled native binary that needs OpenSSL + C++ runtime.
 # These are absent or incomplete in node:20-slim on Debian Bookworm.
 RUN apt-get update && apt-get install -y --no-install-recommends \

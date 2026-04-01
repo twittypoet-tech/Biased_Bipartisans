@@ -48,7 +48,12 @@ export class DebateScheduler {
       log.warn('Orphan cleanup failed on startup', { error: String(err) })
     })
 
-    this.poll().catch((err) => log.error('Scheduler poll crashed', { error: String(err) }))
+    // Delay first poll by 5s to let HTTP server stabilize before loading
+    // native modules (DebateConductor → AudioRelay → @livekit/rtc-node).
+    // This ensures health checks pass before any native addon risk.
+    setTimeout(() => {
+      this.poll().catch((err) => log.error('Scheduler poll crashed', { error: String(err) }))
+    }, 5000)
     this.timer = setInterval(
       () => this.poll().catch((err) => log.error('Scheduler poll crashed', { error: String(err) })),
       POLL_INTERVAL_MS,
