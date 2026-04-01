@@ -50,25 +50,33 @@ export async function POST(request: Request) {
   // ── Extract analysis fields ───────────────────────────────────────────────
   const analysis = (call.call_analysis ?? {}) as Record<string, unknown>
 
-  // Retell preset fields live directly on call_analysis
-  const callSummary    = (analysis.call_summary    as string  | undefined) ?? null
-  const callSuccessful = (analysis.call_successful as boolean | undefined) ?? null
-  const userSentiment  = (analysis.user_sentiment  as string  | undefined) ?? null
+  // Log the raw analysis object to debug missing fields
+  console.log('reporter webhook: call_analysis keys:', Object.keys(analysis))
+  console.log('reporter webhook: call_analysis:', JSON.stringify(analysis).slice(0, 2000))
 
-  // Custom post-call fields — Retell puts them in call_analysis directly
-  // (not nested under custom_analysis_data in the current SDK version)
-  const reportHeadline   = (analysis.report_headline   as string  | undefined) ?? null
-  const reportCategory   = (analysis.report_category   as string  | undefined) ?? null
-  const sourceCount      = (analysis.source_count      as number  | undefined) ?? null
-  const keyEntities      = (analysis.key_entities      as string  | undefined) ?? null
-  const sourcesMentioned = (analysis.sources_mentioned as string  | undefined) ?? null
-  const reportDelivered  = (analysis.report_delivered  as boolean | undefined) ?? null
-  // Note: the Retell JSON had a leading space " sources_cited" — handle both
+  // Retell may put custom fields directly in call_analysis OR under
+  // custom_analysis_data — merge both to handle either structure
+  const customData = (analysis.custom_analysis_data ?? {}) as Record<string, unknown>
+  const merged = { ...customData, ...analysis }
+
+  // Retell preset fields
+  const callSummary    = (merged.call_summary    as string  | undefined) ?? null
+  const callSuccessful = (merged.call_successful as boolean | undefined) ?? null
+  const userSentiment  = (merged.user_sentiment  as string  | undefined) ?? null
+
+  // Custom post-call fields
+  const reportHeadline   = (merged.report_headline   as string  | undefined) ?? null
+  const reportCategory   = (merged.report_category   as string  | undefined) ?? null
+  const sourceCount      = (merged.source_count      as number  | undefined) ?? null
+  const keyEntities      = (merged.key_entities      as string  | undefined) ?? null
+  const sourcesMentioned = (merged.sources_mentioned as string  | undefined) ?? null
+  const reportDelivered  = (merged.report_delivered  as boolean | undefined) ?? null
+  // Handle leading-space variant from Retell config
   const sourcesCited     = (
-    (analysis.sources_cited as boolean | undefined) ??
-    (analysis[' sources_cited'] as boolean | undefined)
+    (merged.sources_cited as boolean | undefined) ??
+    (merged[' sources_cited'] as boolean | undefined)
   ) ?? null
-  const reportQuality    = (analysis.report_quality    as string  | undefined) ?? null
+  const reportQuality    = (merged.report_quality    as string  | undefined) ?? null
 
   // ── Extract call metadata ─────────────────────────────────────────────────
   const recordingUrl    = (call.recording_url as string | undefined) ?? null

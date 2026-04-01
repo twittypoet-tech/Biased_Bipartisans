@@ -122,11 +122,13 @@ export class ReporterRelay {
 
     log.info('ReporterRelay fully connected — Wire and Reporter can hear each other')
 
-    // Safety timeout: 3 minutes max
+    // Safety timeout: 10 minutes max (matches browser-side timeout).
+    // The Reporter's Retell agent has an end_call tool that fires after
+    // delivering the report, which ends the call naturally before this.
     this.safetyTimeout = setTimeout(() => {
       log.warn('Reporter relay safety timeout — stopping')
       this.stop()
-    }, 3 * 60 * 1000)
+    }, 10 * 60 * 1000)
   }
 
   private async connectRetellCall(agentKey: string, token: string): Promise<void> {

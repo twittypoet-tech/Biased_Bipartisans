@@ -24,7 +24,8 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
   const [query, setQuery]     = useState('')
   const [language, setLanguage] = useState('en-US')
   const [errorMsg, setErrorMsg] = useState('')
-  const roomRef = useRef<{ disconnect: () => void } | null>(null)
+  const roomRef   = useRef<{ disconnect: () => void } | null>(null)
+  const callIdRef = useRef<string | null>(null)
 
   async function handleConnect() {
     setStep('connecting')
@@ -39,7 +40,8 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
         const e = await res.json().catch(() => ({}))
         throw new Error(e.error ?? 'Failed to connect')
       }
-      const { publicRoomUrl, browserToken, retellUrl, reporterToken } = await res.json()
+      const { publicRoomUrl, browserToken, retellUrl, reporterToken, callId } = await res.json()
+      callIdRef.current = callId
 
       const { Room, RoomEvent, Track } = await import('livekit-client')
       const room = new Room({ adaptiveStream: false, dynacast: false })
@@ -79,6 +81,15 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
   function handleEndCall() {
     roomRef.current?.disconnect()
     roomRef.current = null
+    // End the Retell call so the relay stops and post-call analysis triggers
+    if (callIdRef.current) {
+      fetch('/api/reporter/end-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callId: callIdRef.current }),
+      }).catch(() => {})
+      callIdRef.current = null
+    }
     setStep('done')
   }
 
