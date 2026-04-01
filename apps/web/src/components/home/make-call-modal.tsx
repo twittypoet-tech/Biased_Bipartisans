@@ -92,21 +92,9 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
     }
   }
 
-  function handleEndCall() {
+  function handleLeaveCall() {
     roomRef.current?.disconnect()
     roomRef.current = null
-    // End BOTH Retell calls so the relay stops and post-call analysis triggers
-    const callIds = [callIdRef.current, wireCallIdRef.current].filter(Boolean)
-    for (const id of callIds) {
-      fetch('/api/reporter/end-call', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ callId: id }),
-      })
-        .then((r) => r.json())
-        .then((data) => { if (!data.ok) console.warn('end-call failed:', id, data) })
-        .catch((err) => console.error('end-call error:', id, err))
-    }
     callIdRef.current = null
     wireCallIdRef.current = null
     setStep('done')
@@ -121,7 +109,7 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={step === 'live' ? undefined : onClose}
+        onClick={step === 'live' ? handleLeaveCall : onClose}
       />
 
       {/* Panel */}
@@ -210,16 +198,19 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-white">The Reporter is on air</p>
-              <p className="mt-0.5 text-xs text-neutral-500">Report will be saved to The Wire when the call ends</p>
+              <p className="mt-0.5 text-xs text-neutral-500">Report will be saved to The Wire when complete</p>
             </div>
             <LiveWaveform />
             <button
-              onClick={handleEndCall}
-              className="mt-2 flex items-center gap-2 rounded-lg border border-red-700/60 bg-red-950/40 px-5 py-2.5 text-sm font-medium text-red-400 hover:bg-red-950/60 transition"
+              onClick={handleLeaveCall}
+              className="mt-2 flex items-center gap-2 rounded-lg border border-neutral-600/60 bg-neutral-800/60 px-5 py-2.5 text-sm font-medium text-neutral-300 hover:bg-neutral-700/60 transition"
             >
               <PhoneOffIcon />
-              End Call
+              Leave Call
             </button>
+            <p className="text-[11px] text-neutral-600 text-center max-w-[260px] leading-relaxed">
+              You can leave anytime — the full report will appear on The Wire once The Reporter finishes.
+            </p>
           </div>
         )}
 
