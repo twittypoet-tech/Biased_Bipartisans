@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { insertReporterCall } from '@bipi/db'
 
-const REPORTER_AGENT_ID = 'agent_0fd7ecb17c2e5717f23ed69511'
+const REPORTER_AGENT_IDS = new Set([
+  'agent_0fd7ecb17c2e5717f23ed69511', // The Reporter
+  'agent_21b5d4660d86a45abad2492cf7', // The Wire Host (intro agent)
+])
 
 export async function POST(request: Request) {
   // Always respond quickly — Retell retries on slow responses
@@ -37,8 +40,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing call object' }, { status: 400 })
   }
 
-  // Only handle calls from The Reporter agent
-  if (call.agent_id !== REPORTER_AGENT_ID) {
+  // Only handle calls from The Reporter pipeline agents
+  if (!REPORTER_AGENT_IDS.has(call.agent_id as string)) {
     return NextResponse.json({ ok: true, skipped: true })
   }
 

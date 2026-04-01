@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
-const REPORTER_AGENT_ID = 'agent_0fd7ecb17c2e5717f23ed69511'
+const REPORTER_AGENT_ID  = 'agent_0fd7ecb17c2e5717f23ed69511'
+const WIRE_HOST_AGENT_ID = 'agent_21b5d4660d86a45abad2492cf7'
 const RETELL_API_BASE   = 'https://api.retellai.com'
 
 const SUPPORTED_LANGUAGES = new Set([
@@ -50,10 +51,13 @@ export async function POST(request: Request) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      agent_id: REPORTER_AGENT_ID,
+      // Start with the Wire Host so audio plays immediately and prevents
+      // Error_no_audio_received. The Wire Host transfers to The Reporter.
+      agent_id: WIRE_HOST_AGENT_ID,
       retell_llm_dynamic_variables: {
-        user_query:   userQuery,
-        current_date: currentDate,
+        user_query:    userQuery,
+        current_date:  currentDate,
+        reporter_agent_id: REPORTER_AGENT_ID,
       },
       language,
     }),
