@@ -1,158 +1,205 @@
 @import 'tailwindcss';
 
-/* ── Light/dark theme ─────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEMANTIC THEME TOKENS
+   ───────────────────────────────────────────────────────────────────────────
+   Dark mode:  Semi-transparent surfaces, subtle borders, light text
+   Light mode: White cards, visible borders, strong text, clean shadows
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-:root.dark {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #171717;
-  --bg-card: rgba(23, 23, 23, 0.8);
-  --border-primary: rgba(64, 64, 64, 0.6);
-  --text-primary: #f5f5f5;
-  --text-secondary: #a3a3a3;
-  --text-muted: #525252;
+/* ── Dark tokens (default) ─────────────────────────────────────────────── */
+:root, :root.dark {
   color-scheme: dark;
+
+  /* Surfaces — 3-layer system */
+  --t-bg:             #0a0a0a;         /* page background */
+  --t-surface:        #171717;         /* cards, panels */
+  --t-surface-el:     #262626;         /* elevated: inputs, controls, dropdowns */
+  --t-surface-inset:  #0f0f0f;         /* inset: code blocks, inner wells */
+
+  /* Surface with opacity (for overlays, hero scrim, etc.) */
+  --t-overlay:        rgba(10,10,10,0.90);
+  --t-overlay-light:  rgba(10,10,10,0.55);
+  --t-card:           rgba(23,23,23,0.80);
+  --t-card-hover:     rgba(23,23,23,1);
+  --t-card-subtle:    rgba(23,23,23,0.50);
+
+  /* Text — 4-tier hierarchy */
+  --t-text:           #f5f5f5;         /* headings, important labels */
+  --t-text-2:         #a3a3a3;         /* body, descriptions */
+  --t-text-3:         #737373;         /* timestamps, captions */
+  --t-text-4:         #525252;         /* placeholders, hints */
+
+  /* Borders */
+  --t-edge:           rgba(38,38,38,0.6); /* default card/section borders */
+  --t-edge-strong:    #404040;            /* input borders, dividers */
+  --t-edge-muted:     rgba(38,38,38,0.4); /* very subtle separators */
+
+  /* Interactive states */
+  --t-hover-bg:       #262626;         /* generic hover background */
+  --t-active-bg:      #404040;         /* pressed/selected background */
+  --t-focus-ring:     #525252;         /* focus ring color */
+
+  /* Accent */
+  --t-accent:         #f59e0b;         /* amber-500 */
+  --t-accent-soft:    rgba(245,158,11,0.15);
+  --t-accent-text:    #fbbf24;         /* amber-400 — text on dark */
+
+  /* Badge surfaces (for pills/tags in dark) */
+  --t-badge-bg:       rgba(23,23,23,0.70);
+  --t-badge-border:   rgba(64,64,64,0.60);
+
+  /* Shadows */
+  --t-shadow:         0 1px 3px rgba(0,0,0,0.4);
+  --t-shadow-lg:      0 8px 24px rgba(0,0,0,0.5);
+
+  /* Gradients */
+  --t-fade-from:      #0a0a0a;
+  --t-fade-to:        transparent;
 }
 
+/* ── Light tokens ──────────────────────────────────────────────────────── */
 :root.light {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --border-primary: rgba(212, 212, 212, 0.8);
-  --text-primary: #171717;
-  --text-secondary: #525252;
-  --text-muted: #a3a3a3;
   color-scheme: light;
+
+  /* Surfaces */
+  --t-bg:             #f8f9fa;         /* warm off-white page bg */
+  --t-surface:        #ffffff;         /* white cards */
+  --t-surface-el:     #f1f3f5;         /* light gray inputs */
+  --t-surface-inset:  #e9ecef;         /* inset wells */
+
+  /* Surface with opacity */
+  --t-overlay:        rgba(255,255,255,0.95);
+  --t-overlay-light:  rgba(255,255,255,0.70);
+  --t-card:           #ffffff;
+  --t-card-hover:     #ffffff;
+  --t-card-subtle:    #ffffff;
+
+  /* Text */
+  --t-text:           #111827;         /* gray-900 — high contrast */
+  --t-text-2:         #4b5563;         /* gray-600 — readable body */
+  --t-text-3:         #9ca3af;         /* gray-400 — timestamps */
+  --t-text-4:         #d1d5db;         /* gray-300 — placeholders */
+
+  /* Borders — stronger in light mode */
+  --t-edge:           #e5e7eb;         /* gray-200 — visible card borders */
+  --t-edge-strong:    #d1d5db;         /* gray-300 — input borders */
+  --t-edge-muted:     #f3f4f6;         /* gray-100 — subtle separators */
+
+  /* Interactive states */
+  --t-hover-bg:       #f3f4f6;         /* gray-100 */
+  --t-active-bg:      #e5e7eb;         /* gray-200 */
+  --t-focus-ring:     #9ca3af;         /* gray-400 */
+
+  /* Accent */
+  --t-accent:         #d97706;         /* amber-600 — better on white */
+  --t-accent-soft:    rgba(217,119,6,0.10);
+  --t-accent-text:    #b45309;         /* amber-700 — readable on white */
+
+  /* Badge surfaces (for pills/tags in light) */
+  --t-badge-bg:       #f3f4f6;         /* gray-100 — crisp, not muddy */
+  --t-badge-border:   #e5e7eb;         /* gray-200 — visible */
+
+  /* Shadows — visible elevation in light mode */
+  --t-shadow:         0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --t-shadow-lg:      0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+
+  /* Gradients */
+  --t-fade-from:      #f8f9fa;
+  --t-fade-to:        transparent;
 }
 
-/* Theme-aware body */
-.light body,
-:root.light body {
-  background-color: #ffffff;
-  color: #171717;
+/* ── Register tokens with Tailwind v4 ──────────────────────────────────── */
+@theme inline {
+  /* Backgrounds / surfaces */
+  --color-t-bg:            var(--t-bg);
+  --color-t-surface:       var(--t-surface);
+  --color-t-surface-el:    var(--t-surface-el);
+  --color-t-surface-inset: var(--t-surface-inset);
+  --color-t-overlay:       var(--t-overlay);
+  --color-t-overlay-light: var(--t-overlay-light);
+  --color-t-card:          var(--t-card);
+  --color-t-card-hover:    var(--t-card-hover);
+  --color-t-card-subtle:   var(--t-card-subtle);
+
+  /* Text */
+  --color-t-text:          var(--t-text);
+  --color-t-text-2:        var(--t-text-2);
+  --color-t-text-3:        var(--t-text-3);
+  --color-t-text-4:        var(--t-text-4);
+
+  /* Borders */
+  --color-t-edge:          var(--t-edge);
+  --color-t-edge-strong:   var(--t-edge-strong);
+  --color-t-edge-muted:    var(--t-edge-muted);
+
+  /* Interactive */
+  --color-t-hover:         var(--t-hover-bg);
+  --color-t-active:        var(--t-active-bg);
+  --color-t-focus:         var(--t-focus-ring);
+
+  /* Accent */
+  --color-t-accent:        var(--t-accent);
+  --color-t-accent-soft:   var(--t-accent-soft);
+  --color-t-accent-text:   var(--t-accent-text);
+
+  /* Badge */
+  --color-t-badge:         var(--t-badge-bg);
+  --color-t-badge-border:  var(--t-badge-border);
+
+  /* Shadows */
+  --shadow-t:              var(--t-shadow);
+  --shadow-t-lg:           var(--t-shadow-lg);
 }
 
-.light .bg-neutral-950 { background-color: #ffffff; }
-.light .bg-neutral-900 { background-color: #f5f5f5; }
-.light .bg-neutral-900\/80 { background-color: rgba(245, 245, 245, 0.8); }
-.light .bg-neutral-900\/70 { background-color: rgba(245, 245, 245, 0.7); }
-.light .bg-neutral-900\/60 { background-color: rgba(245, 245, 245, 0.6); }
-.light .bg-neutral-900\/40 { background-color: rgba(245, 245, 245, 0.4); }
-.light .bg-neutral-800 { background-color: #e5e5e5; }
-.light .bg-neutral-800\/70 { background-color: rgba(229, 229, 229, 0.7); }
-.light .bg-neutral-800\/60 { background-color: rgba(229, 229, 229, 0.6); }
-.light .bg-neutral-950\/90 { background-color: rgba(255, 255, 255, 0.9); }
-.light .bg-neutral-950\/55 { background-color: rgba(255, 255, 255, 0.55); }
-.light .bg-neutral-950\/95 { background-color: rgba(255, 255, 255, 0.95); }
+/* ── Base resets ───────────────────────────────────────────────────────── */
+body {
+  background-color: var(--t-bg);
+  color: var(--t-text);
+}
 
-.light .text-white { color: #171717; }
-.light .text-neutral-100 { color: #262626; }
-.light .text-neutral-200 { color: #404040; }
-.light .text-neutral-300 { color: #525252; }
-.light .text-neutral-400 { color: #737373; }
-.light .text-neutral-500 { color: #a3a3a3; }
-.light .text-neutral-600 { color: #d4d4d4; }
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS & UTILITIES (unchanged)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-.light .border-neutral-700 { border-color: #d4d4d4; }
-.light .border-neutral-700\/60 { border-color: rgba(212, 212, 212, 0.6); }
-.light .border-neutral-700\/40 { border-color: rgba(212, 212, 212, 0.4); }
-.light .border-neutral-800 { border-color: #e5e5e5; }
-.light .border-neutral-800\/60 { border-color: rgba(229, 229, 229, 0.6); }
-.light .border-neutral-800\/40 { border-color: rgba(229, 229, 229, 0.4); }
-
-.light .from-neutral-950 { --tw-gradient-from: #ffffff; }
-.light .to-neutral-950 { --tw-gradient-to: #ffffff; }
-.light .from-neutral-900 { --tw-gradient-from: #f5f5f5; }
-
-.light .placeholder\:text-neutral-600::placeholder { color: #a3a3a3; }
-
-/* Marquee animation for agent carousel */
 @keyframes marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-100%); }
 }
+.animate-marquee { animation: marquee 35s linear infinite; }
 
-.animate-marquee {
-  animation: marquee 35s linear infinite;
-}
-
-/* Fade-in animations for hero */
 @keyframes fade-in-down {
   from { opacity: 0; transform: translateY(-16px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
-.animate-fade-in-down {
-  animation: fade-in-down 0.7s ease-out forwards;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.7s ease-out forwards;
-  opacity: 0;
-}
-
+.animate-fade-in-down { animation: fade-in-down 0.7s ease-out forwards; }
+.animate-fade-in-up { animation: fade-in-up 0.7s ease-out forwards; opacity: 0; }
 .animation-delay-200 { animation-delay: 0.2s; }
 .animation-delay-400 { animation-delay: 0.4s; }
 .animation-delay-600 { animation-delay: 0.6s; }
 .animation-delay-800 { animation-delay: 0.8s; }
 
-/* Live debate room animations */
 @keyframes waveform {
   0%, 100% { height: 4px; }
   50% { height: 18px; }
 }
-
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+.animate-waveform { animation: waveform 0.8s ease-in-out infinite; }
+.animate-slideIn { animation: slideIn 0.4s ease-out; }
 
-.animate-waveform {
-  animation: waveform 0.8s ease-in-out infinite;
-}
+.debate-transcript::-webkit-scrollbar { width: 4px; }
+.debate-transcript::-webkit-scrollbar-track { background: transparent; }
+.debate-transcript::-webkit-scrollbar-thumb { background-color: rgb(64 64 64 / 0.5); border-radius: 2px; }
+.debate-transcript::-webkit-scrollbar-thumb:hover { background-color: rgb(82 82 82 / 0.7); }
 
-.animate-slideIn {
-  animation: slideIn 0.4s ease-out;
-}
+.tabular-nums { font-variant-numeric: tabular-nums; }
 
-/* Transcript scrollbar styling */
-.debate-transcript::-webkit-scrollbar {
-  width: 4px;
-}
-
-.debate-transcript::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.debate-transcript::-webkit-scrollbar-thumb {
-  background-color: rgb(64 64 64 / 0.5);
-  border-radius: 2px;
-}
-
-.debate-transcript::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(82 82 82 / 0.7);
-}
-
-/* Tabular nums for timer */
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
-
-/* Hide scrollbar for horizontal carousels */
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }

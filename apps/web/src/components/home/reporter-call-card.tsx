@@ -36,36 +36,36 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
   const netVotes = call.upvotes - call.downvotes
 
   return (
-    <article className="flex gap-3 rounded-xl border border-neutral-800/60 bg-neutral-900/50 p-4 transition hover:border-neutral-700/60 hover:bg-neutral-900/80">
+    <article className="flex gap-3 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
 
-      {/* ── Vote column ───────────────────────────────────────────────────── */}
+      {/* ── Vote column ── */}
       <div className="flex flex-col items-center gap-1 pt-0.5 min-w-[32px]">
         <button
           onClick={() => onUpvote?.(call.id)}
           aria-label="Upvote"
-          className={`rounded p-1 transition hover:bg-neutral-800 ${userVote === 'up' ? 'text-amber-400' : 'text-neutral-600 hover:text-neutral-300'}`}
+          className={`rounded p-1 transition hover:bg-t-hover ${userVote === 'up' ? 'text-amber-400' : 'text-t-text-3 hover:text-t-text-2'}`}
         >
           <ArrowUpIcon />
         </button>
-        <span className={`text-xs font-semibold tabular-nums ${netVotes > 0 ? 'text-amber-400' : netVotes < 0 ? 'text-blue-400' : 'text-neutral-500'}`}>
+        <span className={`text-xs font-semibold tabular-nums ${netVotes > 0 ? 'text-amber-400' : netVotes < 0 ? 'text-blue-400' : 'text-t-text-3'}`}>
           {netVotes}
         </span>
         <button
           onClick={() => onDownvote?.(call.id)}
           aria-label="Downvote"
-          className={`rounded p-1 transition hover:bg-neutral-800 ${userVote === 'down' ? 'text-blue-400' : 'text-neutral-600 hover:text-neutral-300'}`}
+          className={`rounded p-1 transition hover:bg-t-hover ${userVote === 'down' ? 'text-blue-400' : 'text-t-text-3 hover:text-t-text-2'}`}
         >
           <ArrowDownIcon />
         </button>
       </div>
 
-      {/* ── Content ───────────────────────────────────────────────────────── */}
+      {/* ── Content ── */}
       <div className="flex-1 min-w-0">
 
         {/* Meta row */}
         <div className="flex flex-wrap items-center gap-2 mb-2">
           {call.report_category && (
-            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${CATEGORY_COLORS[call.report_category] ?? 'bg-neutral-800 text-neutral-400 border-neutral-700'}`}>
+            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${CATEGORY_COLORS[call.report_category] ?? 'bg-t-badge text-t-text-2 border-t-badge-border'}`}>
               {call.report_category}
             </span>
           )}
@@ -75,36 +75,36 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
             </span>
           )}
           {call.sources_cited === false && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-neutral-800/60 border border-neutral-700/40 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
+            <span className="inline-flex items-center gap-1 rounded-full bg-t-badge border border-t-badge-border px-2 py-0.5 text-[10px] font-medium text-t-text-3">
               Unverified
             </span>
           )}
         </div>
 
         {/* Headline */}
-        <h3 className="text-sm font-semibold text-white leading-snug mb-1.5">
+        <h3 className="text-sm font-semibold text-t-text leading-snug mb-1.5">
           {call.report_headline ?? 'Untitled Report'}
         </h3>
 
         {/* Reporter + timestamp */}
         <div className="flex items-center gap-2 mb-2.5">
-          <div className="size-5 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[9px] font-bold text-neutral-400 shrink-0">
+          <div className="size-5 rounded-full bg-t-surface-el border border-t-edge-strong flex items-center justify-center text-[9px] font-bold text-t-text-2 shrink-0">
             R
           </div>
-          <span className="text-xs text-neutral-500">The Reporter</span>
-          <span className="text-neutral-700">·</span>
-          <span className="text-xs text-neutral-600">{formatAge(call.created_at)}</span>
+          <span className="text-xs text-t-text-3">The Reporter</span>
+          <span className="text-t-text-4">·</span>
+          <span className="text-xs text-t-text-3">{formatAge(call.created_at)}</span>
           {call.call_language && call.call_language !== 'en-US' && (
             <>
-              <span className="text-neutral-700">·</span>
-              <span className="text-xs text-neutral-600">{call.call_language.split('-')[0]?.toUpperCase()}</span>
+              <span className="text-t-text-4">·</span>
+              <span className="text-xs text-t-text-3">{call.call_language.split('-')[0]?.toUpperCase()}</span>
             </>
           )}
         </div>
 
         {/* Summary */}
         {call.call_summary && (
-          <p className="text-xs text-neutral-400 leading-relaxed mb-3 line-clamp-3">
+          <p className="text-xs text-t-text-2 leading-relaxed mb-3 line-clamp-3">
             {call.call_summary}
           </p>
         )}
@@ -114,21 +114,20 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
           <AudioPlayer url={call.recording_url} durationSeconds={call.duration_seconds} />
         )}
 
-        {/* Footer: source count + key entities */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 pt-2.5 border-t border-neutral-800/60">
+        {/* Footer */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 pt-2.5 border-t border-t-edge-muted">
           {call.source_count != null && call.source_count > 0 && (
-            <span className="flex items-center gap-1 text-[11px] text-neutral-500">
+            <span className="flex items-center gap-1 text-[11px] text-t-text-3">
               <SourceIcon />
               {call.source_count} {call.source_count === 1 ? 'source' : 'sources'}
             </span>
           )}
           {call.key_entities && (
-            <span className="text-[11px] text-neutral-600 truncate max-w-[260px]" title={call.key_entities}>
+            <span className="text-[11px] text-t-text-3 truncate max-w-[260px]" title={call.key_entities}>
               {call.key_entities}
             </span>
           )}
         </div>
-
       </div>
     </article>
   )
@@ -152,18 +151,10 @@ function AudioPlayer({ url, durationSeconds }: { url: string; durationSeconds: n
         setCurrent(a.currentTime)
         setProgress(a.duration ? (a.currentTime / a.duration) * 100 : 0)
       }
-      audioRef.current.onended = () => {
-        setPlaying(false)
-        setProgress(0)
-        setCurrent(0)
-      }
+      audioRef.current.onended = () => { setPlaying(false); setProgress(0); setCurrent(0) }
     }
-    if (playing) {
-      audioRef.current.pause()
-      setPlaying(false)
-    } else {
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => {})
-    }
+    if (playing) { audioRef.current.pause(); setPlaying(false) }
+    else { audioRef.current.play().then(() => setPlaying(true)).catch(() => {}) }
   }
 
   function seek(e: React.MouseEvent<HTMLDivElement>) {
@@ -174,38 +165,25 @@ function AudioPlayer({ url, durationSeconds }: { url: string; durationSeconds: n
   }
 
   function fmt(s: number) {
-    const m = Math.floor(s / 60)
-    const sec = Math.floor(s % 60)
+    const m = Math.floor(s / 60); const sec = Math.floor(s % 60)
     return `${m}:${sec.toString().padStart(2, '0')}`
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-neutral-800/60 border border-neutral-700/40 px-3 py-2">
+    <div className="flex items-center gap-3 rounded-lg bg-t-surface-el border border-t-edge px-3 py-2">
       <button
         onClick={togglePlay}
-        className="size-7 rounded-full bg-white flex items-center justify-center shrink-0 hover:bg-neutral-200 transition active:scale-95"
+        className="size-7 rounded-full bg-t-accent flex items-center justify-center shrink-0 hover:opacity-90 transition active:scale-95"
         aria-label={playing ? 'Pause' : 'Play'}
       >
         {playing ? <PauseIcon /> : <PlayIcon />}
       </button>
-
       <div className="flex-1 min-w-0">
-        <div
-          className="h-1.5 rounded-full bg-neutral-700 cursor-pointer overflow-hidden"
-          onClick={seek}
-          role="progressbar"
-          aria-valuenow={progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div
-            className="h-full rounded-full bg-amber-400 transition-all duration-100"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="h-1.5 rounded-full bg-t-surface-inset cursor-pointer overflow-hidden" onClick={seek} role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full rounded-full bg-amber-400 transition-all duration-100" style={{ width: `${progress}%` }} />
         </div>
       </div>
-
-      <span className="text-[10px] text-neutral-500 tabular-nums shrink-0">
+      <span className="text-[10px] text-t-text-3 tabular-nums shrink-0">
         {playing || current > 0 ? fmt(current) : (duration > 0 ? fmt(duration) : '--:--')}
       </span>
     </div>
@@ -230,14 +208,14 @@ function ArrowDownIcon() {
 }
 function PlayIcon() {
   return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="#0a0a0a">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
       <polygon points="5 3 19 12 5 21 5 3"/>
     </svg>
   )
 }
 function PauseIcon() {
   return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="#0a0a0a">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
       <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
     </svg>
   )

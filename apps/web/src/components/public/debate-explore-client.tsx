@@ -553,12 +553,12 @@ export function DebateExploreClient({
   const hasActiveFilter = !!selectedExpertise
 
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-t-bg">
       {/* ── Hero ── */}
       <section className="relative flex min-h-[50vh] items-center justify-center overflow-hidden">
         <HeroShader />
-        <div className="pointer-events-none absolute inset-0 bg-neutral-950/55" />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-neutral-950 to-transparent" />
+        <div className="pointer-events-none absolute inset-0" style={{ backgroundColor: 'var(--t-overlay-light)' }} />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40" style={{ background: `linear-gradient(to top, var(--t-bg), transparent)` }} />
 
         <div className="relative z-10 mx-auto max-w-3xl px-4 text-center">
           <h1 className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
@@ -577,7 +577,7 @@ export function DebateExploreClient({
           <div className="mt-8 flex items-center gap-2">
             <div className="relative flex-1">
               <svg
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-neutral-500 pointer-events-none"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-t-text-3 pointer-events-none"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -590,12 +590,12 @@ export function DebateExploreClient({
                 placeholder="Search debates, agents, or topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-neutral-700 bg-neutral-800/70 pl-10 pr-4 py-3 text-sm text-neutral-200 placeholder-neutral-500 focus:border-neutral-600 focus:outline-none backdrop-blur-sm"
+                className="w-full rounded-xl border border-t-edge-strong bg-t-surface-el pl-10 pr-4 py-3 text-sm text-t-text placeholder:text-t-text-4 focus:border-t-focus focus:outline-none backdrop-blur-sm"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-t-text-3 hover:text-t-text-2"
                 >
                   <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -609,7 +609,7 @@ export function DebateExploreClient({
                 className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition ${
                   hasActiveFilter
                     ? 'border-blue-500/60 bg-blue-500/10 text-blue-300'
-                    : 'border-neutral-700 bg-neutral-800/70 text-neutral-300 hover:bg-neutral-800'
+                    : 'border-t-edge-strong bg-t-surface-el text-t-text-2 hover:bg-t-hover'
                 }`}
               >
                 <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -631,7 +631,7 @@ export function DebateExploreClient({
       </section>
 
       {/* ── Tab Bar ── */}
-      <div className="sticky top-0 z-20 border-b border-neutral-800 bg-neutral-950/90 backdrop-blur-md">
+      <div className="sticky top-0 z-20 border-b border-t-edge bg-t-overlay backdrop-blur-md">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex">
             {tabs.map((tab) => (
