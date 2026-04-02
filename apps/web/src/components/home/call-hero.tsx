@@ -194,7 +194,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <section className="relative overflow-hidden bg-neutral-950 px-4 py-16 sm:py-24">
+    <section className="relative overflow-hidden bg-neutral-950 px-4 py-10 sm:py-24">
       {/* Subtle radial glow */}
       <div
         className="pointer-events-none absolute inset-0 opacity-30"
@@ -209,15 +209,15 @@ export function CallHero({ presets, agents }: CallHeroProps) {
         {step === 'idle' && (
           <>
             {/* Header */}
-            <div className="mb-8 text-center">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-neutral-700/60 bg-neutral-900/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-400 backdrop-blur-sm">
+            <div className="mb-5 sm:mb-8 text-center">
+              <div className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full border border-neutral-700/60 bg-neutral-900/70 px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-neutral-400 backdrop-blur-sm">
                 <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
                 AI News Agent
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">
                 Make a Call
               </h1>
-              <p className="mt-3 text-sm leading-relaxed text-neutral-400 sm:text-base">
+              <p className="mt-2 sm:mt-3 text-sm leading-relaxed text-neutral-400 sm:text-base">
                 Request News Reports on any topic or try one of the suggestions below
               </p>
             </div>
@@ -307,11 +307,38 @@ export function CallHero({ presets, agents }: CallHeroProps) {
 
             {/* Preset suggestions */}
             {presets.length > 0 && (
-              <div className="mt-8">
-                <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-neutral-600">
+              <div className="mt-6 sm:mt-8">
+                <p className="mb-3 sm:mb-4 text-center text-xs font-medium uppercase tracking-wider text-neutral-600">
                   Suggested Topics
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
+
+                {/* Mobile: horizontal scroll carousel */}
+                <div className="sm:hidden -mx-4 px-4">
+                  <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-none">
+                    {presets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        onClick={() => handlePresetClick(preset.query_template)}
+                        className="group snap-start shrink-0 w-[72vw] text-left rounded-xl border border-neutral-800 bg-neutral-900/60 p-3.5 transition active:scale-[0.98] active:bg-neutral-900"
+                      >
+                        {preset.category && (
+                          <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-1.5 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>
+                            {preset.category}
+                          </span>
+                        )}
+                        <p className="text-sm font-medium text-neutral-300 leading-snug">
+                          {preset.title}
+                        </p>
+                        <p className="mt-1 text-xs text-neutral-600 line-clamp-2 leading-relaxed">
+                          {preset.query_template}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Desktop: 2-column grid */}
+                <div className="hidden sm:grid gap-3 sm:grid-cols-2">
                   {presets.map((preset) => (
                     <button
                       key={preset.id}
