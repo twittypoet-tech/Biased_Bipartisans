@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react'
 import type { ReporterCall } from '@bipi/shared'
 import { ReporterCallCard } from './reporter-call-card'
-import { MakeCallModal } from './make-call-modal'
 
 // Base categories — new ones from post-call analysis are appended dynamically
 const BASE_CATEGORIES = [
@@ -25,7 +24,6 @@ interface ReporterForumProps {
 
 export function ReporterForum({ initialCalls }: ReporterForumProps) {
   const [calls, setCalls]           = useState<ReporterCall[]>(initialCalls)
-  const [showModal, setShowModal]   = useState(false)
   const [search, setSearch]         = useState('')
   const [category, setCategory]     = useState<string>('All')
   const [sort, setSort]             = useState<SortMode>('hot')
@@ -116,13 +114,6 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
           <h2 className="text-lg font-bold text-white tracking-tight">The Wire</h2>
           <span className="text-xs text-neutral-600 font-medium">Live reporter feed</span>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 rounded-lg bg-white text-neutral-900 px-3.5 py-2 text-xs font-semibold hover:bg-neutral-200 active:scale-[0.98] transition"
-        >
-          <MicIcon />
-          Make a Call
-        </button>
       </div>
 
       {/* ── Search ── */}
@@ -173,7 +164,7 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
 
       {/* ── Feed ── */}
       {filtered.length === 0 ? (
-        <EmptyState hasSearch={!!search.trim() || category !== 'All'} onCallClick={() => setShowModal(true)} />
+        <EmptyState hasSearch={!!search.trim() || category !== 'All'} />
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((call) => (
@@ -187,14 +178,11 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
           ))}
         </div>
       )}
-
-      {/* ── Modal ── */}
-      {showModal && <MakeCallModal onClose={() => setShowModal(false)} />}
     </section>
   )
 }
 
-function EmptyState({ hasSearch, onCallClick }: { hasSearch: boolean; onCallClick: () => void }) {
+function EmptyState({ hasSearch }: { hasSearch: boolean }) {
   if (hasSearch) {
     return (
       <div className="flex flex-col items-center py-16 gap-3 text-center">
@@ -209,27 +197,9 @@ function EmptyState({ hasSearch, onCallClick }: { hasSearch: boolean; onCallClic
       </div>
       <div>
         <p className="text-sm font-medium text-white">No reports yet</p>
-        <p className="mt-1 text-xs text-neutral-500">Be the first to call The Reporter</p>
+        <p className="mt-1 text-xs text-neutral-500">Use the call interface above to request a report</p>
       </div>
-      <button
-        onClick={onCallClick}
-        className="flex items-center gap-2 rounded-lg bg-white text-neutral-900 px-4 py-2 text-xs font-semibold hover:bg-neutral-200 transition"
-      >
-        <MicIcon />
-        Make a Call
-      </button>
     </div>
-  )
-}
-
-function MicIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-      <line x1="12" y1="19" x2="12" y2="23"/>
-      <line x1="8" y1="23" x2="16" y2="23"/>
-    </svg>
   )
 }
 

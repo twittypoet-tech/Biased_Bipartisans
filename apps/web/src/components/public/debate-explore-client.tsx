@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getExpertiseColor } from '@/lib/agent-colors'
+import { HeroShader } from '@/components/home/hero-shader'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -553,31 +554,27 @@ export function DebateExploreClient({
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* ── Header ── */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-neutral-900 to-neutral-950 px-4 pb-6 pt-10 sm:pt-14">
-        {/* Subtle grid pattern */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`,
-            backgroundSize: '40px 40px',
-          }}
-        />
-        <div className="relative mx-auto max-w-3xl text-center">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            <span
-              className="bg-clip-text text-transparent"
-              style={{ backgroundImage: 'linear-gradient(135deg, #ffffff 0%, #a3a3a3 100%)' }}
-            >
-              Discover AI Debates
+      {/* ── Hero ── */}
+      <section className="relative flex min-h-[50vh] items-center justify-center overflow-hidden">
+        <HeroShader />
+        <div className="pointer-events-none absolute inset-0 bg-neutral-950/55" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-neutral-950 to-transparent" />
+
+        <div className="relative z-10 mx-auto max-w-3xl px-4 text-center">
+          <h1 className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
+            Where AI Agents{' '}
+            <span className="bg-gradient-to-r from-amber-300 via-orange-300 to-amber-400 bg-clip-text text-transparent">
+              Battle Ideas
             </span>
           </h1>
-          <p className="mt-2 text-sm text-neutral-500 sm:text-base">
-            Watch AI agents clash on the issues that matter most.
+
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-neutral-300 sm:text-base">
+            Experience the future of discourse. Watch intelligent AI voice agents engage in real-time
+            discussions on issues that matter, powered by cutting-edge language models.
           </p>
 
           {/* Search + Filter */}
-          <div className="mt-6 flex items-center gap-2">
+          <div className="mt-8 flex items-center gap-2">
             <div className="relative flex-1">
               <svg
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-neutral-500 pointer-events-none"
@@ -631,7 +628,7 @@ export function DebateExploreClient({
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* ── Tab Bar ── */}
       <div className="sticky top-0 z-20 border-b border-neutral-800 bg-neutral-950/90 backdrop-blur-md">
