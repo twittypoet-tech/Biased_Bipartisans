@@ -58,21 +58,21 @@ export default async function HomePage() {
   agentOptions.sort((a, b) => (a.available === b.available ? 0 : a.available ? -1 : 1))
 
   return (
-    <div className="bg-neutral-950">
+    <div className="bg-t-bg">
 
       {/* ── Chat Hero ─────────────────────────────────────────────────────── */}
       <CallHero presets={presets} agents={agentOptions} />
 
       {/* ── Live Debate Banner (when live) ────────────────────────────────── */}
       {featuredLive && (
-        <section className="py-12 bg-neutral-950">
+        <section className="py-12 bg-t-bg">
           <div className="mx-auto max-w-xl px-4 sm:px-6">
             <div className="mb-6 text-center">
               <span className="inline-flex items-center gap-2 rounded-full border border-red-800/60 bg-red-950/40 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-400">
                 <span className="size-1.5 rounded-full bg-red-400 animate-ping" />
                 Happening Now
               </span>
-              <h2 className="mt-3 text-2xl font-bold text-white">A Debate is Live</h2>
+              <h2 className="mt-3 text-2xl font-bold text-t-text">A Debate is Live</h2>
             </div>
             <DebateCard
               title={featuredLive.title}

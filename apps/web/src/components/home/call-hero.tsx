@@ -40,7 +40,7 @@ const categoryColors: Record<string, string> = {
   'Medicine & Healthcare': 'border-pink-500/30 bg-pink-500/10 text-pink-300',
   'Philosophy & Ethics': 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300',
 }
-const defaultCategoryColor = 'border-neutral-600/30 bg-neutral-700/10 text-neutral-400'
+const defaultCategoryColor = 'border-t-badge-border bg-t-badge text-t-text-2'
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -194,7 +194,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <section className="relative overflow-hidden bg-neutral-950 px-4 py-10 sm:py-24">
+    <section className="relative overflow-hidden bg-t-bg px-4 py-10 sm:py-24">
       {/* Subtle radial glow */}
       <div
         className="pointer-events-none absolute inset-0 opacity-30"
@@ -210,20 +210,20 @@ export function CallHero({ presets, agents }: CallHeroProps) {
           <>
             {/* Header */}
             <div className="mb-5 sm:mb-8 text-center">
-              <div className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full border border-neutral-700/60 bg-neutral-900/70 px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-neutral-400 backdrop-blur-sm">
+              <div className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full border border-t-badge-border bg-t-badge px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-t-text-2 backdrop-blur-sm">
                 <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
                 AI News Agent
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">
+              <h1 className="text-2xl font-bold tracking-tight text-t-text sm:text-4xl">
                 Make a Call
               </h1>
-              <p className="mt-2 sm:mt-3 text-sm leading-relaxed text-neutral-400 sm:text-base">
+              <p className="mt-2 sm:mt-3 text-sm leading-relaxed text-t-text-2 sm:text-base">
                 Request News Reports on any topic or try one of the suggestions below
               </p>
             </div>
 
             {/* Input area */}
-            <div className="rounded-2xl border border-neutral-700/60 bg-neutral-900/80 p-4 backdrop-blur-sm shadow-2xl shadow-black/30">
+            <div className="rounded-2xl border border-t-edge bg-t-surface p-4 shadow-t-lg">
               {/* Text input + send */}
               <div className="flex items-end gap-3">
                 <textarea
@@ -232,15 +232,15 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                   onKeyDown={handleKeyDown}
                   placeholder="Give me a detailed report on CIA's project Bluebird"
                   rows={2}
-                  className="flex-1 resize-none rounded-xl bg-neutral-800/60 border border-neutral-700/40 px-4 py-3 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-600 transition"
+                  className="flex-1 resize-none rounded-xl bg-t-surface-el border border-t-edge-strong px-4 py-3 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-focus transition"
                 />
                 <button
                   onClick={handleConnect}
                   disabled={!query.trim()}
                   className={`shrink-0 flex items-center justify-center size-11 rounded-xl transition ${
                     query.trim()
-                      ? 'bg-amber-500 text-neutral-900 hover:bg-amber-400 active:scale-95'
-                      : 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
+                      ? 'bg-t-accent text-white hover:opacity-90 active:scale-95'
+                      : 'bg-t-surface-el text-t-text-4 cursor-not-allowed'
                   }`}
                   aria-label="Send"
                 >
@@ -258,13 +258,13 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                   <select
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="appearance-none rounded-full border border-neutral-700/60 bg-neutral-800/60 pl-3 pr-7 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-neutral-600 transition cursor-pointer"
+                    className="appearance-none rounded-full border border-t-edge-strong bg-t-surface-el pl-3 pr-7 py-1.5 text-xs text-t-text-2 focus:outline-none focus:border-t-focus transition cursor-pointer"
                   >
                     {LANGUAGES.map((l) => (
                       <option key={l.code} value={l.code}>{l.label}</option>
                     ))}
                   </select>
-                  <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3 text-t-text-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </div>
@@ -274,7 +274,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                   <select
                     value={selectedAgent}
                     onChange={(e) => setSelectedAgent(e.target.value)}
-                    className="appearance-none rounded-full border border-neutral-700/60 bg-neutral-800/60 pl-3 pr-7 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-neutral-600 transition cursor-pointer"
+                    className="appearance-none rounded-full border border-t-edge-strong bg-t-surface-el pl-3 pr-7 py-1.5 text-xs text-t-text-2 focus:outline-none focus:border-t-focus transition cursor-pointer"
                   >
                     {agents.map((a) => (
                       <option key={a.id} value={a.id} disabled={!a.available}>
@@ -282,7 +282,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                       </option>
                     ))}
                   </select>
-                  <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3 text-t-text-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </div>
@@ -292,8 +292,8 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                   onClick={() => setResearchMode(!researchMode)}
                   className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                     researchMode
-                      ? 'border-amber-500/40 bg-amber-500/15 text-amber-300'
-                      : 'border-neutral-700/60 bg-neutral-800/60 text-neutral-500 hover:text-neutral-300 hover:border-neutral-600'
+                      ? 'border-amber-500/40 bg-t-accent-soft text-t-accent-text'
+                      : 'border-t-edge-strong bg-t-surface-el text-t-text-3 hover:text-t-text-2 hover:border-t-focus'
                   }`}
                 >
                   <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -308,7 +308,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
             {/* Preset suggestions */}
             {presets.length > 0 && (
               <div className="mt-6 sm:mt-8">
-                <p className="mb-3 sm:mb-4 text-center text-xs font-medium uppercase tracking-wider text-neutral-600">
+                <p className="mb-3 sm:mb-4 text-center text-xs font-medium uppercase tracking-wider text-t-text-3">
                   Suggested Topics
                 </p>
 
@@ -319,17 +319,17 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                       <button
                         key={preset.id}
                         onClick={() => handlePresetClick(preset.query_template)}
-                        className="group snap-start shrink-0 w-[72vw] text-left rounded-xl border border-neutral-800 bg-neutral-900/60 p-3.5 transition active:scale-[0.98] active:bg-neutral-900"
+                        className="group snap-start shrink-0 w-[72vw] text-left rounded-xl border border-t-edge bg-t-surface p-3.5 shadow-t transition active:scale-[0.98]"
                       >
                         {preset.category && (
                           <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-1.5 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>
                             {preset.category}
                           </span>
                         )}
-                        <p className="text-sm font-medium text-neutral-300 leading-snug">
+                        <p className="text-sm font-medium text-t-text leading-snug">
                           {preset.title}
                         </p>
-                        <p className="mt-1 text-xs text-neutral-600 line-clamp-2 leading-relaxed">
+                        <p className="mt-1 text-xs text-t-text-3 line-clamp-2 leading-relaxed">
                           {preset.query_template}
                         </p>
                       </button>
@@ -343,17 +343,17 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                     <button
                       key={preset.id}
                       onClick={() => handlePresetClick(preset.query_template)}
-                      className="group text-left rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 transition hover:border-neutral-700 hover:bg-neutral-900"
+                      className="group text-left rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg"
                     >
                       {preset.category && (
                         <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-2 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>
                           {preset.category}
                         </span>
                       )}
-                      <p className="text-sm font-medium text-neutral-300 leading-snug group-hover:text-white transition">
+                      <p className="text-sm font-medium text-t-text leading-snug group-hover:text-t-accent-text transition">
                         {preset.title}
                       </p>
-                      <p className="mt-1.5 text-xs text-neutral-600 line-clamp-2 leading-relaxed">
+                      <p className="mt-1.5 text-xs text-t-text-3 line-clamp-2 leading-relaxed">
                         {preset.query_template}
                       </p>
                     </button>
@@ -367,17 +367,17 @@ export function CallHero({ presets, agents }: CallHeroProps) {
         {/* ── Connecting state ── */}
         {step === 'connecting' && (
           <div className="flex flex-col items-center py-16 gap-5">
-            <div className="size-16 rounded-full bg-neutral-900 border border-neutral-700/60 flex items-center justify-center shadow-lg shadow-black/30">
+            <div className="size-16 rounded-full bg-t-surface border border-t-edge flex items-center justify-center shadow-t-lg">
               <LoadingSpinner />
             </div>
             <div className="text-center">
-              <p className="text-base font-semibold text-white">Connecting to The Reporter</p>
-              <p className="mt-1.5 text-sm text-neutral-500">Searching the news wire...</p>
+              <p className="text-base font-semibold text-t-text">Connecting to The Reporter</p>
+              <p className="mt-1.5 text-sm text-t-text-3">Searching the news wire...</p>
             </div>
             {query && (
-              <div className="mt-2 max-w-md rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-3">
-                <p className="text-xs text-neutral-500 mb-1">Your query</p>
-                <p className="text-sm text-neutral-300 line-clamp-2">{query}</p>
+              <div className="mt-2 max-w-md rounded-xl border border-t-edge bg-t-surface px-4 py-3 shadow-t">
+                <p className="text-xs text-t-text-3 mb-1">Your query</p>
+                <p className="text-sm text-t-text-2 line-clamp-2">{query}</p>
               </div>
             )}
           </div>
@@ -386,18 +386,18 @@ export function CallHero({ presets, agents }: CallHeroProps) {
         {/* ── Live call state ── */}
         {step === 'live' && (
           <div className="flex flex-col items-center py-12 gap-6">
-            <div className="size-16 rounded-full bg-neutral-900 border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-500/10">
+            <div className="size-16 rounded-full bg-t-surface border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-500/10">
               <span className="text-2xl">📡</span>
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-white">The Reporter is on air</p>
-              <p className="mt-1 text-sm text-neutral-500">Report will be saved to The Wire when complete</p>
+              <p className="text-lg font-semibold text-t-text">The Reporter is on air</p>
+              <p className="mt-1 text-sm text-t-text-3">Report will be saved to The Wire when complete</p>
             </div>
 
             {query && (
-              <div className="max-w-md rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-3">
-                <p className="text-xs text-neutral-500 mb-1">Reporting on</p>
-                <p className="text-sm text-neutral-300">{query}</p>
+              <div className="max-w-md rounded-xl border border-t-edge bg-t-surface px-4 py-3 shadow-t">
+                <p className="text-xs text-t-text-3 mb-1">Reporting on</p>
+                <p className="text-sm text-t-text-2">{query}</p>
               </div>
             )}
 
@@ -405,12 +405,12 @@ export function CallHero({ presets, agents }: CallHeroProps) {
 
             <button
               onClick={handleLeaveCall}
-              className="mt-2 flex items-center gap-2 rounded-xl border border-neutral-600/60 bg-neutral-800/60 px-6 py-3 text-sm font-medium text-neutral-300 hover:bg-neutral-700/60 transition"
+              className="mt-2 flex items-center gap-2 rounded-xl border border-t-edge-strong bg-t-surface-el px-6 py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"
             >
               <PhoneOffIcon />
               Leave Call
             </button>
-            <p className="text-xs text-neutral-600 text-center max-w-xs leading-relaxed">
+            <p className="text-xs text-t-text-3 text-center max-w-xs leading-relaxed">
               You can leave anytime — the full report will appear on The Wire once The Reporter finishes.
             </p>
           </div>
@@ -423,14 +423,14 @@ export function CallHero({ presets, agents }: CallHeroProps) {
               <CheckIcon />
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-white">Report submitted</p>
-              <p className="mt-1.5 text-sm text-neutral-400">
+              <p className="text-lg font-semibold text-t-text">Report submitted</p>
+              <p className="mt-1.5 text-sm text-t-text-2">
                 Your report will appear on The Wire shortly after analysis completes.
               </p>
             </div>
             <button
               onClick={handleReset}
-              className="rounded-xl bg-neutral-800 border border-neutral-700 px-6 py-2.5 text-sm font-medium text-neutral-300 hover:bg-neutral-700 transition"
+              className="rounded-xl bg-t-surface-el border border-t-edge-strong px-6 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"
             >
               Make Another Call
             </button>
@@ -451,7 +451,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
             <div className="flex gap-3">
               <button
                 onClick={() => setStep('idle')}
-                className="rounded-xl bg-neutral-800 border border-neutral-700 px-5 py-2.5 text-sm font-medium text-neutral-300 hover:bg-neutral-700 transition"
+                className="rounded-xl bg-t-surface-el border border-t-edge-strong px-5 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"
               >
                 Try again
               </button>

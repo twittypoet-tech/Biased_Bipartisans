@@ -29,7 +29,6 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
   const [sort, setSort]             = useState<SortMode>('hot')
   const [userVotes, setUserVotes]   = useState<Record<string, 'up' | 'down' | null>>({})
 
-  // Build category tabs from base list + any new categories found in the data
   const categories = useMemo(() => {
     const dataCategories = new Set(
       calls.map((c) => c.report_category).filter(Boolean) as string[],
@@ -41,11 +40,7 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
 
   const filtered = useMemo(() => {
     let result = calls
-
-    if (category !== 'All') {
-      result = result.filter((c) => c.report_category === category)
-    }
-
+    if (category !== 'All') result = result.filter((c) => c.report_category === category)
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter(
@@ -55,11 +50,9 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
           c.key_entities?.toLowerCase().includes(q),
       )
     }
-
     return [...result].sort((a, b) => {
       if (sort === 'new') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       if (sort === 'top') return b.upvotes - a.upvotes
-      // hot: net votes descending, recency tiebreak
       const netA = a.upvotes - a.downvotes
       const netB = b.upvotes - b.downvotes
       if (netB !== netA) return netB - netA
@@ -69,16 +62,11 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
 
   function handleUpvote(id: string) {
     const prev = userVotes[id] ?? null
-    if (prev === 'up') return // already upvoted
-
+    if (prev === 'up') return
     setCalls((cs) =>
       cs.map((c) => {
         if (c.id !== id) return c
-        return {
-          ...c,
-          upvotes:   c.upvotes + 1,
-          downvotes: prev === 'down' ? c.downvotes - 1 : c.downvotes,
-        }
+        return { ...c, upvotes: c.upvotes + 1, downvotes: prev === 'down' ? c.downvotes - 1 : c.downvotes }
       }),
     )
     setUserVotes((v) => ({ ...v, [id]: 'up' }))
@@ -87,15 +75,10 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
   function handleDownvote(id: string) {
     const prev = userVotes[id] ?? null
     if (prev === 'down') return
-
     setCalls((cs) =>
       cs.map((c) => {
         if (c.id !== id) return c
-        return {
-          ...c,
-          downvotes: c.downvotes + 1,
-          upvotes:   prev === 'up' ? c.upvotes - 1 : c.upvotes,
-        }
+        return { ...c, downvotes: c.downvotes + 1, upvotes: prev === 'up' ? c.upvotes - 1 : c.upvotes }
       }),
     )
     setUserVotes((v) => ({ ...v, [id]: 'down' }))
@@ -111,20 +94,20 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
             <span className="relative inline-flex rounded-full size-2 bg-amber-400" />
           </span>
-          <h2 className="text-lg font-bold text-white tracking-tight">The Wire</h2>
-          <span className="text-xs text-neutral-600 font-medium">Live reporter feed</span>
+          <h2 className="text-lg font-bold text-t-text tracking-tight">The Wire</h2>
+          <span className="text-xs text-t-text-3 font-medium">Live reporter feed</span>
         </div>
       </div>
 
       {/* ── Search ── */}
       <div className="relative mb-4">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" />
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-t-text-3" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search reports…"
-          className="w-full rounded-lg bg-neutral-900 border border-neutral-800 pl-9 pr-4 py-2 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-neutral-600 transition"
+          className="w-full rounded-lg bg-t-surface border border-t-edge pl-9 pr-4 py-2 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none focus:ring-1 focus:ring-t-focus transition"
         />
       </div>
 
@@ -136,8 +119,8 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
             onClick={() => setCategory(cat)}
             className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition whitespace-nowrap ${
               category === cat
-                ? 'bg-neutral-700 text-white'
-                : 'bg-neutral-900 border border-neutral-800 text-neutral-500 hover:text-neutral-300 hover:border-neutral-700'
+                ? 'bg-t-active text-t-text'
+                : 'bg-t-surface border border-t-edge text-t-text-3 hover:text-t-text-2 hover:border-t-edge-strong'
             }`}
           >
             {cat}
@@ -152,9 +135,7 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
             key={s}
             onClick={() => setSort(s)}
             className={`px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide transition ${
-              sort === s
-                ? 'text-amber-400'
-                : 'text-neutral-600 hover:text-neutral-400'
+              sort === s ? 'text-t-accent-text' : 'text-t-text-3 hover:text-t-text-2'
             }`}
           >
             {s === 'hot' ? 'Hot' : s === 'new' ? 'New' : 'Top'}
@@ -186,18 +167,18 @@ function EmptyState({ hasSearch }: { hasSearch: boolean }) {
   if (hasSearch) {
     return (
       <div className="flex flex-col items-center py-16 gap-3 text-center">
-        <p className="text-sm text-neutral-500">No reports match your search.</p>
+        <p className="text-sm text-t-text-3">No reports match your search.</p>
       </div>
     )
   }
   return (
     <div className="flex flex-col items-center py-16 gap-4 text-center">
-      <div className="size-12 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-2xl">
+      <div className="size-12 rounded-full bg-t-surface border border-t-edge flex items-center justify-center text-2xl">
         📡
       </div>
       <div>
-        <p className="text-sm font-medium text-white">No reports yet</p>
-        <p className="mt-1 text-xs text-neutral-500">Use the call interface above to request a report</p>
+        <p className="text-sm font-medium text-t-text">No reports yet</p>
+        <p className="mt-1 text-xs text-t-text-3">Use the call interface above to request a report</p>
       </div>
     </div>
   )
