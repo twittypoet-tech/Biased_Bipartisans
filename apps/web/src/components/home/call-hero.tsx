@@ -1,8 +1,17 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { LANGUAGES } from '@/lib/constants'
 import type { ReporterPreset } from '@bipi/db'
+
+// Preload livekit-client on module load so it's cached before the user clicks.
+// Without this, the dynamic import() during handleConnect introduces an async gap
+// that breaks the browser's user-gesture chain → autoplay is silently blocked.
+let livekitReady: Promise<typeof import('livekit-client')> | null = null
+function preloadLiveKit() {
+  if (!livekitReady) livekitReady = import('livekit-client')
+  return livekitReady
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,6 +54,28 @@ export function CallHero({ presets, agents }: CallHeroProps) {
   const roomRef       = useRef<{ disconnect: () => void } | null>(null)
   const callIdRef     = useRef<string | null>(null)
   const wireCallIdRef = useRef<string | null>(null)
+  const audioElsRef   = useRef<HTMLAudioElement[]>([])
+
+  // Preload LiveKit on mount so import() resolves instantly on first click
+  useEffect(() => { preloadLiveKit() }, [])
+
+  // ── Audio cleanup ───────────────────────────────────────────────────────
+
+  function attachAudio(el: HTMLAudioElement) {
+    el.autoplay = true
+    el.style.display = 'none'
+    document.body.appendChild(el)
+    audioElsRef.current.push(el)
+  }
+
+  function cleanupAudio() {
+    for (const el of audioElsRef.current) {
+      el.pause()
+      el.srcObject = null
+      el.remove()
+    }
+    audioElsRef.current = []
+  }
 
   // ── Call logic (from MakeCallModal) ──────────────────────────────────────
 
@@ -71,34 +102,53 @@ export function CallHero({ presets, agents }: CallHeroProps) {
       callIdRef.current = callId
       wireCallIdRef.current = wireCallId
 
-      const { Room, RoomEvent, Track } = await import('livekit-client')
+      // Use preloaded module — resolves instantly so user gesture stays valid
+      const { Room, RoomEvent, Track } = await preloadLiveKit()
+
+      // Clean up any leftover audio elements from a previous call
+      cleanupAudio()
+
       const room = new Room({ adaptiveStream: false, dynacast: false })
       roomRef.current = room
+
+      // Resume AudioContext to satisfy autoplay policy (belt-and-suspenders).
+      // LiveKit creates an AudioContext internally; some browsers suspend it
+      // if the user gesture chain was broken by async operations.
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ctx = (room as any).audioContext as AudioContext | undefined
+        if (ctx?.state === 'suspended') await ctx.resume()
+      } catch { /* non-fatal */ }
 
       room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio) {
           const el = track.attach()
-          el.autoplay = true
-          el.style.display = 'none'
-          document.body.appendChild(el)
+          attachAudio(el)
           setStep('live')
         }
       })
 
       room.on(RoomEvent.Disconnected, () => {
+        cleanupAudio()
         setStep('done')
         roomRef.current = null
       })
 
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
+
+        // Resume AudioContext again after connection (some browsers create it lazily)
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ctx = (room as any).audioContext as AudioContext | undefined
+          if (ctx?.state === 'suspended') await ctx.resume()
+        } catch { /* non-fatal */ }
+
         for (const p of room.remoteParticipants.values()) {
           for (const pub of p.audioTrackPublications.values()) {
             if (pub.track && pub.isSubscribed) {
               const el = pub.track.attach()
-              el.autoplay = true
-              el.style.display = 'none'
-              document.body.appendChild(el)
+              attachAudio(el)
               setStep('live')
             }
           }
@@ -120,6 +170,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
     roomRef.current = null
     callIdRef.current = null
     wireCallIdRef.current = null
+    cleanupAudio()
     setStep('done')
   }
 

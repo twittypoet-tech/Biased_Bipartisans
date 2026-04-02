@@ -1,7 +1,15 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { LANGUAGES } from '@/lib/constants'
+
+// Preload livekit-client so import() resolves instantly on user click,
+// keeping the user-gesture chain intact for browser autoplay policy.
+let livekitReady: Promise<typeof import('livekit-client')> | null = null
+function preloadLiveKit() {
+  if (!livekitReady) livekitReady = import('livekit-client')
+  return livekitReady
+}
 
 type Step = 'form' | 'connecting' | 'live' | 'done' | 'error'
 
@@ -17,6 +25,26 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
   const roomRef       = useRef<{ disconnect: () => void } | null>(null)
   const callIdRef     = useRef<string | null>(null)
   const wireCallIdRef = useRef<string | null>(null)
+  const audioElsRef   = useRef<HTMLAudioElement[]>([])
+
+  // Preload LiveKit on mount
+  useEffect(() => { preloadLiveKit() }, [])
+
+  function attachAudio(el: HTMLAudioElement) {
+    el.autoplay = true
+    el.style.display = 'none'
+    document.body.appendChild(el)
+    audioElsRef.current.push(el)
+  }
+
+  function cleanupAudio() {
+    for (const el of audioElsRef.current) {
+      el.pause()
+      el.srcObject = null
+      el.remove()
+    }
+    audioElsRef.current = []
+  }
 
   async function handleConnect() {
     setStep('connecting')
@@ -25,7 +53,7 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
       const res = await fetch('/api/reporter/call', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userQuery: query.trim(), language, timezone }),
+        body: JSON.stringify({ userQuery: query.trim(), language, timezone, researchMode: false }),
       })
       if (!res.ok) {
         const e = await res.json().catch(() => ({}))
@@ -35,37 +63,43 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
       callIdRef.current = callId
       wireCallIdRef.current = wireCallId
 
-      const { Room, RoomEvent, Track } = await import('livekit-client')
+      const { Room, RoomEvent, Track } = await preloadLiveKit()
+      cleanupAudio()
       const room = new Room({ adaptiveStream: false, dynacast: false })
       roomRef.current = room
 
+      // Resume AudioContext to satisfy autoplay policy
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ctx = (room as any).audioContext as AudioContext | undefined
+        if (ctx?.state === 'suspended') await ctx.resume()
+      } catch { /* non-fatal */ }
+
       room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio) {
-          const el = track.attach()
-          el.autoplay = true
-          el.style.display = 'none'
-          document.body.appendChild(el)
+          attachAudio(track.attach())
           setStep('live')
         }
       })
 
       room.on(RoomEvent.Disconnected, () => {
+        cleanupAudio()
         setStep('done')
         roomRef.current = null
       })
 
-      // If relay is active, connect to public LiveKit room (hears Wire + Reporter).
-      // Fallback: connect directly to Reporter's Retell room (no Wire greeting).
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
-        // Attach any tracks already published before we subscribed
+        // Resume again after connection (some browsers create AudioContext lazily)
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ctx = (room as any).audioContext as AudioContext | undefined
+          if (ctx?.state === 'suspended') await ctx.resume()
+        } catch { /* non-fatal */ }
         for (const p of room.remoteParticipants.values()) {
           for (const pub of p.audioTrackPublications.values()) {
             if (pub.track && pub.isSubscribed) {
-              const el = pub.track.attach()
-              el.autoplay = true
-              el.style.display = 'none'
-              document.body.appendChild(el)
+              attachAudio(pub.track.attach())
               setStep('live')
             }
           }
@@ -87,6 +121,7 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
     roomRef.current = null
     callIdRef.current = null
     wireCallIdRef.current = null
+    cleanupAudio()
     setStep('done')
   }
 
