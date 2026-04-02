@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Retell not configured' }, { status: 500 })
   }
 
-  let body: { userQuery?: string; language?: string; timezone?: string }
+  let body: { userQuery?: string; language?: string; timezone?: string; researchMode?: boolean }
   try {
     body = await request.json()
   } catch {
@@ -54,7 +54,15 @@ export async function POST(request: Request) {
     ' at ' +
     now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' })
 
-  const dynamicVars = { user_query: userQuery, current_date: currentDate }
+  const researchMode = body.researchMode ?? false
+
+  const dynamicVars = {
+    user_query: userQuery,
+    current_date: currentDate,
+    response_language: language as string,
+    research_mode: researchMode ? 'on' : 'off',
+    timezone,
+  }
 
   let reporterCall: { access_token: string; call_id: string }
   let wireCall:     { access_token: string; call_id: string } | null = null
