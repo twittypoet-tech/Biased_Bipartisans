@@ -52,6 +52,7 @@ export default async function HomePage() {
     .map((a) => ({
       id: a.id,
       name: a.name,
+      avatarUrl: a.avatar_url,
       available: a.role === 'reporter',
     }))
   // Ensure The Reporter is first
