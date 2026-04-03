@@ -90,12 +90,11 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
       {/* ── Hero Image ── */}
       {report.report_image_url && (
         <div className="relative w-full h-48 sm:h-72 lg:h-96">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={report.report_image_url}
             alt={report.report_headline ?? 'Report'}
-            fill
-            className="object-cover"
-            priority
+            className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, var(--t-bg) 100%)' }} />
         </div>
@@ -210,13 +209,16 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
           <div className="mb-8">
             <h2 className="text-base font-semibold text-t-text mb-4 flex items-center gap-2">
               <FileText className="size-4 text-t-text-3" />
-              Full Transcript
+              Full Report
             </h2>
             <div className="rounded-xl border border-t-edge bg-t-surface p-4 sm:p-6 shadow-t space-y-4">
               {visibleTurns.map((turn, i) => {
                 const colonIdx = turn.indexOf(':')
                 const speaker = colonIdx > 0 ? turn.slice(0, colonIdx) : null
                 const content = colonIdx > 0 ? turn.slice(colonIdx + 1).trim() : turn
+
+                // Detect section callout lines (ALL CAPS text like "WHAT IS ALLEGED...")
+                const isCallout = content === content.toUpperCase() && content.length > 10 && /^[A-Z\s,.'"\-—]+$/.test(content)
 
                 return (
                   <div key={i} className="group">
@@ -228,7 +230,11 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
                         {speaker}
                       </p>
                     )}
-                    <p className="text-sm leading-relaxed text-t-text-2">{content}</p>
+                    {isCallout ? (
+                      <p className="text-base font-bold leading-relaxed text-amber-500 mt-4 mb-1">{content}</p>
+                    ) : (
+                      <p className="text-base leading-relaxed text-t-text-2">{content}</p>
+                    )}
                   </div>
                 )
               })}
@@ -241,7 +247,7 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
                   {showFullTranscript ? (
                     <><ChevronUp className="size-4" /> Show less</>
                   ) : (
-                    <><ChevronDown className="size-4" /> Show full transcript ({transcriptTurns.length} turns)</>
+                    <><ChevronDown className="size-4" /> Show full report ({transcriptTurns.length} sections)</>
                   )}
                 </button>
               )}
@@ -251,7 +257,7 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
 
         {/* ── Metadata Card ── */}
         <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-4 text-center">
             {report.source_count != null && (
               <div>
                 <p className="text-lg font-bold text-t-text">{report.source_count}</p>
@@ -262,12 +268,6 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
               <div>
                 <p className="text-lg font-bold text-t-text">{formatDuration(report.duration_seconds)}</p>
                 <p className="text-xs text-t-text-3">Duration</p>
-              </div>
-            )}
-            {report.report_quality && (
-              <div>
-                <p className="text-lg font-bold text-t-text">{report.report_quality}</p>
-                <p className="text-xs text-t-text-3">Quality</p>
               </div>
             )}
             {report.call_language && (
