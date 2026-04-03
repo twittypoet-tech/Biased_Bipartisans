@@ -205,7 +205,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="hidden sm:block absolute left-0 bottom-full mb-2 w-64 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
+                        className="hidden sm:block absolute left-0 top-full mt-2 w-64 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
                       >
                         <div className="p-3 max-h-72 overflow-y-auto">
                           <p className="text-xs font-semibold text-t-text-3 uppercase tracking-wider mb-3">Agent</p>
@@ -272,7 +272,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="hidden sm:block absolute left-0 bottom-full mb-2 w-52 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
+                        className="hidden sm:block absolute left-0 top-full mt-2 w-52 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
                       >
                         <div className="p-2">
                           <div className="relative mb-2">
