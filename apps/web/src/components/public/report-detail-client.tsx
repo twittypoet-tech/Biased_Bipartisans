@@ -217,9 +217,6 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
                 const speaker = colonIdx > 0 ? turn.slice(0, colonIdx) : null
                 const content = colonIdx > 0 ? turn.slice(colonIdx + 1).trim() : turn
 
-                // Detect section callout lines (ALL CAPS text like "WHAT IS ALLEGED...")
-                const isCallout = content === content.toUpperCase() && content.length > 10 && /^[A-Z\s,.'"\-—]+$/.test(content)
-
                 return (
                   <div key={i} className="group">
                     {speaker && (
@@ -230,11 +227,9 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
                         {speaker}
                       </p>
                     )}
-                    {isCallout ? (
-                      <p className="text-base font-bold leading-relaxed text-amber-500 mt-4 mb-1">{content}</p>
-                    ) : (
-                      <p className="text-base leading-relaxed text-t-text-2">{content}</p>
-                    )}
+                    <p className="text-base leading-relaxed text-t-text-2">
+                      <StyledContent text={content} />
+                    </p>
                   </div>
                 )
               })}
@@ -510,6 +505,28 @@ function CommentaryRequestSheet({
 }
 
 // ── Icons ────────────────────────────────────────────────────────────────────
+
+// Renders text with ALL CAPS phrases (5+ words) styled as gold callout headers
+function StyledContent({ text }: { text: string }) {
+  // Match sequences of 5+ consecutive ALL-CAPS words (allows punctuation/dashes/em-dashes)
+  const parts = text.split(/(\b[A-Z][A-Z\s,.'"\-—]{15,}\b)/g)
+
+  return (
+    <>
+      {parts.map((part, i) => {
+        const isAllCaps = part.length > 15 && part === part.toUpperCase() && /[A-Z]/.test(part)
+        if (isAllCaps) {
+          return (
+            <span key={i} className="block text-lg font-bold text-amber-500 mt-5 mb-2 tracking-wide">
+              {part.trim()}
+            </span>
+          )
+        }
+        return <span key={i}>{part}</span>
+      })}
+    </>
+  )
+}
 
 function ShieldCheckIcon() {
   return (
