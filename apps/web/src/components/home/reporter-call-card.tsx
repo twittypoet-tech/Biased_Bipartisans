@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Link from 'next/link'
 import type { ReporterCall } from '@bipi/shared'
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -36,12 +37,13 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
   const netVotes = call.upvotes - call.downvotes
 
   return (
+    <Link href={`/reports/${call.slug}`} className="block">
     <article className="flex gap-3 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
 
       {/* ── Vote column ── */}
       <div className="flex flex-col items-center gap-1 pt-0.5 min-w-[32px]">
         <button
-          onClick={() => onUpvote?.(call.id)}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUpvote?.(call.id) }}
           aria-label="Upvote"
           className={`rounded p-1 transition hover:bg-t-hover ${userVote === 'up' ? 'text-amber-400' : 'text-t-text-3 hover:text-t-text-2'}`}
         >
@@ -51,7 +53,7 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
           {netVotes}
         </span>
         <button
-          onClick={() => onDownvote?.(call.id)}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownvote?.(call.id) }}
           aria-label="Downvote"
           className={`rounded p-1 transition hover:bg-t-hover ${userVote === 'down' ? 'text-blue-400' : 'text-t-text-3 hover:text-t-text-2'}`}
         >
@@ -130,6 +132,7 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
         </div>
       </div>
     </article>
+    </Link>
   )
 }
 
@@ -170,7 +173,7 @@ function AudioPlayer({ url, durationSeconds }: { url: string; durationSeconds: n
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-t-surface-el border border-t-edge px-3 py-2">
+    <div className="flex items-center gap-3 rounded-lg bg-t-surface-el border border-t-edge px-3 py-2" onClick={(e) => { e.preventDefault(); e.stopPropagation() }}>
       <button
         onClick={togglePlay}
         className="size-7 rounded-full bg-t-accent flex items-center justify-center shrink-0 hover:opacity-90 transition active:scale-95"
