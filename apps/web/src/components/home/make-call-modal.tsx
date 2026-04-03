@@ -35,6 +35,7 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
     el.style.display = 'none'
     document.body.appendChild(el)
     audioElsRef.current.push(el)
+    el.play().catch(() => {})
   }
 
   function cleanupAudio() {
@@ -46,7 +47,22 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
     audioElsRef.current = []
   }
 
+  function unlockAudio() {
+    try {
+      const AC = window.AudioContext || (window as any).webkitAudioContext
+      if (!AC) return
+      const ctx = new AC()
+      ctx.resume()
+      const buf = ctx.createBuffer(1, 1, 22050)
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      src.connect(ctx.destination)
+      src.start(0)
+    } catch { /* non-fatal */ }
+  }
+
   async function handleConnect() {
+    unlockAudio()
     setStep('connecting')
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -68,13 +84,6 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
       const room = new Room({ adaptiveStream: false, dynacast: false })
       roomRef.current = room
 
-      // Resume AudioContext to satisfy autoplay policy
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ctx = (room as any).audioContext as AudioContext | undefined
-        if (ctx?.state === 'suspended') await ctx.resume()
-      } catch { /* non-fatal */ }
-
       room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio) {
           attachAudio(track.attach())
@@ -90,12 +99,7 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
 
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
-        // Resume again after connection (some browsers create AudioContext lazily)
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const ctx = (room as any).audioContext as AudioContext | undefined
-          if (ctx?.state === 'suspended') await ctx.resume()
-        } catch { /* non-fatal */ }
+        try { await (room as any).startAudio?.() } catch {}
         for (const p of room.remoteParticipants.values()) {
           for (const pub of p.audioTrackPublications.values()) {
             if (pub.track && pub.isSubscribed) {
@@ -106,9 +110,9 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
         }
       } else if (reporterToken) {
         await room.connect(retellUrl, reporterToken)
+        try { await (room as any).startAudio?.() } catch {}
       }
 
-      // Safety timeout: 10 min max
       setTimeout(() => room.disconnect(), 10 * 60 * 1000)
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')

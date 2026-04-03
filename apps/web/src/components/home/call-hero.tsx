@@ -93,16 +93,46 @@ export function CallHero({ presets, agents }: CallHeroProps) {
     el.style.display = 'none'
     document.body.appendChild(el)
     audioElsRef.current.push(el)
+    // Explicitly call play() — autoplay attribute alone is unreliable
+    // after the user gesture has expired from async work
+    el.play().catch(() => {})
   }
   function cleanupAudio() {
     for (const el of audioElsRef.current) { el.pause(); el.srcObject = null; el.remove() }
     audioElsRef.current = []
   }
 
+  // Unlock browser audio playback. Must be called SYNCHRONOUSLY inside
+  // a user-gesture handler (click/tap), BEFORE any await. This creates
+  // and resumes an AudioContext while the gesture is still valid, which
+  // permanently marks the page as "allowed to play audio". All subsequent
+  // audio — including LiveKit tracks arriving seconds later — will work.
+  function unlockAudio() {
+    try {
+      const AC = window.AudioContext || (window as any).webkitAudioContext
+      if (!AC) return
+      const ctx = new AC()
+      ctx.resume()
+      // Play a silent buffer to fully satisfy the autoplay policy
+      const buf = ctx.createBuffer(1, 1, 22050)
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      src.connect(ctx.destination)
+      src.start(0)
+    } catch { /* non-fatal */ }
+  }
+
   // ── Call logic ────────────────────────────────────────────────────────────
 
   async function handleConnect() {
     if (!query.trim() && step === 'idle') return
+
+    // CRITICAL: unlock audio SYNCHRONOUSLY on click, before any await.
+    // This is the only reliable way to satisfy browser autoplay policy
+    // when the actual audio playback happens seconds later (after network
+    // requests to create the Retell call and connect to LiveKit).
+    unlockAudio()
+
     setStep('connecting')
     setActiveSheet(null)
     setDesktopDropdown(null)
@@ -121,16 +151,24 @@ export function CallHero({ presets, agents }: CallHeroProps) {
       cleanupAudio()
       const room = new Room({ adaptiveStream: false, dynacast: false })
       roomRef.current = room
-      try { const ctx = (room as any).audioContext as AudioContext | undefined; if (ctx?.state === 'suspended') await ctx.resume() } catch {}
 
-      room.on(RoomEvent.TrackSubscribed, (track) => { if (track.kind === Track.Kind.Audio) { attachAudio(track.attach()); setStep('live') } })
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind === Track.Kind.Audio) {
+          attachAudio(track.attach())
+          setStep('live')
+        }
+      })
       room.on(RoomEvent.Disconnected, () => { cleanupAudio(); setStep('done'); roomRef.current = null })
 
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
-        try { const ctx = (room as any).audioContext as AudioContext | undefined; if (ctx?.state === 'suspended') await ctx.resume() } catch {}
+        // Use LiveKit's official audio unlock after connection
+        try { await (room as any).startAudio?.() } catch {}
         for (const p of room.remoteParticipants.values()) for (const pub of p.audioTrackPublications.values()) if (pub.track && pub.isSubscribed) { attachAudio(pub.track.attach()); setStep('live') }
-      } else if (reporterToken) { await room.connect(retellUrl, reporterToken) }
+      } else if (reporterToken) {
+        await room.connect(retellUrl, reporterToken)
+        try { await (room as any).startAudio?.() } catch {}
+      }
       setTimeout(() => room.disconnect(), 10 * 60 * 1000)
     } catch (err) { setErrorMsg(err instanceof Error ? err.message : 'Something went wrong'); setStep('error') }
   }
