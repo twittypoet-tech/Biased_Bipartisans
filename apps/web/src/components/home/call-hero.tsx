@@ -1,12 +1,15 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import Image from 'next/image'
+import { Plus, X, Search, Phone, Globe, Zap } from 'lucide-react'
 import { LANGUAGES } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 import type { ReporterPreset } from '@bipi/db'
 
-// Preload livekit-client on module load so it's cached before the user clicks.
-// Without this, the dynamic import() during handleConnect introduces an async gap
-// that breaks the browser's user-gesture chain → autoplay is silently blocked.
+// ── LiveKit preload ──────────────────────────────────────────────────────────
+
 let livekitReady: Promise<typeof import('livekit-client')> | null = null
 function preloadLiveKit() {
   if (!livekitReady) livekitReady = import('livekit-client')
@@ -16,10 +19,12 @@ function preloadLiveKit() {
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type Step = 'idle' | 'connecting' | 'live' | 'done' | 'error'
+type Sheet = null | 'options' | 'language'
 
 interface AgentOption {
   id: string
   name: string
+  avatarUrl: string | null
   available: boolean
 }
 
@@ -42,24 +47,39 @@ const categoryColors: Record<string, string> = {
 }
 const defaultCategoryColor = 'border-t-badge-border bg-t-badge text-t-text-2'
 
-// ── Component ────────────────────────────────────────────────────────────────
+// ── Main component ───────────────────────────────────────────────────────────
 
 export function CallHero({ presets, agents }: CallHeroProps) {
-  const [step, setStep]               = useState<Step>('idle')
-  const [query, setQuery]             = useState('')
-  const [language, setLanguage]       = useState('en-US')
+  const [step, setStep] = useState<Step>('idle')
+  const [query, setQuery] = useState('')
+  const [language, setLanguage] = useState('en-US')
   const [selectedAgent, setSelectedAgent] = useState(agents[0]?.id ?? '')
-  const [researchMode, setResearchMode]  = useState(false)
-  const [errorMsg, setErrorMsg]       = useState('')
-  const roomRef       = useRef<{ disconnect: () => void } | null>(null)
-  const callIdRef     = useRef<string | null>(null)
+  const [researchMode, setResearchMode] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [activeSheet, setActiveSheet] = useState<Sheet>(null)
+  const [langSearch, setLangSearch] = useState('')
+  const [showDesktopPlus, setShowDesktopPlus] = useState(false)
+  const roomRef = useRef<{ disconnect: () => void } | null>(null)
+  const callIdRef = useRef<string | null>(null)
   const wireCallIdRef = useRef<string | null>(null)
-  const audioElsRef   = useRef<HTMLAudioElement[]>([])
+  const audioElsRef = useRef<HTMLAudioElement[]>([])
+  const plusBtnRef = useRef<HTMLButtonElement>(null)
 
-  // Preload LiveKit on mount so import() resolves instantly on first click
   useEffect(() => { preloadLiveKit() }, [])
 
-  // ── Audio cleanup ───────────────────────────────────────────────────────
+  // Close desktop dropdown on outside click
+  useEffect(() => {
+    if (!showDesktopPlus) return
+    function handleClick(e: MouseEvent) {
+      if (plusBtnRef.current && !plusBtnRef.current.closest('.plus-menu')?.contains(e.target as Node)) {
+        setShowDesktopPlus(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showDesktopPlus])
+
+  // ── Audio helpers ─────────────────────────────────────────────────────────
 
   function attachAudio(el: HTMLAudioElement) {
     el.autoplay = true
@@ -67,145 +87,63 @@ export function CallHero({ presets, agents }: CallHeroProps) {
     document.body.appendChild(el)
     audioElsRef.current.push(el)
   }
-
   function cleanupAudio() {
-    for (const el of audioElsRef.current) {
-      el.pause()
-      el.srcObject = null
-      el.remove()
-    }
+    for (const el of audioElsRef.current) { el.pause(); el.srcObject = null; el.remove() }
     audioElsRef.current = []
   }
 
-  // ── Call logic (from MakeCallModal) ──────────────────────────────────────
+  // ── Call logic ────────────────────────────────────────────────────────────
 
   async function handleConnect() {
     if (!query.trim() && step === 'idle') return
     setStep('connecting')
+    setActiveSheet(null)
+    setShowDesktopPlus(false)
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const res = await fetch('/api/reporter/call', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userQuery: query.trim() || 'breaking news today',
-          language,
-          timezone,
-          researchMode,
-        }),
+        body: JSON.stringify({ userQuery: query.trim() || 'breaking news today', language, timezone, researchMode }),
       })
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}))
-        throw new Error(e.error ?? 'Failed to connect')
-      }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error ?? 'Failed to connect') }
       const { publicRoomUrl, browserToken, retellUrl, reporterToken, callId, wireCallId } = await res.json()
-      callIdRef.current = callId
-      wireCallIdRef.current = wireCallId
+      callIdRef.current = callId; wireCallIdRef.current = wireCallId
 
-      // Use preloaded module — resolves instantly so user gesture stays valid
       const { Room, RoomEvent, Track } = await preloadLiveKit()
-
-      // Clean up any leftover audio elements from a previous call
       cleanupAudio()
-
       const room = new Room({ adaptiveStream: false, dynacast: false })
       roomRef.current = room
+      try { const ctx = (room as any).audioContext as AudioContext | undefined; if (ctx?.state === 'suspended') await ctx.resume() } catch {}
 
-      // Resume AudioContext to satisfy autoplay policy (belt-and-suspenders).
-      // LiveKit creates an AudioContext internally; some browsers suspend it
-      // if the user gesture chain was broken by async operations.
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ctx = (room as any).audioContext as AudioContext | undefined
-        if (ctx?.state === 'suspended') await ctx.resume()
-      } catch { /* non-fatal */ }
-
-      room.on(RoomEvent.TrackSubscribed, (track) => {
-        if (track.kind === Track.Kind.Audio) {
-          const el = track.attach()
-          attachAudio(el)
-          setStep('live')
-        }
-      })
-
-      room.on(RoomEvent.Disconnected, () => {
-        cleanupAudio()
-        setStep('done')
-        roomRef.current = null
-      })
+      room.on(RoomEvent.TrackSubscribed, (track) => { if (track.kind === Track.Kind.Audio) { attachAudio(track.attach()); setStep('live') } })
+      room.on(RoomEvent.Disconnected, () => { cleanupAudio(); setStep('done'); roomRef.current = null })
 
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
-
-        // Resume AudioContext again after connection (some browsers create it lazily)
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const ctx = (room as any).audioContext as AudioContext | undefined
-          if (ctx?.state === 'suspended') await ctx.resume()
-        } catch { /* non-fatal */ }
-
-        for (const p of room.remoteParticipants.values()) {
-          for (const pub of p.audioTrackPublications.values()) {
-            if (pub.track && pub.isSubscribed) {
-              const el = pub.track.attach()
-              attachAudio(el)
-              setStep('live')
-            }
-          }
-        }
-      } else if (reporterToken) {
-        await room.connect(retellUrl, reporterToken)
-      }
-
-      // Safety timeout: 10 min max
+        try { const ctx = (room as any).audioContext as AudioContext | undefined; if (ctx?.state === 'suspended') await ctx.resume() } catch {}
+        for (const p of room.remoteParticipants.values()) for (const pub of p.audioTrackPublications.values()) if (pub.track && pub.isSubscribed) { attachAudio(pub.track.attach()); setStep('live') }
+      } else if (reporterToken) { await room.connect(retellUrl, reporterToken) }
       setTimeout(() => room.disconnect(), 10 * 60 * 1000)
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
-      setStep('error')
-    }
+    } catch (err) { setErrorMsg(err instanceof Error ? err.message : 'Something went wrong'); setStep('error') }
   }
 
-  function handleLeaveCall() {
-    roomRef.current?.disconnect()
-    roomRef.current = null
-    callIdRef.current = null
-    wireCallIdRef.current = null
-    cleanupAudio()
-    setStep('done')
-  }
+  function handleLeaveCall() { roomRef.current?.disconnect(); roomRef.current = null; callIdRef.current = null; wireCallIdRef.current = null; cleanupAudio(); setStep('done') }
+  function handleReset() { setStep('idle'); setQuery(''); setErrorMsg('') }
+  function handleKeyDown(e: React.KeyboardEvent) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleConnect() } }
 
-  function handleReset() {
-    setStep('idle')
-    setQuery('')
-    setErrorMsg('')
-  }
-
-  function handlePresetClick(template: string) {
-    setQuery(template)
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleConnect()
-    }
-  }
+  const selectedLang = LANGUAGES.find(l => l.code === language)
+  const selectedAgentObj = agents.find(a => a.id === selectedAgent)
+  const filteredLangs = langSearch ? LANGUAGES.filter(l => l.label.toLowerCase().includes(langSearch.toLowerCase()) || l.code.toLowerCase().includes(langSearch.toLowerCase())) : LANGUAGES
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <section className="relative overflow-hidden bg-t-bg px-4 py-10 sm:py-24">
-      {/* Subtle radial glow */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-30"
-        style={{
-          background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(251,191,36,0.08), transparent)',
-        }}
-      />
+      <div className="pointer-events-none absolute inset-0 opacity-30" style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(251,191,36,0.08), transparent)' }} />
 
       <div className="relative z-10 mx-auto max-w-2xl">
 
-        {/* ── Idle state ── */}
         {step === 'idle' && (
           <>
             {/* Header */}
@@ -214,148 +152,188 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                 <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
                 AI News Agent
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-t-text sm:text-4xl">
-                Make a Call
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight text-t-text sm:text-4xl">Make a Call</h1>
               <p className="mt-2 sm:mt-3 text-sm leading-relaxed text-t-text-2 sm:text-base">
                 Request News Reports on any topic or try one of the suggestions below
               </p>
             </div>
 
-            {/* Input area */}
-            <div className="rounded-2xl border border-t-edge bg-t-surface p-4 shadow-t-lg">
-              {/* Text input + send */}
-              <div className="flex items-end gap-3">
-                <textarea
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Give me a detailed report on CIA's project Bluebird"
-                  rows={2}
-                  className="flex-1 resize-none rounded-xl bg-t-surface-el border border-t-edge-strong px-4 py-3 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-focus transition"
-                />
+            {/* ── Composer card ── */}
+            <div className="rounded-2xl border border-t-edge bg-t-surface p-3 sm:p-4 shadow-t-lg">
+              {/* Input row */}
+              <textarea
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Give me a detailed report on CIA's project Bluebird"
+                rows={3}
+                className="w-full resize-none rounded-xl bg-transparent px-1 py-2 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none"
+              />
+
+              {/* Toolbar row: [+] [lang pill] ... [send] */}
+              <div className="flex items-center gap-2 pt-1 border-t border-t-edge-muted mt-1">
+                {/* Plus button — bottom sheet on mobile, dropdown on desktop */}
+                <div className="relative plus-menu">
+                  <button
+                    ref={plusBtnRef}
+                    onClick={() => {
+                      if (window.innerWidth < 640) setActiveSheet('options')
+                      else setShowDesktopPlus(!showDesktopPlus)
+                    }}
+                    className="size-8 rounded-full border border-t-edge-strong bg-t-surface-el flex items-center justify-center text-t-text-3 hover:text-t-text-2 hover:bg-t-hover transition active:scale-95"
+                    aria-label="Options"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+
+                  {/* Desktop dropdown */}
+                  <AnimatePresence>
+                    {showDesktopPlus && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="hidden sm:block absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
+                      >
+                        <div className="p-3">
+                          <p className="text-xs font-semibold text-t-text-3 uppercase tracking-wider mb-3">Agent</p>
+                          <div className="space-y-1">
+                            {agents.map((a) => (
+                              <button
+                                key={a.id}
+                                onClick={() => { if (a.available) { setSelectedAgent(a.id); setShowDesktopPlus(false) } }}
+                                disabled={!a.available}
+                                className={cn(
+                                  'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition',
+                                  a.id === selectedAgent ? 'bg-t-accent-soft text-t-accent-text' : a.available ? 'text-t-text hover:bg-t-hover' : 'text-t-text-4 cursor-not-allowed',
+                                )}
+                              >
+                                <AgentAvatar agent={a} size={28} />
+                                <span className="flex-1 text-left truncate">{a.name}</span>
+                                {!a.available && <span className="text-[10px] text-t-text-4">Soon</span>}
+                                {a.id === selectedAgent && <CheckMark />}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="border-t border-t-edge-muted p-3">
+                          <button
+                            onClick={() => { setResearchMode(!researchMode); setShowDesktopPlus(false) }}
+                            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-t-text hover:bg-t-hover transition"
+                          >
+                            <Zap className={cn('size-4', researchMode ? 'text-t-accent-text' : 'text-t-text-3')} />
+                            <div className="flex-1 text-left">
+                              <p className="font-medium">Deep Research</p>
+                              <p className="text-xs text-t-text-3">In-depth analysis & reporting</p>
+                            </div>
+                            {researchMode && <CheckMark />}
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Language pill */}
+                <button
+                  onClick={() => {
+                    if (window.innerWidth < 640) setActiveSheet('language')
+                    else setActiveSheet(activeSheet === 'language' ? null : 'language')
+                  }}
+                  className="flex items-center gap-1.5 rounded-full border border-t-edge-strong bg-t-surface-el px-2.5 py-1 text-xs text-t-text-2 hover:bg-t-hover transition"
+                >
+                  <Globe className="size-3" />
+                  {selectedLang?.label ?? 'English'}
+                </button>
+
+                {/* Desktop language dropdown */}
+                <AnimatePresence>
+                  {activeSheet === 'language' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="hidden sm:block absolute left-20 bottom-full mb-2 w-52 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
+                    >
+                      <div className="p-2">
+                        <div className="relative mb-2">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-t-text-4" />
+                          <input
+                            type="text"
+                            value={langSearch}
+                            onChange={(e) => setLangSearch(e.target.value)}
+                            placeholder="Search..."
+                            className="w-full rounded-lg bg-t-surface-el border border-t-edge pl-8 pr-3 py-1.5 text-xs text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-focus"
+                            autoFocus
+                          />
+                        </div>
+                        {filteredLangs.map((l) => (
+                          <button
+                            key={l.code}
+                            onClick={() => { setLanguage(l.code); setActiveSheet(null); setLangSearch('') }}
+                            className={cn(
+                              'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition',
+                              l.code === language ? 'bg-t-accent-soft text-t-accent-text' : 'text-t-text hover:bg-t-hover',
+                            )}
+                          >
+                            {l.label}
+                            {l.code === language && <CheckMark />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Status indicators */}
+                <div className="flex-1" />
+                {researchMode && (
+                  <span className="hidden sm:flex items-center gap-1 text-[10px] font-medium text-t-accent-text">
+                    <Zap className="size-3" /> Deep
+                  </span>
+                )}
+
+                {/* Send button */}
                 <button
                   onClick={handleConnect}
                   disabled={!query.trim()}
-                  className={`shrink-0 flex items-center justify-center size-11 rounded-xl transition ${
+                  className={cn(
+                    'size-9 rounded-full flex items-center justify-center transition',
                     query.trim()
                       ? 'bg-t-accent text-white hover:opacity-90 active:scale-95'
-                      : 'bg-t-surface-el text-t-text-4 cursor-not-allowed'
-                  }`}
+                      : 'bg-t-surface-el text-t-text-4 cursor-not-allowed',
+                  )}
                   aria-label="Send"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="19" x2="12" y2="5" />
-                    <polyline points="5 12 12 5 19 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Controls row */}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {/* Language */}
-                <div className="relative">
-                  <select
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="appearance-none rounded-full border border-t-edge-strong bg-t-surface-el pl-3 pr-7 py-1.5 text-xs text-t-text-2 focus:outline-none focus:border-t-focus transition cursor-pointer"
-                  >
-                    {LANGUAGES.map((l) => (
-                      <option key={l.code} value={l.code}>{l.label}</option>
-                    ))}
-                  </select>
-                  <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3 text-t-text-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-
-                {/* Agent */}
-                <div className="relative">
-                  <select
-                    value={selectedAgent}
-                    onChange={(e) => setSelectedAgent(e.target.value)}
-                    className="appearance-none rounded-full border border-t-edge-strong bg-t-surface-el pl-3 pr-7 py-1.5 text-xs text-t-text-2 focus:outline-none focus:border-t-focus transition cursor-pointer"
-                  >
-                    {agents.map((a) => (
-                      <option key={a.id} value={a.id} disabled={!a.available}>
-                        {a.name}{!a.available ? ' (coming soon)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3 text-t-text-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-
-                {/* Research Mode */}
-                <button
-                  onClick={() => setResearchMode(!researchMode)}
-                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                    researchMode
-                      ? 'border-amber-500/40 bg-t-accent-soft text-t-accent-text'
-                      : 'border-t-edge-strong bg-t-surface-el text-t-text-3 hover:text-t-text-2 hover:border-t-focus'
-                  }`}
-                >
-                  <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                  Research Mode
+                  <Phone className="size-4" />
                 </button>
               </div>
             </div>
 
-            {/* Preset suggestions */}
+            {/* ── Preset suggestions ── */}
             {presets.length > 0 && (
               <div className="mt-6 sm:mt-8">
-                <p className="mb-3 sm:mb-4 text-center text-xs font-medium uppercase tracking-wider text-t-text-3">
-                  Suggested Topics
-                </p>
-
-                {/* Mobile: horizontal scroll carousel */}
+                <p className="mb-3 sm:mb-4 text-center text-xs font-medium uppercase tracking-wider text-t-text-3">Suggested Topics</p>
+                {/* Mobile carousel */}
                 <div className="sm:hidden -mx-4 px-4">
                   <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-none">
                     {presets.map((preset) => (
-                      <button
-                        key={preset.id}
-                        onClick={() => handlePresetClick(preset.query_template)}
-                        className="group snap-start shrink-0 w-[72vw] text-left rounded-xl border border-t-edge bg-t-surface p-3.5 shadow-t transition active:scale-[0.98]"
-                      >
-                        {preset.category && (
-                          <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-1.5 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>
-                            {preset.category}
-                          </span>
-                        )}
-                        <p className="text-sm font-medium text-t-text leading-snug">
-                          {preset.title}
-                        </p>
-                        <p className="mt-1 text-xs text-t-text-3 line-clamp-2 leading-relaxed">
-                          {preset.query_template}
-                        </p>
+                      <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group snap-start shrink-0 w-[72vw] text-left rounded-xl border border-t-edge bg-t-surface p-3.5 shadow-t transition active:scale-[0.98]">
+                        {preset.category && <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-1.5 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>{preset.category}</span>}
+                        <p className="text-sm font-medium text-t-text leading-snug">{preset.title}</p>
+                        <p className="mt-1 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
                       </button>
                     ))}
                   </div>
                 </div>
-
-                {/* Desktop: 2-column grid */}
+                {/* Desktop grid */}
                 <div className="hidden sm:grid gap-3 sm:grid-cols-2">
                   {presets.map((preset) => (
-                    <button
-                      key={preset.id}
-                      onClick={() => handlePresetClick(preset.query_template)}
-                      className="group text-left rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg"
-                    >
-                      {preset.category && (
-                        <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-2 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>
-                          {preset.category}
-                        </span>
-                      )}
-                      <p className="text-sm font-medium text-t-text leading-snug group-hover:text-t-accent-text transition">
-                        {preset.title}
-                      </p>
-                      <p className="mt-1.5 text-xs text-t-text-3 line-clamp-2 leading-relaxed">
-                        {preset.query_template}
-                      </p>
+                    <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group text-left rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
+                      {preset.category && <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-2 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>{preset.category}</span>}
+                      <p className="text-sm font-medium text-t-text leading-snug group-hover:text-t-accent-text transition">{preset.title}</p>
+                      <p className="mt-1.5 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
                     </button>
                   ))}
                 </div>
@@ -364,148 +342,202 @@ export function CallHero({ presets, agents }: CallHeroProps) {
           </>
         )}
 
-        {/* ── Connecting state ── */}
+        {/* ── Call states (connecting/live/done/error) ── */}
         {step === 'connecting' && (
           <div className="flex flex-col items-center py-16 gap-5">
-            <div className="size-16 rounded-full bg-t-surface border border-t-edge flex items-center justify-center shadow-t-lg">
-              <LoadingSpinner />
-            </div>
+            <div className="size-16 rounded-full bg-t-surface border border-t-edge flex items-center justify-center shadow-t-lg"><LoadingSpinner /></div>
             <div className="text-center">
               <p className="text-base font-semibold text-t-text">Connecting to The Reporter</p>
               <p className="mt-1.5 text-sm text-t-text-3">Searching the news wire...</p>
             </div>
-            {query && (
-              <div className="mt-2 max-w-md rounded-xl border border-t-edge bg-t-surface px-4 py-3 shadow-t">
-                <p className="text-xs text-t-text-3 mb-1">Your query</p>
-                <p className="text-sm text-t-text-2 line-clamp-2">{query}</p>
-              </div>
-            )}
+            {query && <div className="mt-2 max-w-md rounded-xl border border-t-edge bg-t-surface px-4 py-3 shadow-t"><p className="text-xs text-t-text-3 mb-1">Your query</p><p className="text-sm text-t-text-2 line-clamp-2">{query}</p></div>}
           </div>
         )}
 
-        {/* ── Live call state ── */}
         {step === 'live' && (
           <div className="flex flex-col items-center py-12 gap-6">
-            <div className="size-16 rounded-full bg-t-surface border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-500/10">
-              <span className="text-2xl">📡</span>
-            </div>
+            <div className="size-16 rounded-full bg-t-surface border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-500/10"><span className="text-2xl">📡</span></div>
             <div className="text-center">
               <p className="text-lg font-semibold text-t-text">The Reporter is on air</p>
               <p className="mt-1 text-sm text-t-text-3">Report will be saved to The Wire when complete</p>
             </div>
-
-            {query && (
-              <div className="max-w-md rounded-xl border border-t-edge bg-t-surface px-4 py-3 shadow-t">
-                <p className="text-xs text-t-text-3 mb-1">Reporting on</p>
-                <p className="text-sm text-t-text-2">{query}</p>
-              </div>
-            )}
-
+            {query && <div className="max-w-md rounded-xl border border-t-edge bg-t-surface px-4 py-3 shadow-t"><p className="text-xs text-t-text-3 mb-1">Reporting on</p><p className="text-sm text-t-text-2">{query}</p></div>}
             <LiveWaveform />
-
-            <button
-              onClick={handleLeaveCall}
-              className="mt-2 flex items-center gap-2 rounded-xl border border-t-edge-strong bg-t-surface-el px-6 py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"
-            >
-              <PhoneOffIcon />
-              Leave Call
-            </button>
-            <p className="text-xs text-t-text-3 text-center max-w-xs leading-relaxed">
-              You can leave anytime — the full report will appear on The Wire once The Reporter finishes.
-            </p>
+            <button onClick={handleLeaveCall} className="mt-2 flex items-center gap-2 rounded-xl border border-t-edge-strong bg-t-surface-el px-6 py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"><PhoneOffIcon /> Leave Call</button>
+            <p className="text-xs text-t-text-3 text-center max-w-xs leading-relaxed">You can leave anytime — the full report will appear on The Wire once The Reporter finishes.</p>
           </div>
         )}
 
-        {/* ── Done state ── */}
         {step === 'done' && (
           <div className="flex flex-col items-center py-16 gap-5">
-            <div className="size-16 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center">
-              <CheckIcon />
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-t-text">Report submitted</p>
-              <p className="mt-1.5 text-sm text-t-text-2">
-                Your report will appear on The Wire shortly after analysis completes.
-              </p>
-            </div>
-            <button
-              onClick={handleReset}
-              className="rounded-xl bg-t-surface-el border border-t-edge-strong px-6 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"
-            >
-              Make Another Call
-            </button>
+            <div className="size-16 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center"><CheckIcon /></div>
+            <div className="text-center"><p className="text-lg font-semibold text-t-text">Report submitted</p><p className="mt-1.5 text-sm text-t-text-2">Your report will appear on The Wire shortly after analysis completes.</p></div>
+            <button onClick={handleReset} className="rounded-xl bg-t-surface-el border border-t-edge-strong px-6 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition">Make Another Call</button>
           </div>
         )}
 
-        {/* ── Error state ── */}
         {step === 'error' && (
           <div className="flex flex-col items-center py-16 gap-5">
             <div className="size-16 rounded-full bg-red-950/40 border border-red-800/60 flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="15" y1="9" x2="9" y2="15" />
-                <line x1="9" y1="9" x2="15" y2="15" />
-              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
             </div>
             <p className="text-sm text-red-400">{errorMsg || 'Something went wrong'}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep('idle')}
-                className="rounded-xl bg-t-surface-el border border-t-edge-strong px-5 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"
-              >
-                Try again
-              </button>
-            </div>
+            <button onClick={() => setStep('idle')} className="rounded-xl bg-t-surface-el border border-t-edge-strong px-5 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition">Try again</button>
           </div>
         )}
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+         MOBILE BOTTOM SHEETS (sm:hidden)
+         ═══════════════════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {activeSheet && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setActiveSheet(null); setLangSearch('') }}
+              className="fixed inset-0 z-40 bg-black/40 sm:hidden"
+            />
+
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed inset-x-0 bottom-0 z-50 sm:hidden"
+            >
+              <div className="rounded-t-2xl bg-t-surface border-t border-t-edge shadow-t-lg max-h-[70vh] overflow-y-auto">
+                {/* Drag handle */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-t-edge-strong" />
+                </div>
+
+                {/* ── Options sheet ── */}
+                {activeSheet === 'options' && (
+                  <div className="px-5 pb-8 pt-2">
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="text-lg font-semibold text-t-text">Options</h3>
+                      <button onClick={() => setActiveSheet(null)} className="size-8 rounded-full bg-t-surface-el flex items-center justify-center text-t-text-3"><X className="size-4" /></button>
+                    </div>
+
+                    {/* Agent horizontal scroll */}
+                    <p className="text-xs font-semibold text-t-text-3 uppercase tracking-wider mb-3">Agent</p>
+                    <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-none -mx-1 px-1">
+                      {agents.map((a) => (
+                        <button
+                          key={a.id}
+                          onClick={() => { if (a.available) setSelectedAgent(a.id) }}
+                          disabled={!a.available}
+                          className={cn(
+                            'shrink-0 flex flex-col items-center gap-2 rounded-xl p-3 w-20 transition',
+                            a.id === selectedAgent ? 'bg-t-accent-soft border border-amber-500/30' : a.available ? 'border border-t-edge hover:bg-t-hover' : 'border border-t-edge-muted opacity-50',
+                          )}
+                        >
+                          <AgentAvatar agent={a} size={40} />
+                          <span className={cn('text-[11px] font-medium text-center leading-tight', a.id === selectedAgent ? 'text-t-accent-text' : 'text-t-text-2')}>
+                            {a.name.replace('The ', '')}
+                          </span>
+                          {!a.available && <span className="text-[9px] text-t-text-4">Soon</span>}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Deep Research toggle */}
+                    <div className="border-t border-t-edge-muted pt-4 mt-2">
+                      <button
+                        onClick={() => setResearchMode(!researchMode)}
+                        className="w-full flex items-center gap-4 rounded-xl px-4 py-3 transition hover:bg-t-hover"
+                      >
+                        <div className={cn('size-10 rounded-xl flex items-center justify-center', researchMode ? 'bg-t-accent-soft' : 'bg-t-surface-el')}>
+                          <Zap className={cn('size-5', researchMode ? 'text-t-accent-text' : 'text-t-text-3')} />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-semibold text-t-text">Deep Research</p>
+                          <p className="text-xs text-t-text-3">In-depth reports and analysis</p>
+                        </div>
+                        <div className={cn('w-11 h-6 rounded-full transition-colors relative', researchMode ? 'bg-t-accent' : 'bg-t-edge-strong')}>
+                          <div className={cn('absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform', researchMode ? 'translate-x-5.5' : 'translate-x-0.5')} />
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Language sheet ── */}
+                {activeSheet === 'language' && (
+                  <div className="px-5 pb-8 pt-2">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-t-text">Language</h3>
+                      <button onClick={() => { setActiveSheet(null); setLangSearch('') }} className="size-8 rounded-full bg-t-surface-el flex items-center justify-center text-t-text-3"><X className="size-4" /></button>
+                    </div>
+
+                    {/* Search */}
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-t-text-4" />
+                      <input
+                        type="text"
+                        value={langSearch}
+                        onChange={(e) => setLangSearch(e.target.value)}
+                        placeholder="Search languages..."
+                        className="w-full rounded-xl bg-t-surface-el border border-t-edge pl-10 pr-4 py-3 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-focus"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Language list */}
+                    <div className="space-y-1">
+                      {filteredLangs.map((l) => (
+                        <button
+                          key={l.code}
+                          onClick={() => { setLanguage(l.code); setActiveSheet(null); setLangSearch('') }}
+                          className={cn(
+                            'w-full flex items-center justify-between rounded-xl px-4 py-3.5 text-sm transition',
+                            l.code === language ? 'bg-t-accent-soft text-t-accent-text font-medium' : 'text-t-text hover:bg-t-hover',
+                          )}
+                        >
+                          {l.label}
+                          {l.code === language && <CheckMark />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </section>
   )
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
+function AgentAvatar({ agent, size = 32 }: { agent: { name: string; avatarUrl: string | null }; size?: number }) {
+  if (agent.avatarUrl) {
+    return <div className="relative shrink-0 overflow-hidden rounded-full" style={{ width: size, height: size }}><Image src={agent.avatarUrl} alt={agent.name} fill className="object-cover" sizes={`${size}px`} /></div>
+  }
+  const initials = agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)
+  return <div className="shrink-0 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-xs font-bold text-t-text-2" style={{ width: size, height: size }}>{initials}</div>
+}
+
+function CheckMark() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-t-accent-text shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
+}
+
 function PhoneOffIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
-      <path d="M14.5 2.5a10 10 0 0 0-10 10"/>
-      <line x1="2" y1="2" x2="22" y2="22"/>
-    </svg>
-  )
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/><path d="M14.5 2.5a10 10 0 0 0-10 10"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
 }
-
 function CheckIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-400">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
-  )
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-400"><polyline points="20 6 9 17 4 12"/></svg>
 }
-
 function LoadingSpinner() {
-  return (
-    <svg className="animate-spin text-neutral-400" width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
-    </svg>
-  )
+  return <svg className="animate-spin text-neutral-400" width="24" height="24" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
 }
-
 function LiveWaveform() {
-  return (
-    <div className="flex items-end gap-1 h-10">
-      {[0.4, 0.7, 1, 0.6, 0.9, 0.5, 0.8, 0.65, 0.45, 0.75, 0.55, 0.85].map((h, i) => (
-        <div
-          key={i}
-          className="w-1.5 rounded-full bg-amber-400 animate-pulse"
-          style={{
-            height: `${h * 100}%`,
-            animationDelay: `${i * 70}ms`,
-            animationDuration: '900ms',
-          }}
-        />
-      ))}
-    </div>
-  )
+  return <div className="flex items-end gap-1 h-10">{[0.4,0.7,1,0.6,0.9,0.5,0.8,0.65,0.45,0.75,0.55,0.85].map((h,i) => <div key={i} className="w-1.5 rounded-full bg-amber-400 animate-pulse" style={{ height: `${h*100}%`, animationDelay: `${i*70}ms`, animationDuration: '900ms' }} />)}</div>
 }
