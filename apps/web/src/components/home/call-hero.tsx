@@ -58,26 +58,33 @@ export function CallHero({ presets, agents }: CallHeroProps) {
   const [errorMsg, setErrorMsg] = useState('')
   const [activeSheet, setActiveSheet] = useState<Sheet>(null)
   const [langSearch, setLangSearch] = useState('')
-  const [showDesktopPlus, setShowDesktopPlus] = useState(false)
+  // Desktop: single state for which dropdown is open (null = none)
+  const [desktopDropdown, setDesktopDropdown] = useState<'options' | 'language' | null>(null)
   const roomRef = useRef<{ disconnect: () => void } | null>(null)
   const callIdRef = useRef<string | null>(null)
   const wireCallIdRef = useRef<string | null>(null)
   const audioElsRef = useRef<HTMLAudioElement[]>([])
-  const plusBtnRef = useRef<HTMLButtonElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { preloadLiveKit() }, [])
 
   // Close desktop dropdown on outside click
   useEffect(() => {
-    if (!showDesktopPlus) return
+    if (!desktopDropdown) return
     function handleClick(e: MouseEvent) {
-      if (plusBtnRef.current && !plusBtnRef.current.closest('.plus-menu')?.contains(e.target as Node)) {
-        setShowDesktopPlus(false)
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+        setDesktopDropdown(null)
+        setLangSearch('')
       }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [showDesktopPlus])
+  }, [desktopDropdown])
+
+  function toggleDesktopDropdown(which: 'options' | 'language') {
+    setDesktopDropdown(prev => prev === which ? null : which)
+    setLangSearch('')
+  }
 
   // ── Audio helpers ─────────────────────────────────────────────────────────
 
@@ -98,7 +105,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
     if (!query.trim() && step === 'idle') return
     setStep('connecting')
     setActiveSheet(null)
-    setShowDesktopPlus(false)
+    setDesktopDropdown(null)
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const res = await fetch('/api/reporter/call', {
@@ -171,38 +178,42 @@ export function CallHero({ presets, agents }: CallHeroProps) {
               />
 
               {/* Toolbar row: [+] [lang pill] ... [send] */}
-              <div className="flex items-center gap-2 pt-1 border-t border-t-edge-muted mt-1">
-                {/* Plus button — bottom sheet on mobile, dropdown on desktop */}
-                <div className="relative plus-menu">
+              <div ref={toolbarRef} className="relative flex items-center gap-2 pt-1 border-t border-t-edge-muted mt-1">
+                {/* Plus button */}
+                <div className="relative">
                   <button
-                    ref={plusBtnRef}
                     onClick={() => {
-                      if (window.innerWidth < 640) setActiveSheet('options')
-                      else setShowDesktopPlus(!showDesktopPlus)
+                      if (window.innerWidth < 640) { setActiveSheet('options') }
+                      else { toggleDesktopDropdown('options') }
                     }}
-                    className="size-8 rounded-full border border-t-edge-strong bg-t-surface-el flex items-center justify-center text-t-text-3 hover:text-t-text-2 hover:bg-t-hover transition active:scale-95"
+                    className={cn(
+                      'size-8 rounded-full border flex items-center justify-center transition active:scale-95',
+                      desktopDropdown === 'options'
+                        ? 'border-t-accent bg-t-accent-soft text-t-accent-text'
+                        : 'border-t-edge-strong bg-t-surface-el text-t-text-3 hover:text-t-text-2 hover:bg-t-hover',
+                    )}
                     aria-label="Options"
                   >
                     <Plus className="size-4" />
                   </button>
 
-                  {/* Desktop dropdown */}
+                  {/* Desktop options dropdown — anchored to plus button, opens upward */}
                   <AnimatePresence>
-                    {showDesktopPlus && (
+                    {desktopDropdown === 'options' && (
                       <motion.div
                         initial={{ opacity: 0, y: 8, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="hidden sm:block absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
+                        className="hidden sm:block absolute left-0 bottom-full mb-2 w-64 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
                       >
-                        <div className="p-3">
+                        <div className="p-3 max-h-72 overflow-y-auto">
                           <p className="text-xs font-semibold text-t-text-3 uppercase tracking-wider mb-3">Agent</p>
                           <div className="space-y-1">
                             {agents.map((a) => (
                               <button
                                 key={a.id}
-                                onClick={() => { if (a.available) { setSelectedAgent(a.id); setShowDesktopPlus(false) } }}
+                                onClick={() => { if (a.available) { setSelectedAgent(a.id); setDesktopDropdown(null) } }}
                                 disabled={!a.available}
                                 className={cn(
                                   'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition',
@@ -219,7 +230,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                         </div>
                         <div className="border-t border-t-edge-muted p-3">
                           <button
-                            onClick={() => { setResearchMode(!researchMode); setShowDesktopPlus(false) }}
+                            onClick={() => { setResearchMode(!researchMode); setDesktopDropdown(null) }}
                             className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-t-text hover:bg-t-hover transition"
                           >
                             <Zap className={cn('size-4', researchMode ? 'text-t-accent-text' : 'text-t-text-3')} />
@@ -236,55 +247,63 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                 </div>
 
                 {/* Language pill */}
-                <button
-                  onClick={() => {
-                    if (window.innerWidth < 640) setActiveSheet('language')
-                    else setActiveSheet(activeSheet === 'language' ? null : 'language')
-                  }}
-                  className="flex items-center gap-1.5 rounded-full border border-t-edge-strong bg-t-surface-el px-2.5 py-1 text-xs text-t-text-2 hover:bg-t-hover transition"
-                >
-                  <Globe className="size-3" />
-                  {selectedLang?.label ?? 'English'}
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      if (window.innerWidth < 640) { setActiveSheet('language') }
+                      else { toggleDesktopDropdown('language') }
+                    }}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition',
+                      desktopDropdown === 'language'
+                        ? 'border-t-accent bg-t-accent-soft text-t-accent-text'
+                        : 'border-t-edge-strong bg-t-surface-el text-t-text-2 hover:bg-t-hover',
+                    )}
+                  >
+                    <Globe className="size-3" />
+                    {selectedLang?.label ?? 'English'}
+                  </button>
 
-                {/* Desktop language dropdown */}
-                <AnimatePresence>
-                  {activeSheet === 'language' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      className="hidden sm:block absolute left-20 bottom-full mb-2 w-52 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
-                    >
-                      <div className="p-2">
-                        <div className="relative mb-2">
-                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-t-text-4" />
-                          <input
-                            type="text"
-                            value={langSearch}
-                            onChange={(e) => setLangSearch(e.target.value)}
-                            placeholder="Search..."
-                            className="w-full rounded-lg bg-t-surface-el border border-t-edge pl-8 pr-3 py-1.5 text-xs text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-focus"
-                            autoFocus
-                          />
+                  {/* Desktop language dropdown — anchored to language pill, opens upward */}
+                  <AnimatePresence>
+                    {desktopDropdown === 'language' && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="hidden sm:block absolute left-0 bottom-full mb-2 w-52 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
+                      >
+                        <div className="p-2">
+                          <div className="relative mb-2">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-t-text-4" />
+                            <input
+                              type="text"
+                              value={langSearch}
+                              onChange={(e) => setLangSearch(e.target.value)}
+                              placeholder="Search..."
+                              className="w-full rounded-lg bg-t-surface-el border border-t-edge pl-8 pr-3 py-1.5 text-xs text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-focus"
+                              autoFocus
+                            />
+                          </div>
+                          {filteredLangs.map((l) => (
+                            <button
+                              key={l.code}
+                              onClick={() => { setLanguage(l.code); setDesktopDropdown(null); setLangSearch('') }}
+                              className={cn(
+                                'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition',
+                                l.code === language ? 'bg-t-accent-soft text-t-accent-text' : 'text-t-text hover:bg-t-hover',
+                              )}
+                            >
+                              {l.label}
+                              {l.code === language && <CheckMark />}
+                            </button>
+                          ))}
                         </div>
-                        {filteredLangs.map((l) => (
-                          <button
-                            key={l.code}
-                            onClick={() => { setLanguage(l.code); setActiveSheet(null); setLangSearch('') }}
-                            className={cn(
-                              'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition',
-                              l.code === language ? 'bg-t-accent-soft text-t-accent-text' : 'text-t-text hover:bg-t-hover',
-                            )}
-                          >
-                            {l.label}
-                            {l.code === language && <CheckMark />}
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 {/* Status indicators */}
                 <div className="flex-1" />
