@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { insertReporterCall } from '@bipi/db'
+import { insertReporterCall, generateUniqueReportSlug } from '@bipi/db'
 
 const REPORTER_AGENT_ID = 'agent_0fd7ecb17c2e5717f23ed69511'
 
@@ -89,6 +89,14 @@ export async function POST(request: Request) {
   const userQuery    = (dynamicVars.user_query as string | undefined) ?? null
   const callLanguage = (call.language as string | undefined) ?? 'en-US'
 
+  // ── Extract full transcript ────────────────────────────────────────────
+  const transcriptObject = (call.transcript_object as Array<{ role: string; content: string }> | undefined) ?? []
+  const transcript = transcriptObject.length > 0
+    ? transcriptObject
+        .map((t) => `${t.role === 'agent' ? 'The Reporter' : 'Caller'}: ${t.content}`)
+        .join('\n\n')
+    : null
+
   // ── Visibility gate ────────────────────────────────────────────────────
   const isPublished =
     reportDelivered === true &&
@@ -98,7 +106,15 @@ export async function POST(request: Request) {
   // ── Write to DB ───────────────────────────────────────────────────────────
   try {
     const db = createServerClient()
+
+    // Generate unique slug from headline
+    const slug = reportHeadline
+      ? await generateUniqueReportSlug(db, reportHeadline)
+      : callId
+
     await insertReporterCall(db, {
+      slug,
+      transcript,
       retell_call_id: callId,
       call_summary:    callSummary,
       call_successful: callSuccessful,

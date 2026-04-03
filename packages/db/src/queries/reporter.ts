@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ReporterCall, ReportCategory } from '@bipi/shared'
+import type { ReporterCall, ReportCategory, ReportCommentary } from '@bipi/shared'
 
 export type ReporterCallSort = 'hot' | 'new' | 'top'
 
@@ -25,7 +25,6 @@ export async function listPublishedReporterCalls(
   if (sort === 'new') {
     query = query.order('created_at', { ascending: false })
   } else {
-    // 'hot' and 'top' — order by upvotes desc, then recency
     query = query.order('upvotes', { ascending: false }).order('created_at', { ascending: false })
   }
 
@@ -53,6 +52,9 @@ export interface InsertReporterCallData {
   user_query?: string | null
   duration_seconds?: number | null
   is_published?: boolean
+  slug?: string
+  transcript?: string | null
+  report_image_url?: string | null
 }
 
 export async function insertReporterCall(
@@ -68,13 +70,80 @@ export async function insertReporterCall(
   return row as ReporterCall
 }
 
+export async function getReporterCallBySlug(
+  db: SupabaseClient,
+  slug: string,
+): Promise<ReporterCall | null> {
+  const { data, error } = await db
+    .from('reporter_calls')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .single()
+  if (error && error.code !== 'PGRST116') throw error
+  return (data as ReporterCall) ?? null
+}
+
+export async function listReportCommentary(
+  db: SupabaseClient,
+  reportCallId: string,
+): Promise<ReportCommentary[]> {
+  const { data, error } = await db
+    .from('report_commentary')
+    .select('*, agents(name, slug, avatar_url, archetype)')
+    .eq('report_call_id', reportCallId)
+    .eq('is_published', true)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((r: any) => {
+    const agent = r.agents
+    return {
+      ...r,
+      agents: undefined,
+      agent_name: agent?.name,
+      agent_slug: agent?.slug,
+      agent_avatar_url: agent?.avatar_url,
+      agent_archetype: agent?.archetype,
+    }
+  })
+}
+
+// ── Slug generation ──────────────────────────────────────────────────────────
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 80)
+}
+
+export async function generateUniqueReportSlug(
+  db: SupabaseClient,
+  headline: string,
+): Promise<string> {
+  const base = slugify(headline) || 'report'
+  const { data } = await db
+    .from('reporter_calls')
+    .select('slug')
+    .ilike('slug', `${base}%`)
+  const existing = new Set((data ?? []).map((r: { slug: string }) => r.slug))
+  if (!existing.has(base)) return base
+  let counter = 2
+  while (existing.has(`${base}-${counter}`)) counter++
+  return `${base}-${counter}`
+}
+
+// ── Voting ───────────────────────────────────────────────────────────────────
+
 export async function upvoteReporterCall(
   db: SupabaseClient,
   callId: string,
 ): Promise<void> {
   const { error } = await db.rpc('increment_reporter_upvotes', { call_id: callId })
   if (error) {
-    // Fallback: manual increment if rpc not available
     const { data: row } = await db
       .from('reporter_calls')
       .select('upvotes')

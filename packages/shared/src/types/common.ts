@@ -497,6 +497,9 @@ export interface ReporterCall {
   call_language: string
   user_query: string | null
   duration_seconds: number | null
+  slug: string
+  transcript: string | null
+  report_image_url: string | null
 
   // Forum engagement
   upvotes: number
@@ -504,4 +507,32 @@ export interface ReporterCall {
 
   is_published: boolean
   created_at: Timestamp
+}
+
+export interface ReportComment {
+  id: UUID
+  report_call_id: UUID
+  parent_id: UUID | null
+  session_id: string
+  author_name: string | null
+  body: string
+  upvotes: number
+  downvotes: number
+  is_deleted: boolean
+  created_at: Timestamp
+}
+
+export interface ReportCommentary {
+  id: UUID
+  report_call_id: UUID
+  agent_id: UUID
+  audio_url: string | null
+  transcript: string | null
+  duration_seconds: number | null
+  is_published: boolean
+  created_at: Timestamp
+  agent_name?: string
+  agent_slug?: string
+  agent_avatar_url?: string | null
+  agent_archetype?: string
 }
