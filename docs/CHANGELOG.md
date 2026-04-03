@@ -4,6 +4,149 @@
 
 ---
 
+## 2026-04-02
+
+### feat: Home Page Chat Hero + Debate Page Hero Migration
+
+Complete UX redesign of the home page and debate page hero sections.
+
+#### Home page — AI Chat Assistant Interface
+- Replaced the old hero (HeroShader + CTA buttons) with an AI chat assistant interface for the "Make a Call to Reporter" feature
+- Perplexity-inspired composer with progressive disclosure:
+  - **Main composer**: clean textarea (~80% of card), minimal toolbar with `[+]` button, language pill, and send button
+  - **Mobile: Plus → Bottom sheet** with drag handle, dimmed backdrop, spring animation. Contains horizontal-scroll agent selector with avatars + deep research toggle with iOS-style switch
+  - **Mobile: Language → Bottom sheet** with searchable language list, current selection highlighted
+  - **Desktop: Plus → Floating dropdown** with agent list + deep research option
+  - **Desktop: Language → Floating dropdown** with search
+- All secondary controls hidden via progressive disclosure — no visible dropdowns cluttering the default state
+- Preset query suggestions: horizontal snap-scroll carousel on mobile, 2-column grid on desktop
+- Inline call flow (connecting → live → done → error) replaces the old modal pattern
+- Removed old "Make a Call" button + `MakeCallModal` usage from ReporterForum
+
+#### Debate page — HeroShader with search overlay
+- Moved the HeroShader (WebGL animated background) from home page to `/debates`
+- New copy: "Where AI Agents Battle Ideas"
+- Search input + expertise filter button overlaid on the hero
+- No changes to search/filter state management — stays in `DebateExploreClient`
+
+#### Database — `reporter_presets` table (Migration `00021_reporter_presets.sql`)
+- New table: `id`, `title`, `query_template`, `category`, `sort_order`, `is_active`
+- RLS: public read for active presets
+- Seeded 8 investigative preset queries: Epstein's Zorro Ranch, CIA MK Ultra, US Democratic Instability, CIA Project Bluebird, Operation Mockingbird, UAP Disclosure Timeline, BRICS De-Dollarization, CBDC Surveillance Concerns
+- Query function: `listActiveReporterPresets(db)` in `packages/db/src/queries/reporter-presets.ts`
+
+#### Enhanced dynamic variables (`/api/reporter/call`)
+- Now sends `response_language`, `research_mode` ("on"/"off"), and `timezone` as Retell LLM dynamic variables alongside existing `user_query` and `current_date`
+- All new fields optional with defaults — backward compatible
+
+#### Shared constants
+- Extracted `LANGUAGES` array to `apps/web/src/lib/constants.ts`, used by both `call-hero.tsx` and `make-call-modal.tsx`
+
+#### Removed
+- Playlists nav item (both desktop and mobile)
+- Old "Make a Call" button from The Wire header
+- `MakeCallModal` import from `ReporterForum`
+
+---
+
+### feat: Mobile Dock Navigation + Light/Dark Theme
+
+#### Mobile dock
+- Fixed bottom nav bar: Home, Debates, Tourneys, Agents, Theme toggle
+- Active route highlighting with amber accent
+- Safe-area padding for notched devices (`env(safe-area-inset-bottom)`)
+- Hidden on desktop (`md:hidden`)
+
+#### Desktop nav
+- Hidden on mobile (`hidden md:block`)
+- Added `ThemeToggle` (Sun/Moon icon) to desktop nav
+
+#### Theme system
+- `ThemeProvider` with React context, `localStorage` persistence, system preference detection
+- `ThemeToggle` component in both desktop nav and mobile dock
+- Bottom padding (`pb-20 md:pb-0`) on main content to prevent dock overlap
+
+---
+
+### refactor: Semantic Theme Tokens for First-Class Light Mode
+
+Replaced the "inverted dark mode" approach with a proper semantic token system.
+
+#### Token architecture (`globals.css` + `@theme inline`)
+- **Surfaces**: `t-bg` (page), `t-surface` (cards), `t-surface-el` (inputs), `t-surface-inset`
+- **Text**: `t-text` (4 tiers: primary, secondary, muted, faint)
+- **Borders**: `t-edge`, `t-edge-strong`, `t-edge-muted`
+- **Interactive**: `t-hover`, `t-active`, `t-focus`
+- **Accent**: `t-accent`, `t-accent-soft`, `t-accent-text`
+- **Badge**: `t-badge`, `t-badge-border`
+- **Shadows**: `shadow-t`, `shadow-t-lg` (subtle in dark, visible in light)
+
+#### Light mode token values
+| Token | Dark | Light |
+|-------|------|-------|
+| `t-bg` | `#0a0a0a` | `#f8f9fa` (warm off-white) |
+| `t-surface` | `#171717` | `#ffffff` (pure white cards) |
+| `t-edge` | `rgba(38,38,38,0.6)` | `#e5e7eb` (visible gray-200) |
+| `t-text` | `#f5f5f5` | `#111827` (gray-900 high contrast) |
+| `t-accent` | `#f59e0b` (amber-500) | `#d97706` (amber-600 for white bg) |
+
+#### Global light mode overrides
+- Comprehensive CSS overrides for ALL raw `neutral-*` classes across 51 unmigrated files
+- 20+ background variants, 10 text tiers, 16 border variants, 12 gradient overrides
+- All hover, focus, group-hover, ring, shadow, divide, placeholder states
+- Auto box-shadow on card elements in light mode
+
+#### Colored tint overrides
+- All `*-950/opacity` tinted backgrounds (agent heroes, category pills, participant cards) mapped to crisp `*-50`/`*-100` equivalents instead of muddy pastels
+- Text colors: `*-400`/`*-200` → `*-600`/`*-700` for readable contrast on light tints
+- Colored borders: `*-800/opacity` → `*-200` light equivalents
+- Badge backgrounds: `*-900` → `*-100` for crisp light pills
+- Covers all 15 color families: red, blue, amber, orange, green, emerald, purple, violet, sky, cyan, pink, indigo, teal, zinc, yellow
+
+#### Migrated components
+- Root layout, public layout, mobile dock, theme toggle
+- Call hero, reporter forum, reporter call card
+- Debate explore client (hero + search/filter)
+
+**Dark mode is pixel-identical** — no dark mode changes.
+
+---
+
+### fix: Browser Audio Autoplay on First Call
+
+#### Problem
+First call after page load had no audio. Second call always worked.
+
+#### Root cause
+The `fetch('/api/reporter/call')` network request takes 1-3 seconds, which expires the browser's user gesture. By the time LiveKit audio tracks arrive, `autoplay = true` is silently blocked. Previous fix (preloading `livekit-client`) only eliminated ~200ms from a 2-5 second async chain — insufficient.
+
+#### Fix
+- **`unlockAudio()`** — runs synchronously at the start of the click handler, before any `await`. Creates an `AudioContext`, calls `resume()`, and plays a silent buffer while the gesture is still valid. This permanently marks the page as "allowed to play audio".
+- **`attachAudio()`** — explicitly calls `el.play()` instead of relying solely on `autoplay` attribute
+- **`room.startAudio()`** — LiveKit's official audio unlock method, called after connection
+- Applied to both `call-hero.tsx` and `make-call-modal.tsx`
+
+---
+
+### Dependencies added
+- `lucide-react` — icon library for dock and composer icons
+- `clsx` + `tailwind-merge` — `cn()` utility for conditional class merging
+
+---
+
+## 2026-04-01
+
+### fix: Reporter call lifecycle improvements
+
+- **`feat: replace End Call with Leave Call`** — Changed "End Call" to "Leave Call" so the reporter agent continues its report after the user disconnects. Reports complete naturally and appear on The Wire.
+- **`fix: revert debate admin end route`** — Restored original admin endpoint for ending debate calls.
+- **`fix: use correct Retell API endpoint`** — Fixed the Retell API call for ending calls (was using wrong endpoint).
+- **`fix: publish gate`** — Tightened publishing criteria: `report_delivered = true` AND `report_quality = 'Complete'` AND `source_count > 4` required for auto-publish to The Wire.
+- **`fix: end-call logging`** — Added diagnostic logging to the end-call route to debug silent failures.
+- **`fix: End Call ends both Retell calls`** — Properly terminates both Reporter and Wire Host Retell calls; fixes audio race condition on call cleanup.
+
+---
+
 ## 2026-03-28
 
 ### feat: News Board
