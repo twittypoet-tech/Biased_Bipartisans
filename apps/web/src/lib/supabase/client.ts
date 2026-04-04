@@ -1,7 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
-let _client: ReturnType<typeof createClient> | null = null
+let _client: ReturnType<typeof createBrowserClient> | null = null
 
+/**
+ * Auth-aware browser client — manages session via cookies.
+ * Used by client components for auth operations and user-scoped queries.
+ */
 export function getSupabaseBrowserClient() {
   if (_client) return _client
 
@@ -9,9 +13,12 @@ export function getSupabaseBrowserClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
-    console.error('[supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY — client-side queries will fail')
+    // During build/SSR, env vars may not be available.
+    // Return a dummy client that won't crash but won't work.
+    // Real client is only used in browser after hydration.
+    return createBrowserClient('https://placeholder.supabase.co', 'placeholder-key')
   }
 
-  _client = createClient(url!, key!)
+  _client = createBrowserClient(url, key)
   return _client
 }
