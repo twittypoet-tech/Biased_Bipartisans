@@ -209,7 +209,7 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
         )}
 
         {/* ── Full Transcript ── */}
-        {transcriptTurns.length > 0 && (
+        {reporterTurns.length > 0 && (
           <div className="mb-8">
             <h2 className="text-base font-semibold text-t-text mb-4 flex items-center gap-2">
               <FileText className="size-4 text-t-text-3" />
