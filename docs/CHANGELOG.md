@@ -6,6 +6,60 @@
 
 ## 2026-04-04
 
+### feat: Phase 7 — Credit Gating & Top-Up Flow
+
+#### Credit enforcement
+- `/api/reporter/call`: Requires authentication (401) + 5 credits (402 if insufficient). Deducts credits on call creation, logs `credit_transactions` with reason `report` and reference to `call_id`. Returns `creditsRemaining` in response.
+- `/api/votes`: Requires authentication. Uses `user.id` as voter ID instead of anonymous IP hash.
+- `call-hero.tsx`: Shows "Sign in" link when not authenticated. Displays credits badge in composer toolbar when logged in. Refreshes profile after call completes to update credit count. Catches 402 responses and shows TopUpModal instead of generic error.
+
+#### Top-up credits modal (`top-up-modal.tsx`)
+- Triggered on insufficient credits (402 from reporter call API)
+- Shows balance / needed / deficit in a 3-column stat card
+- "Get Credits" CTA → `/subscribe`
+- Pro upsell card for free users ("100 credits/month for $25")
+- Spring animation, backdrop blur, mobile bottom-sheet pattern
+
+#### Subscribe page — pro-awareness
+- Pro members: compact status bar at top ("You're on Pro, X credits remaining") with Manage button. Buy Credits section is primary focus.
+- Free users: full Pro card with features shown first, Buy Credits below.
+
+#### `useIsProUser()` hook
+- Wired to real `profile.tier === 'pro'` check in `pro-upgrade-modal.tsx`
+
+---
+
+### feat: Bipi Onboarding Agent — Interest Discovery via Live Call
+
+- New Retell agent "Bipi" (`agent_dc30d418ef88204e5452f1eed5`) for conversational interest discovery
+- `/api/onboarding/call`: Creates direct 1-on-1 Retell web call, passes `user_id`, `user_name`, `existing_interests` as dynamic variables
+- Webhook handler: Routes onboarding calls to `handleOnboardingCall()`, extracts `user_interests` + `interest_entities` from post-call analysis, updates `user_profiles.interests`
+- Uses `retell-client-js-sdk` `RetellWebClient` for proper two-way voice (microphone + speaker)
+- Settings page (`/my/settings`): replaced static 8-category picker with "Personalize with Bipi" call CTA, inline call flow, shows interests as amber pills
+- Agent prompt reference: `docs/prompts/bipi-onboarding-agent.md`
+
+---
+
+### feat: Subscribe Page Redesign
+
+- Conversion-focused Pro card: AI-Powered tailored reports, 20 reports/month, unlimited algorithm refinements, multi-lingual, 1-on-1 calls
+- Credit tiers with expandable value breakdown (chevron toggle per row):
+  - 100 credits ($25): 20 reports / 1.5 hours agent call time
+  - 500 credits ($105): 100 reports / 7.5 hours, save 16%
+  - 1,000 credits ($200): 200 reports / 15 hours, save 20%
+
+---
+
+### feat: Vercel Web Analytics + Google AdSense
+
+- `@vercel/analytics` installed, `<Analytics />` component in root layout
+- Google AdSense meta tag (`ca-pub-3338044547412009`) in root layout
+- AdSense script loaded only on `/reports/[slug]` pages (lazyOnload strategy)
+- Two ad placements: after summary (horizontal) and after transcript (auto)
+- `AdSlot` component for reusable ad insertion
+
+---
+
 ### feat: User Auth, Credits System, Dashboard & Navigation Overhaul
 
 #### Database — Migration `00024_user_auth.sql`
