@@ -18,6 +18,7 @@
     "@livekit/components-react": "^2.7.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0",
+    "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "livekit-client": "^2.6.0",
