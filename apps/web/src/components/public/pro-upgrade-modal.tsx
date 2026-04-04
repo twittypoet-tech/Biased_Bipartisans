@@ -1,6 +1,14 @@
 'use client'
 
-// TODO: wire isProUser() to a real subscription check when auth/billing are implemented
+import { useAuth } from '@/components/auth-provider'
+
+// Hook version for components
+export function useIsProUser(): boolean {
+  const { profile } = useAuth()
+  return profile?.tier === 'pro'
+}
+
+// Standalone check — returns false when called outside React (kept for backward compat)
 export function isProUser(): boolean {
   return false
 }

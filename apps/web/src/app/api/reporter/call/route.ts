@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
+import { createAuthServerClient, createServerClient } from '@/lib/supabase/server'
 
 const REPORTER_AGENT_ID  = 'agent_0fd7ecb17c2e5717f23ed69511'
 const WIRE_HOST_AGENT_ID = 'agent_21b5d4660d86a45abad2492cf7'
+const REPORT_CREDIT_COST = 5
 
 async function createRetellCall(apiKey: string, agentId: string, dynamicVars: Record<string, string>, language: string) {
   const res = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
@@ -25,6 +27,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Retell not configured' }, { status: 500 })
   }
 
+  // ── Auth + credit check ─────────────────────────────────────────────────
+  const authClient = await createAuthServerClient()
+  const { data: { user } } = await authClient.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Sign in to make a call' }, { status: 401 })
+  }
+
+  // Check credit balance
+  const serviceDb = createServerClient()
+  const { data: profile } = await serviceDb
+    .from('user_profiles')
+    .select('credits')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || profile.credits < REPORT_CREDIT_COST) {
+    return NextResponse.json({
+      error: `Not enough credits. You need ${REPORT_CREDIT_COST} credits to generate a report (you have ${profile?.credits ?? 0}).`,
+    }, { status: 402 })
+  }
+
   let body: { userQuery?: string; language?: string; timezone?: string; researchMode?: boolean }
   try {
     body = await request.json()
@@ -34,6 +58,7 @@ export async function POST(request: Request) {
 
   const userQuery = (body.userQuery ?? '').trim() || 'breaking news today'
   const language  = SUPPORTED_LANGUAGES.has(body.language ?? '') ? body.language : 'en-US'
+  const researchMode = body.researchMode ?? false
 
   // Validate timezone from client; fall back to UTC if unrecognised
   let timezone = 'UTC'
@@ -47,14 +72,11 @@ export async function POST(request: Request) {
   }
 
   // Format current date + time in the user's local timezone
-  // e.g. "April 1, 2026 at 3:42 PM EDT"
   const now = new Date()
   const currentDate =
     now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: timezone }) +
     ' at ' +
     now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' })
-
-  const researchMode = body.researchMode ?? false
 
   const dynamicVars = {
     user_query: userQuery,
@@ -73,6 +95,25 @@ export async function POST(request: Request) {
     console.error('Retell create-web-call error (Reporter):', err)
     return NextResponse.json({ error: 'Failed to create call' }, { status: 500 })
   }
+
+  // ── Deduct credits ──────────────────────────────────────────────────────
+  try {
+    await serviceDb.rpc('deduct_credits', { p_user_id: user.id, p_amount: REPORT_CREDIT_COST })
+  } catch {
+    // Fallback: manual deduction
+    await serviceDb
+      .from('user_profiles')
+      .update({ credits: (profile.credits ?? 0) - REPORT_CREDIT_COST })
+      .eq('id', user.id)
+  }
+
+  // Log credit transaction
+  await serviceDb.from('credit_transactions').insert({
+    user_id: user.id,
+    amount: -REPORT_CREDIT_COST,
+    reason: 'report',
+    reference_id: reporterCall.call_id,
+  })
 
   // Create Wire Host call — fire-and-forget; non-fatal if it fails
   try {
@@ -116,11 +157,10 @@ export async function POST(request: Request) {
   return NextResponse.json({
     callId:        reporterCall.call_id,
     wireCallId:    wireCall?.call_id ?? null,
-    // If relay is active, browser connects to public LiveKit room (hears both agents).
-    // Fallback: connect directly to Reporter's Retell room (no Wire audio).
     publicRoomUrl: publicRoomUrl ?? null,
     browserToken:  browserToken  ?? null,
     retellUrl:     'wss://retell-ai-4ihahnq7.livekit.cloud',
     reporterToken: publicRoomUrl ? null : reporterCall.access_token,
+    creditsRemaining: (profile.credits ?? 0) - REPORT_CREDIT_COST,
   })
 }

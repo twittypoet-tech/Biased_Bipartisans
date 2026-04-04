@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createAuthServerClient } from '@/lib/supabase/server'
 import { insertDebateVote } from '@bipi/db'
 
 export async function POST(request: Request) {
   try {
+    // Require authentication for voting
+    const authClient = await createAuthServerClient()
+    const { data: { user } } = await authClient.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Sign in to vote' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { debateId, voteType, targetAgentId, targetTurnId, roundPhase } = body
 
@@ -13,12 +21,9 @@ export async function POST(request: Request) {
 
     const db = createServerClient()
 
-    // Use a simple anonymous voter ID based on IP or random
-    const voterId = request.headers.get('x-forwarded-for') ?? `anon-${Date.now()}`
-
     const vote = await insertDebateVote(db, {
       debate_id: debateId,
-      voter_id: voterId,
+      voter_id: user.id,
       vote_type: voteType,
       target_agent_id: targetAgentId ?? null,
       target_turn_id: targetTurnId ?? null,

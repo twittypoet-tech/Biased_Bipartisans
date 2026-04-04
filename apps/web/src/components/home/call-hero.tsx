@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
-import { Plus, X, Search, Phone, Globe, Zap } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, X, Search, Phone, Globe, Zap, LogIn, Coins } from 'lucide-react'
 import { LANGUAGES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/components/auth-provider'
 import type { ReporterPreset } from '@bipi/db'
 
 // ── LiveKit preload ──────────────────────────────────────────────────────────
@@ -50,6 +52,7 @@ const defaultCategoryColor = 'border-t-badge-border bg-t-badge text-t-text-2'
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function CallHero({ presets, agents }: CallHeroProps) {
+  const { user, profile, refreshProfile } = useAuth()
   const [step, setStep] = useState<Step>('idle')
   const [query, setQuery] = useState('')
   const [language, setLanguage] = useState('en-US')
@@ -185,7 +188,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
           setStep('live')
         }
       })
-      room.on(RoomEvent.Disconnected, () => { cleanupAudio(); setStep('done'); roomRef.current = null })
+      room.on(RoomEvent.Disconnected, () => { cleanupAudio(); setStep('done'); roomRef.current = null; refreshProfile() })
 
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
@@ -220,7 +223,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
     } catch (err) { setErrorMsg(err instanceof Error ? err.message : 'Something went wrong'); setStep('error') }
   }
 
-  function handleLeaveCall() { roomRef.current?.disconnect(); roomRef.current = null; callIdRef.current = null; wireCallIdRef.current = null; cleanupAudio(); setStep('done') }
+  function handleLeaveCall() { roomRef.current?.disconnect(); roomRef.current = null; callIdRef.current = null; wireCallIdRef.current = null; cleanupAudio(); setStep('done'); refreshProfile() }
   function handleReset() { setStep('idle'); setQuery(''); setErrorMsg('') }
   function handleKeyDown(e: React.KeyboardEvent) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleConnect() } }
 
@@ -392,26 +395,43 @@ export function CallHero({ presets, agents }: CallHeroProps) {
 
                 {/* Status indicators */}
                 <div className="flex-1" />
+
+                {/* Credits badge (when logged in) */}
+                {user && profile && (
+                  <span className="hidden sm:flex items-center gap-1 text-[10px] font-medium text-t-text-3">
+                    <Coins className="size-3 text-t-accent-text" /> {profile.credits}
+                  </span>
+                )}
+
                 {researchMode && (
                   <span className="hidden sm:flex items-center gap-1 text-[10px] font-medium text-t-accent-text">
                     <Zap className="size-3" /> Deep
                   </span>
                 )}
 
-                {/* Send button */}
-                <button
-                  onClick={handleConnect}
-                  disabled={!query.trim()}
-                  className={cn(
-                    'size-9 rounded-full flex items-center justify-center transition',
-                    query.trim()
-                      ? 'bg-t-accent text-white hover:opacity-90 active:scale-95'
-                      : 'bg-t-surface-el text-t-text-4 cursor-not-allowed',
-                  )}
-                  aria-label="Send"
-                >
-                  <Phone className="size-4" />
-                </button>
+                {/* Send / Sign In button */}
+                {user ? (
+                  <button
+                    onClick={handleConnect}
+                    disabled={!query.trim()}
+                    className={cn(
+                      'size-9 rounded-full flex items-center justify-center transition',
+                      query.trim()
+                        ? 'bg-t-accent text-white hover:opacity-90 active:scale-95'
+                        : 'bg-t-surface-el text-t-text-4 cursor-not-allowed',
+                    )}
+                    aria-label="Send"
+                  >
+                    <Phone className="size-4" />
+                  </button>
+                ) : (
+                  <Link
+                    href="/auth"
+                    className="flex items-center gap-1.5 rounded-full bg-t-accent px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition"
+                  >
+                    <LogIn className="size-3.5" /> Sign in
+                  </Link>
+                )}
               </div>
             </div>
 
