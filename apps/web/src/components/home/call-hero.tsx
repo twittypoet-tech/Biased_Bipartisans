@@ -86,6 +86,8 @@ export function CallHero({ presets, agents }: CallHeroProps) {
     setLangSearch('')
   }
 
+  const [audioBlocked, setAudioBlocked] = useState(false)
+
   // ── Audio helpers ─────────────────────────────────────────────────────────
 
   function attachAudio(el: HTMLAudioElement) {
@@ -93,26 +95,51 @@ export function CallHero({ presets, agents }: CallHeroProps) {
     el.style.display = 'none'
     document.body.appendChild(el)
     audioElsRef.current.push(el)
-    // Explicitly call play() — autoplay attribute alone is unreliable
-    // after the user gesture has expired from async work
-    el.play().catch(() => {})
+    // Try to play immediately, then retry after a delay if it fails
+    el.play()
+      .then(() => setAudioBlocked(false))
+      .catch(() => {
+        // Retry after 500ms — track stream may not be ready yet
+        setTimeout(() => {
+          el.play()
+            .then(() => setAudioBlocked(false))
+            .catch(() => setAudioBlocked(true))
+        }, 500)
+      })
   }
+
   function cleanupAudio() {
     for (const el of audioElsRef.current) { el.pause(); el.srcObject = null; el.remove() }
     audioElsRef.current = []
+    setAudioBlocked(false)
   }
 
-  // Unlock browser audio playback. Must be called SYNCHRONOUSLY inside
-  // a user-gesture handler (click/tap), BEFORE any await. This creates
-  // and resumes an AudioContext while the gesture is still valid, which
-  // permanently marks the page as "allowed to play audio". All subsequent
-  // audio — including LiveKit tracks arriving seconds later — will work.
+  // Force-play all attached audio elements — used by the "Tap to unmute"
+  // fallback button which runs in a fresh user gesture context.
+  function forceUnmute() {
+    for (const el of audioElsRef.current) {
+      el.play().catch(() => {})
+    }
+    // Also resume any suspended AudioContext on the room
+    try {
+      const room = roomRef.current as any
+      room?.startAudio?.()
+    } catch {}
+    setAudioBlocked(false)
+  }
+
+  // Singleton AudioContext — reuse across calls to avoid hitting browser limits.
+  // Must be called SYNCHRONOUSLY in a click handler, BEFORE any await.
   function unlockAudio() {
     try {
       const AC = window.AudioContext || (window as any).webkitAudioContext
       if (!AC) return
-      const ctx = new AC()
-      ctx.resume()
+      // Reuse existing context if we have one
+      if (!(window as any).__bipiAudioCtx) {
+        (window as any).__bipiAudioCtx = new AC()
+      }
+      const ctx = (window as any).__bipiAudioCtx as AudioContext
+      if (ctx.state === 'suspended') ctx.resume()
       // Play a silent buffer to fully satisfy the autoplay policy
       const buf = ctx.createBuffer(1, 1, 22050)
       const src = ctx.createBufferSource()
@@ -162,14 +189,34 @@ export function CallHero({ presets, agents }: CallHeroProps) {
 
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
-        // Use LiveKit's official audio unlock after connection
-        try { await (room as any).startAudio?.() } catch {}
-        for (const p of room.remoteParticipants.values()) for (const pub of p.audioTrackPublications.values()) if (pub.track && pub.isSubscribed) { attachAudio(pub.track.attach()); setStep('live') }
       } else if (reporterToken) {
         await room.connect(retellUrl, reporterToken)
+      }
+
+      // Resume LiveKit's internal audio after connection
+      try { await room.startAudio() } catch {
         try { await (room as any).startAudio?.() } catch {}
       }
-      setTimeout(() => room.disconnect(), 10 * 60 * 1000)
+
+      // Attach any tracks already published before we subscribed
+      for (const p of room.remoteParticipants.values()) {
+        for (const pub of p.audioTrackPublications.values()) {
+          if (pub.track && pub.isSubscribed) {
+            attachAudio(pub.track.attach())
+            setStep('live')
+          }
+        }
+      }
+
+      // Periodic retry: if audio elements exist but aren't playing, retry play()
+      const retryInterval = setInterval(() => {
+        for (const el of audioElsRef.current) {
+          if (el.paused && el.srcObject) el.play().catch(() => {})
+        }
+      }, 2000)
+
+      // Safety timeout: 10 min max
+      setTimeout(() => { clearInterval(retryInterval); room.disconnect() }, 10 * 60 * 1000)
     } catch (err) { setErrorMsg(err instanceof Error ? err.message : 'Something went wrong'); setStep('error') }
   }
 
@@ -419,6 +466,18 @@ export function CallHero({ presets, agents }: CallHeroProps) {
               <p className="mt-1 text-sm text-t-text-3">Report will be saved to The Wire when complete</p>
             </div>
             {query && <div className="max-w-md rounded-xl border border-t-edge bg-t-surface px-4 py-3 shadow-t"><p className="text-xs text-t-text-3 mb-1">Reporting on</p><p className="text-sm text-t-text-2">{query}</p></div>}
+
+            {/* Fallback: if browser blocked audio, show a tap-to-unmute button */}
+            {audioBlocked && (
+              <button
+                onClick={forceUnmute}
+                className="flex items-center gap-2 rounded-xl bg-t-accent px-5 py-3 text-sm font-semibold text-white hover:opacity-90 active:scale-95 transition animate-pulse"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                Tap to Enable Audio
+              </button>
+            )}
+
             <LiveWaveform />
             <button onClick={handleLeaveCall} className="mt-2 flex items-center gap-2 rounded-xl border border-t-edge-strong bg-t-surface-el px-6 py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"><PhoneOffIcon /> Leave Call</button>
             <p className="text-xs text-t-text-3 text-center max-w-xs leading-relaxed">You can leave anytime — the full report will appear on The Wire once The Reporter finishes.</p>

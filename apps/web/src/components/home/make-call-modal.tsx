@@ -35,15 +35,13 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
     el.style.display = 'none'
     document.body.appendChild(el)
     audioElsRef.current.push(el)
-    el.play().catch(() => {})
+    el.play().catch(() => {
+      setTimeout(() => { el.play().catch(() => {}) }, 500)
+    })
   }
 
   function cleanupAudio() {
-    for (const el of audioElsRef.current) {
-      el.pause()
-      el.srcObject = null
-      el.remove()
-    }
+    for (const el of audioElsRef.current) { el.pause(); el.srcObject = null; el.remove() }
     audioElsRef.current = []
   }
 
@@ -51,8 +49,9 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
     try {
       const AC = window.AudioContext || (window as any).webkitAudioContext
       if (!AC) return
-      const ctx = new AC()
-      ctx.resume()
+      if (!(window as any).__bipiAudioCtx) (window as any).__bipiAudioCtx = new AC()
+      const ctx = (window as any).__bipiAudioCtx as AudioContext
+      if (ctx.state === 'suspended') ctx.resume()
       const buf = ctx.createBuffer(1, 1, 22050)
       const src = ctx.createBufferSource()
       src.buffer = buf
@@ -99,21 +98,30 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
 
       if (publicRoomUrl && browserToken) {
         await room.connect(publicRoomUrl, browserToken)
-        try { await (room as any).startAudio?.() } catch {}
-        for (const p of room.remoteParticipants.values()) {
-          for (const pub of p.audioTrackPublications.values()) {
-            if (pub.track && pub.isSubscribed) {
-              attachAudio(pub.track.attach())
-              setStep('live')
-            }
-          }
-        }
       } else if (reporterToken) {
         await room.connect(retellUrl, reporterToken)
+      }
+
+      try { await room.startAudio() } catch {
         try { await (room as any).startAudio?.() } catch {}
       }
 
-      setTimeout(() => room.disconnect(), 10 * 60 * 1000)
+      for (const p of room.remoteParticipants.values()) {
+        for (const pub of p.audioTrackPublications.values()) {
+          if (pub.track && pub.isSubscribed) {
+            attachAudio(pub.track.attach())
+            setStep('live')
+          }
+        }
+      }
+
+      const retryInterval = setInterval(() => {
+        for (const el of audioElsRef.current) {
+          if (el.paused && el.srcObject) el.play().catch(() => {})
+        }
+      }, 2000)
+
+      setTimeout(() => { clearInterval(retryInterval); room.disconnect() }, 10 * 60 * 1000)
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
       setStep('error')
