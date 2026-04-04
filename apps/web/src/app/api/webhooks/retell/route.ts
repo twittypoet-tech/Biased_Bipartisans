@@ -80,15 +80,24 @@ export async function POST(request: Request) {
   const publishToBipi    = (merged.publish_to_bipi   as boolean | undefined) ?? null
 
   // Parse structured sources (JSON array of {title, url})
-  const rawSourcesJson = (merged.sources_with_urls as string | undefined) ?? null
+  // Check multiple possible key names — Retell sometimes adds leading spaces
+  const rawSourcesJson = (
+    merged.sources_with_urls ??
+    merged[' sources_with_urls'] ??
+    (customData as Record<string, unknown>).sources_with_urls ??
+    null
+  ) as string | unknown[] | undefined ?? null
+
+  console.log('reporter webhook: sources_with_urls raw:', rawSourcesJson ? JSON.stringify(rawSourcesJson).slice(0, 500) : 'null')
+
   let sourcesJson: Array<{ title: string; url: string | null }> | null = null
   if (rawSourcesJson) {
     try {
       const parsed = typeof rawSourcesJson === 'string' ? JSON.parse(rawSourcesJson) : rawSourcesJson
       if (Array.isArray(parsed)) {
         sourcesJson = parsed.map((s: Record<string, unknown>) => ({
-          title: String(s.title ?? ''),
-          url: s.url ? String(s.url) : null,
+          title: String(s.title ?? s.name ?? ''),
+          url: s.url ? String(s.url) : (s.link ? String(s.link) : null),
         })).filter((s) => s.title)
       }
     } catch {

@@ -80,10 +80,14 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Parse transcript into turns
-  const transcriptTurns = (report.transcript ?? '').split('\n\n').filter(Boolean)
-  const isLongTranscript = transcriptTurns.length > 8
-  const visibleTurns = showFullTranscript ? transcriptTurns : transcriptTurns.slice(0, 8)
+  // Parse transcript — only show The Reporter's turns (not Caller)
+  const allTurns = (report.transcript ?? '').split('\n\n').filter(Boolean)
+  const reporterTurns = allTurns
+    .filter((t) => t.startsWith('The Reporter:'))
+    .map((t) => t.slice('The Reporter:'.length).trim())
+    .filter(Boolean)
+  const isLongTranscript = reporterTurns.length > 6
+  const visibleTurns = showFullTranscript ? reporterTurns : reporterTurns.slice(0, 6)
 
   return (
     <div className="bg-t-bg min-h-screen">
@@ -212,27 +216,11 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
               Full Report
             </h2>
             <div className="rounded-xl border border-t-edge bg-t-surface p-4 sm:p-6 shadow-t space-y-4">
-              {visibleTurns.map((turn, i) => {
-                const colonIdx = turn.indexOf(':')
-                const speaker = colonIdx > 0 ? turn.slice(0, colonIdx) : null
-                const content = colonIdx > 0 ? turn.slice(colonIdx + 1).trim() : turn
-
-                return (
-                  <div key={i} className="group">
-                    {speaker && (
-                      <p className={cn(
-                        'text-xs font-semibold uppercase tracking-wider mb-1',
-                        speaker === 'The Reporter' ? 'text-t-accent-text' : 'text-t-text-3',
-                      )}>
-                        {speaker}
-                      </p>
-                    )}
-                    <p className="text-base leading-relaxed text-t-text-2">
-                      <StyledContent text={content} />
-                    </p>
-                  </div>
-                )
-              })}
+              {visibleTurns.map((turn, i) => (
+                <p key={i} className="text-base leading-relaxed text-t-text-2">
+                  {turn}
+                </p>
+              ))}
 
               {isLongTranscript && (
                 <button
@@ -242,7 +230,7 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
                   {showFullTranscript ? (
                     <><ChevronUp className="size-4" /> Show less</>
                   ) : (
-                    <><ChevronDown className="size-4" /> Show full report ({transcriptTurns.length} sections)</>
+                    <><ChevronDown className="size-4" /> Continue reading ({reporterTurns.length - 6} more sections)</>
                   )}
                 </button>
               )}
@@ -534,28 +522,6 @@ function CommentaryRequestSheet({
 }
 
 // ── Icons ────────────────────────────────────────────────────────────────────
-
-// Renders text with ALL CAPS phrases (5+ words) styled as gold callout headers
-function StyledContent({ text }: { text: string }) {
-  // Match sequences of 5+ consecutive ALL-CAPS words (allows punctuation/dashes/em-dashes)
-  const parts = text.split(/(\b[A-Z][A-Z\s,.'"\-—]{15,}\b)/g)
-
-  return (
-    <>
-      {parts.map((part, i) => {
-        const isAllCaps = part.length > 15 && part === part.toUpperCase() && /[A-Z]/.test(part)
-        if (isAllCaps) {
-          return (
-            <span key={i} className="block text-lg font-bold text-amber-500 mt-5 mb-2 tracking-wide">
-              {part.trim()}
-            </span>
-          )
-        }
-        return <span key={i}>{part}</span>
-      })}
-    </>
-  )
-}
 
 function ShieldCheckIcon() {
   return (
