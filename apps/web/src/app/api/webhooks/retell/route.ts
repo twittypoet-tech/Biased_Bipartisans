@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { insertReporterCall, generateUniqueReportSlug } from '@bipi/db'
 
 const REPORTER_AGENT_ID = 'agent_0fd7ecb17c2e5717f23ed69511'
+const ONBOARDING_AGENT_ID = 'agent_dc30d418ef88204e5452f1eed5'
 
 export async function POST(request: Request) {
   // Always respond quickly — Retell retries on slow responses
@@ -37,14 +38,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing call object' }, { status: 400 })
   }
 
-  // Only handle calls from The Reporter agent
-  if (call.agent_id !== REPORTER_AGENT_ID) {
-    return NextResponse.json({ ok: true, skipped: true })
-  }
-
   const callId = call.call_id as string | undefined
   if (!callId) {
     return NextResponse.json({ error: 'Missing call_id' }, { status: 400 })
+  }
+
+  // ── Route by agent ────────────────────────────────────────────────────────
+  if (call.agent_id === ONBOARDING_AGENT_ID) {
+    return handleOnboardingCall(call, callId)
+  }
+
+  // Only handle calls from The Reporter agent below
+  if (call.agent_id !== REPORTER_AGENT_ID) {
+    return NextResponse.json({ ok: true, skipped: true })
   }
 
   // ── Extract analysis fields ───────────────────────────────────────────────
@@ -168,4 +174,71 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ ok: true, published: isPublished })
+}
+
+// ── Onboarding call handler ─────────────────────────────────────────────────
+
+async function handleOnboardingCall(call: Record<string, unknown>, callId: string) {
+  const analysis = (call.call_analysis ?? {}) as Record<string, unknown>
+  const customData = (analysis.custom_analysis_data ?? {}) as Record<string, unknown>
+  const merged = { ...customData, ...analysis }
+
+  console.log('onboarding webhook: analysis keys:', Object.keys(merged))
+
+  // Extract interest fields
+  const rawInterests = (merged.user_interests ?? merged[' user_interests']) as string | undefined
+  const rawEntities = (merged.interest_entities ?? merged[' interest_entities']) as string | undefined
+  const onboardingSuccessful = (merged.onboarding_successful ?? merged[' onboarding_successful']) as boolean | undefined
+  const interestSummary = (merged.interest_summary ?? merged[' interest_summary']) as string | undefined
+
+  // Parse interests JSON array
+  let interests: string[] = []
+  if (rawInterests) {
+    try {
+      const parsed = typeof rawInterests === 'string' ? JSON.parse(rawInterests) : rawInterests
+      if (Array.isArray(parsed)) interests = parsed.map(String).filter(Boolean)
+    } catch {
+      console.warn('onboarding webhook: failed to parse user_interests', rawInterests)
+    }
+  }
+
+  // Parse entities
+  let entities: string[] = []
+  if (rawEntities) {
+    try {
+      const parsed = typeof rawEntities === 'string' ? JSON.parse(rawEntities) : rawEntities
+      if (Array.isArray(parsed)) entities = parsed.map(String).filter(Boolean)
+    } catch {
+      console.warn('onboarding webhook: failed to parse interest_entities', rawEntities)
+    }
+  }
+
+  // Get user_id from dynamic variables
+  const dynamicVars = (call.retell_llm_dynamic_variables ?? {}) as Record<string, unknown>
+  const userId = dynamicVars.user_id as string | undefined
+
+  if (!userId) {
+    console.error('onboarding webhook: no user_id in dynamic variables')
+    return NextResponse.json({ ok: true, error: 'no user_id' })
+  }
+
+  // Combine interests + entities into the interests array
+  const allInterests = [...new Set([...interests, ...entities])]
+
+  console.log('onboarding webhook: updating user', userId, 'with interests:', allInterests)
+
+  // Update user profile
+  try {
+    const db = createServerClient()
+    await db
+      .from('user_profiles')
+      .update({ interests: allInterests })
+      .eq('id', userId)
+
+    console.log('onboarding webhook: profile updated successfully')
+  } catch (err) {
+    console.error('onboarding webhook: DB update failed', err)
+  }
+
+  return NextResponse.json({ ok: true, onboarding: true, interestCount: allInterests.length })
 }
