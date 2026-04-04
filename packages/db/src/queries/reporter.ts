@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ReporterCall, ReportCategory, ReportCommentary } from '@bipi/shared'
+import type { ReporterCall, ReportCategory, ReportCommentary, SourceCitation } from '@bipi/shared'
 
 export type ReporterCallSort = 'hot' | 'new' | 'top'
 
@@ -55,6 +55,7 @@ export interface InsertReporterCallData {
   slug?: string
   transcript?: string | null
   report_image_url?: string | null
+  sources_json?: SourceCitation[] | null
 }
 
 export async function insertReporterCall(

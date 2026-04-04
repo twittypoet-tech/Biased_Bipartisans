@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowUp, ArrowDown, MessageSquare, Share2, Clock, Globe, FileText, Sparkles, Lock, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowUp, ArrowDown, MessageSquare, Share2, Clock, Globe, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import type { ReporterCall, ReportCommentary } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { cn } from '@/lib/utils'
@@ -80,10 +80,17 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Parse transcript into turns
-  const transcriptTurns = (report.transcript ?? '').split('\n\n').filter(Boolean)
-  const isLongTranscript = transcriptTurns.length > 8
-  const visibleTurns = showFullTranscript ? transcriptTurns : transcriptTurns.slice(0, 8)
+  // Parse transcript — strip Caller lines, show only Reporter's report
+  // The transcript is: Caller lines... then "The Reporter: ..." followed by
+  // the rest of the report as plain paragraphs (no prefix).
+  const rawTranscript = report.transcript ?? ''
+  const reporterStart = rawTranscript.indexOf('The Reporter:')
+  const reporterText = reporterStart >= 0
+    ? rawTranscript.slice(reporterStart + 'The Reporter:'.length).trim()
+    : rawTranscript
+  const reporterTurns = reporterText.split('\n\n').filter(Boolean)
+  const isLongTranscript = reporterTurns.length > 6
+  const visibleTurns = showFullTranscript ? reporterTurns : reporterTurns.slice(0, 6)
 
   return (
     <div className="bg-t-bg min-h-screen">
@@ -205,34 +212,18 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
         )}
 
         {/* ── Full Transcript ── */}
-        {transcriptTurns.length > 0 && (
+        {reporterTurns.length > 0 && (
           <div className="mb-8">
             <h2 className="text-base font-semibold text-t-text mb-4 flex items-center gap-2">
               <FileText className="size-4 text-t-text-3" />
               Full Report
             </h2>
             <div className="rounded-xl border border-t-edge bg-t-surface p-4 sm:p-6 shadow-t space-y-4">
-              {visibleTurns.map((turn, i) => {
-                const colonIdx = turn.indexOf(':')
-                const speaker = colonIdx > 0 ? turn.slice(0, colonIdx) : null
-                const content = colonIdx > 0 ? turn.slice(colonIdx + 1).trim() : turn
-
-                return (
-                  <div key={i} className="group">
-                    {speaker && (
-                      <p className={cn(
-                        'text-xs font-semibold uppercase tracking-wider mb-1',
-                        speaker === 'The Reporter' ? 'text-t-accent-text' : 'text-t-text-3',
-                      )}>
-                        {speaker}
-                      </p>
-                    )}
-                    <p className="text-base leading-relaxed text-t-text-2">
-                      <StyledContent text={content} />
-                    </p>
-                  </div>
-                )
-              })}
+              {visibleTurns.map((turn, i) => (
+                <p key={i} className="text-base leading-relaxed text-t-text-2">
+                  {turn}
+                </p>
+              ))}
 
               {isLongTranscript && (
                 <button
@@ -242,7 +233,7 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
                   {showFullTranscript ? (
                     <><ChevronUp className="size-4" /> Show less</>
                   ) : (
-                    <><ChevronDown className="size-4" /> Show full report ({transcriptTurns.length} sections)</>
+                    <><ChevronDown className="size-4" /> Continue reading ({reporterTurns.length - 6} more sections)</>
                   )}
                 </button>
               )}
@@ -286,10 +277,39 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
             </div>
           )}
 
-          {report.sources_mentioned && (
+          {/* Sources Cited — structured links if available, plain text fallback */}
+          {(report.sources_json?.length || report.sources_mentioned) && (
             <div className="mt-4 pt-4 border-t border-t-edge-muted">
-              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Sources Cited</p>
-              <p className="text-xs text-t-text-2 leading-relaxed">{report.sources_mentioned}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-3">Sources Cited</p>
+              {report.sources_json && report.sources_json.length > 0 ? (
+                <ol className="space-y-2">
+                  {report.sources_json.map((source, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="shrink-0 text-xs font-bold text-t-text-3 mt-0.5 w-5 text-right">{i + 1}.</span>
+                      <div className="min-w-0">
+                        {source.url ? (
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-start gap-1.5"
+                          >
+                            <span className="text-sm font-medium text-t-accent-text group-hover:underline">{source.title}</span>
+                            <ExternalLink className="size-3 shrink-0 text-t-text-4 mt-1 group-hover:text-t-accent-text transition" />
+                          </a>
+                        ) : (
+                          <span className="text-sm text-t-text-2">{source.title}</span>
+                        )}
+                        {source.url && (
+                          <p className="text-[11px] text-t-text-4 truncate max-w-xs">{new URL(source.url).hostname}</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : report.sources_mentioned ? (
+                <p className="text-xs text-t-text-2 leading-relaxed">{report.sources_mentioned}</p>
+              ) : null}
             </div>
           )}
         </div>
@@ -505,28 +525,6 @@ function CommentaryRequestSheet({
 }
 
 // ── Icons ────────────────────────────────────────────────────────────────────
-
-// Renders text with ALL CAPS phrases (5+ words) styled as gold callout headers
-function StyledContent({ text }: { text: string }) {
-  // Match sequences of 5+ consecutive ALL-CAPS words (allows punctuation/dashes/em-dashes)
-  const parts = text.split(/(\b[A-Z][A-Z\s,.'"\-—]{15,}\b)/g)
-
-  return (
-    <>
-      {parts.map((part, i) => {
-        const isAllCaps = part.length > 15 && part === part.toUpperCase() && /[A-Z]/.test(part)
-        if (isAllCaps) {
-          return (
-            <span key={i} className="block text-lg font-bold text-amber-500 mt-5 mb-2 tracking-wide">
-              {part.trim()}
-            </span>
-          )
-        }
-        return <span key={i}>{part}</span>
-      })}
-    </>
-  )
-}
 
 function ShieldCheckIcon() {
   return (

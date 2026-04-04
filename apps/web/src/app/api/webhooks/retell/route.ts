@@ -79,6 +79,32 @@ export async function POST(request: Request) {
   const reportQuality    = (merged.report_quality    as string  | undefined) ?? null
   const publishToBipi    = (merged.publish_to_bipi   as boolean | undefined) ?? null
 
+  // Parse structured sources (JSON array of {title, url})
+  // Check multiple possible key names — Retell sometimes adds leading spaces
+  const rawSourcesJson = (
+    merged.sources_with_urls ??
+    merged[' sources_with_urls'] ??
+    (customData as Record<string, unknown>).sources_with_urls ??
+    null
+  ) as string | unknown[] | undefined ?? null
+
+  console.log('reporter webhook: sources_with_urls raw:', rawSourcesJson ? JSON.stringify(rawSourcesJson).slice(0, 500) : 'null')
+
+  let sourcesJson: Array<{ title: string; url: string | null }> | null = null
+  if (rawSourcesJson) {
+    try {
+      const parsed = typeof rawSourcesJson === 'string' ? JSON.parse(rawSourcesJson) : rawSourcesJson
+      if (Array.isArray(parsed)) {
+        sourcesJson = parsed.map((s: Record<string, unknown>) => ({
+          title: String(s.title ?? s.name ?? ''),
+          url: s.url ? String(s.url) : (s.link ? String(s.link) : null),
+        })).filter((s) => s.title)
+      }
+    } catch {
+      console.warn('reporter webhook: failed to parse sources_with_urls', rawSourcesJson)
+    }
+  }
+
   // ── Extract call metadata ─────────────────────────────────────────────────
   const recordingUrl    = (call.recording_url as string | undefined) ?? null
   const startTs         = call.start_timestamp as number | undefined
@@ -115,6 +141,7 @@ export async function POST(request: Request) {
     await insertReporterCall(db, {
       slug,
       transcript,
+      sources_json: sourcesJson,
       retell_call_id: callId,
       call_summary:    callSummary,
       call_successful: callSuccessful,
