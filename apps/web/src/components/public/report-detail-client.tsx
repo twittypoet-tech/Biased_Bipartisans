@@ -80,12 +80,15 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Parse transcript — only show The Reporter's turns (not Caller)
-  const allTurns = (report.transcript ?? '').split('\n\n').filter(Boolean)
-  const reporterTurns = allTurns
-    .filter((t) => t.startsWith('The Reporter:'))
-    .map((t) => t.slice('The Reporter:'.length).trim())
-    .filter(Boolean)
+  // Parse transcript — strip Caller lines, show only Reporter's report
+  // The transcript is: Caller lines... then "The Reporter: ..." followed by
+  // the rest of the report as plain paragraphs (no prefix).
+  const rawTranscript = report.transcript ?? ''
+  const reporterStart = rawTranscript.indexOf('The Reporter:')
+  const reporterText = reporterStart >= 0
+    ? rawTranscript.slice(reporterStart + 'The Reporter:'.length).trim()
+    : rawTranscript
+  const reporterTurns = reporterText.split('\n\n').filter(Boolean)
   const isLongTranscript = reporterTurns.length > 6
   const visibleTurns = showFullTranscript ? reporterTurns : reporterTurns.slice(0, 6)
 
