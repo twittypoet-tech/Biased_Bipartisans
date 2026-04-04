@@ -6,13 +6,6 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Phone, Sparkles, RefreshCw } from 'lucide-react'
 
-// Preload LiveKit
-let livekitReady: Promise<typeof import('livekit-client')> | null = null
-function preloadLiveKit() {
-  if (!livekitReady) livekitReady = import('livekit-client')
-  return livekitReady
-}
-
 type CallStep = 'idle' | 'connecting' | 'live' | 'done' | 'error'
 
 export default function SettingsPage() {
@@ -24,12 +17,11 @@ export default function SettingsPage() {
   // Onboarding call state
   const [callStep, setCallStep] = useState<CallStep>('idle')
   const [callError, setCallError] = useState('')
-  const roomRef = useRef<{ disconnect: () => void } | null>(null)
-  const audioElsRef = useRef<HTMLAudioElement[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const retellClientRef = useRef<any>(null)
 
   const supabase = getSupabaseBrowserClient()
 
-  useEffect(() => { preloadLiveKit() }, [])
   useEffect(() => { if (profile?.display_name) setDisplayName(profile.display_name) }, [profile?.display_name])
 
   // ── Profile save ──────────────────────────────────────────────────────────
@@ -47,72 +39,45 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  // ── Onboarding call logic ─────────────────────────────────────────────────
-
-  function attachAudio(el: HTMLAudioElement) {
-    el.autoplay = true
-    el.style.display = 'none'
-    document.body.appendChild(el)
-    audioElsRef.current.push(el)
-    el.play().catch(() => { setTimeout(() => el.play().catch(() => {}), 500) })
-  }
-
-  function cleanupAudio() {
-    for (const el of audioElsRef.current) { el.pause(); el.srcObject = null; el.remove() }
-    audioElsRef.current = []
-  }
-
-  function unlockAudio() {
-    try {
-      const AC = window.AudioContext || (window as any).webkitAudioContext
-      if (!AC) return
-      if (!(window as any).__bipiAudioCtx) (window as any).__bipiAudioCtx = new AC()
-      const ctx = (window as any).__bipiAudioCtx as AudioContext
-      if (ctx.state === 'suspended') ctx.resume()
-      const buf = ctx.createBuffer(1, 1, 22050)
-      const src = ctx.createBufferSource()
-      src.buffer = buf
-      src.connect(ctx.destination)
-      src.start(0)
-    } catch {}
-  }
+  // ── Onboarding call logic (Retell Web SDK — two-way voice) ───────────────
 
   async function startOnboardingCall() {
-    unlockAudio()
     setCallStep('connecting')
     setCallError('')
 
     try {
+      // Get access token from our API
       const res = await fetch('/api/onboarding/call', { method: 'POST' })
       if (!res.ok) {
         const e = await res.json().catch(() => ({}))
         throw new Error(e.error ?? 'Failed to connect')
       }
-      const { retellUrl, accessToken } = await res.json()
+      const { accessToken } = await res.json()
 
-      const { Room, RoomEvent, Track } = await preloadLiveKit()
-      cleanupAudio()
-      const room = new Room({ adaptiveStream: false, dynacast: false })
-      roomRef.current = room
+      // Use Retell Web SDK for two-way voice (microphone + speaker)
+      const { RetellWebClient } = await import('retell-client-js-sdk')
+      const retellClient = new RetellWebClient()
+      retellClientRef.current = retellClient
 
-      room.on(RoomEvent.TrackSubscribed, (track) => {
-        if (track.kind === Track.Kind.Audio) { attachAudio(track.attach()); setCallStep('live') }
+      retellClient.on('call_started', () => {
+        setCallStep('live')
       })
-      room.on(RoomEvent.Disconnected, () => {
-        cleanupAudio()
+
+      retellClient.on('call_ended', () => {
+        retellClientRef.current = null
         setCallStep('done')
-        roomRef.current = null
-        // Refresh profile after call ends — interests may have been updated via webhook
+        // Refresh profile after call — webhook will have updated interests
         setTimeout(() => refreshProfile(), 3000)
       })
 
-      await room.connect(retellUrl, accessToken)
-      try { await room.startAudio() } catch {}
+      retellClient.on('error', (error: Error) => {
+        console.error('Retell onboarding error:', error)
+        retellClientRef.current = null
+        setCallError(error.message || 'Call error')
+        setCallStep('error')
+      })
 
-      const retryInterval = setInterval(() => {
-        for (const el of audioElsRef.current) { if (el.paused && el.srcObject) el.play().catch(() => {}) }
-      }, 2000)
-      setTimeout(() => { clearInterval(retryInterval); room.disconnect() }, 5 * 60 * 1000)
+      await retellClient.startCall({ accessToken })
     } catch (err) {
       setCallError(err instanceof Error ? err.message : 'Something went wrong')
       setCallStep('error')
@@ -120,9 +85,8 @@ export default function SettingsPage() {
   }
 
   function handleLeaveCall() {
-    roomRef.current?.disconnect()
-    roomRef.current = null
-    cleanupAudio()
+    retellClientRef.current?.stopCall()
+    retellClientRef.current = null
     setCallStep('done')
     setTimeout(() => refreshProfile(), 3000)
   }
