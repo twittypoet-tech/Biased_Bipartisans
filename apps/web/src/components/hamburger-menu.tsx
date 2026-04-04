@@ -54,8 +54,8 @@ export function HamburgerMenu() {
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[100]"
           >
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-t-bg/95 backdrop-blur-md" />
+            {/* Backdrop — fully opaque, no transparency */}
+            <div className="absolute inset-0" style={{ backgroundColor: 'var(--t-bg)' }} />
 
             {/* Content */}
             <div className="relative z-10 flex flex-col h-full">

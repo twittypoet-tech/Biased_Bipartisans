@@ -4,6 +4,91 @@
 
 ---
 
+## 2026-04-04
+
+### feat: User Auth, Credits System, Dashboard & Navigation Overhaul
+
+#### Database — Migration `00024_user_auth.sql`
+- **`user_profiles`** — extends Supabase Auth `auth.users` with `tier` (free/pro), `credits` (default 10), `interests` (TEXT[]), Stripe fields, timestamps
+- **`credit_transactions`** — audit log: signup_bonus, weekly_free, monthly_pro, purchase, report, commentary, agent_call
+- **`user_reports`** — links users to their generated reports (favorite toggle, unique per user+report)
+- Added `user_id` FK to `reporter_calls` and `report_comments`
+- Auto-create profile trigger: on `auth.users` INSERT → creates `user_profiles` row + logs 10 signup credits
+- RLS: users read/update own profile, public reads display names, users manage own reports/transactions
+
+#### Auth System
+- `@supabase/ssr` cookie-based clients (server.ts + client.ts)
+- `middleware.ts`: refreshes sessions, protects `/my/*` routes (redirect to `/auth`)
+- `AuthProvider` context: exposes `user`, `profile`, `isLoading`, `signOut`, `refreshProfile`
+- `/auth` page: email input → 6-digit OTP code → inline verification → redirect to `/my`
+  - Auto-focus, paste-friendly code inputs, auto-submit on 6 digits
+  - Sign In / Create Account toggle
+
+#### Navigation Overhaul
+- Branding: "Bipi AI Debate" → "Biased Bipartisans" (desktop + mobile)
+- Full-screen hamburger menu (both mobile + desktop):
+  - About Us: "What is Biased Bipartisans?", "Our Mission: Think Further"
+  - Work With Us: "Independent Journalists", "Companies and Organizations", "Contact Us"
+  - Buy BIPI: "Buy Credits"
+  - Auth state: Sign In/Subscribe buttons OR profile/credits/dashboard/sign-out
+- Desktop header: keeps inline nav links + adds Sign In, Subscribe, hamburger
+- Mobile header: brand left-aligned, hamburger right-aligned
+- `HeaderAuthButtons`: credits badge + avatar when logged in, Sign In + Subscribe when not
+
+#### Pages
+- `/auth` — OTP sign-in with email/code steps
+- `/subscribe` — Pro card ($25/mo, 100 credits), credit purchase tiers ($0.25→$0.20/credit), Stripe placeholder
+- `/my` — Dashboard home: credits card, quick actions, upsell CTAs for free users
+- `/my/reports` — Report list (empty state, pending population)
+- `/my/settings` — Display name, interests picker (8 topic tags), sign out
+
+#### Email Template
+- `docs/email-templates/magic-code.html` — dark theme branded OTP email with amber code, ready for Supabase Auth > Email Templates
+
+---
+
+## 2026-04-03
+
+### feat: Reddit/News-Style Report Detail Page
+
+#### Database — Migrations `00022_report_page.sql` + `00023_sources_json.sql`
+- Added `slug`, `transcript`, `report_image_url`, `sources_json` columns to `reporter_calls`
+- Backfilled slugs from headlines for existing rows
+- Created `report_comments` (threaded, schema-complete, UX empty state)
+- Created `report_commentary` + `report_commentary_requests` tables
+- RLS: public read, session-based inserts
+
+#### Webhook Updates
+- Extracts full transcript from `call.transcript_object` (Retell `call_analyzed` payload)
+- Formats transcript as "The Reporter: ..." turns, filters out Caller (Wire Host)
+- Generates unique slug from headline before DB insert
+- Extracts `sources_with_urls` from post-call analysis → stores as `sources_json` JSONB
+
+#### Report Detail Page (`/reports/[slug]`)
+- Hero image (conditional, uses `<img>` for arbitrary external URLs)
+- Post header: category badge, verified sources badge
+- Headline, author row (Reporter avatar, name, relative time, language, duration)
+- Engagement bar: upvote/downvote (functional), comments (static "0"), share (copies URL)
+- User query callout, summary, full-width audio player (reuses `NewsAudioPlayer`)
+- Full Report body: Reporter-only turns, expandable for long reports
+- Structured citations: numbered list with clickable source links (title + URL + hostname), fallback to plain text
+- Metadata card: source count, duration, language, key entities as pills
+- "Request Commentary" CTA: gradient card with agent selection bottom sheet (pro gate)
+- Agent commentary section with audio + transcript
+- Comment thread empty state with ghost skeleton + "Sign in" prompt
+
+#### Wire Feed Cards
+- `ReporterCallCard` now wrapped in `<Link>` to `/reports/[slug]`
+- Vote buttons + audio player have `stopPropagation` to prevent navigation
+
+### fix: Browser Audio Autoplay Edge Cases
+- Singleton `AudioContext` (prevents browser limit exhaustion across multiple calls)
+- `el.play()` retry after 500ms + periodic 2-second retry interval
+- "Tap to Enable Audio" fallback button in live call state
+- `room.startAudio()` called after connection
+
+---
+
 ## 2026-04-02
 
 ### feat: Home Page Chat Hero + Debate Page Hero Migration
