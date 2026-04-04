@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUp, ArrowDown, MessageSquare, Share2, Clock, Globe, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
+import { AdSlot } from '@/components/ad-slot'
 import type { ReporterCall, ReportCommentary } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { cn } from '@/lib/utils'
@@ -204,6 +205,9 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
           </div>
         )}
 
+        {/* ── Ad: after summary ── */}
+        <AdSlot format="horizontal" className="mb-6" />
+
         {/* ── Audio Player ── */}
         {report.recording_url && (
           <div className="mb-8">
@@ -240,6 +244,9 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
             </div>
           </div>
         )}
+
+        {/* ── Ad: after transcript ── */}
+        <AdSlot format="auto" className="mb-8" />
 
         {/* ── Metadata Card ── */}
         <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">

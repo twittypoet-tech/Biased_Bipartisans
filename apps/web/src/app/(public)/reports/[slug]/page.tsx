@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { notFound } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { getReporterCallBySlug, listReportCommentary } from '@bipi/db'
@@ -52,10 +53,18 @@ export default async function ReportDetailPage({ params }: PageProps) {
     }))
 
   return (
-    <ReportDetailClient
-      report={report}
-      commentary={commentary}
-      agents={agentsForCommentary}
-    />
+    <>
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3338044547412009"
+        crossOrigin="anonymous"
+        strategy="lazyOnload"
+      />
+      <ReportDetailClient
+        report={report}
+        commentary={commentary}
+        agents={agentsForCommentary}
+      />
+    </>
   )
 }
