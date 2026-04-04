@@ -472,6 +472,11 @@ export interface CommentaryRequest {
 
 // ─── Reporter Call (post-call news feed) ───
 
+export interface SourceCitation {
+  title: string
+  url: string | null
+}
+
 export interface ReporterCall {
   id: UUID
   retell_call_id: string
@@ -500,6 +505,7 @@ export interface ReporterCall {
   slug: string
   transcript: string | null
   report_image_url: string | null
+  sources_json: SourceCitation[] | null
 
   // Forum engagement
   upvotes: number

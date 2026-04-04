@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowUp, ArrowDown, MessageSquare, Share2, Clock, Globe, FileText, Sparkles, Lock, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowUp, ArrowDown, MessageSquare, Share2, Clock, Globe, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import type { ReporterCall, ReportCommentary } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { cn } from '@/lib/utils'
@@ -286,10 +286,39 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
             </div>
           )}
 
-          {report.sources_mentioned && (
+          {/* Sources Cited — structured links if available, plain text fallback */}
+          {(report.sources_json?.length || report.sources_mentioned) && (
             <div className="mt-4 pt-4 border-t border-t-edge-muted">
-              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Sources Cited</p>
-              <p className="text-xs text-t-text-2 leading-relaxed">{report.sources_mentioned}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-3">Sources Cited</p>
+              {report.sources_json && report.sources_json.length > 0 ? (
+                <ol className="space-y-2">
+                  {report.sources_json.map((source, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="shrink-0 text-xs font-bold text-t-text-3 mt-0.5 w-5 text-right">{i + 1}.</span>
+                      <div className="min-w-0">
+                        {source.url ? (
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-start gap-1.5"
+                          >
+                            <span className="text-sm font-medium text-t-accent-text group-hover:underline">{source.title}</span>
+                            <ExternalLink className="size-3 shrink-0 text-t-text-4 mt-1 group-hover:text-t-accent-text transition" />
+                          </a>
+                        ) : (
+                          <span className="text-sm text-t-text-2">{source.title}</span>
+                        )}
+                        {source.url && (
+                          <p className="text-[11px] text-t-text-4 truncate max-w-xs">{new URL(source.url).hostname}</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : report.sources_mentioned ? (
+                <p className="text-xs text-t-text-2 leading-relaxed">{report.sources_mentioned}</p>
+              ) : null}
             </div>
           )}
         </div>
