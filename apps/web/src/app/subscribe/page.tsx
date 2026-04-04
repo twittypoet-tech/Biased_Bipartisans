@@ -37,6 +37,7 @@ const creditTiers = [
 
 export default function SubscribePage() {
   const { user, profile } = useAuth()
+  const isPro = profile?.tier === 'pro'
   const [expandedTier, setExpandedTier] = useState<number | null>(null)
 
   return (
@@ -53,37 +54,56 @@ export default function SubscribePage() {
 
       <div className="mx-auto max-w-lg px-4 py-12 sm:py-20">
 
-        {/* ── Pro Card ── */}
-        <div className="rounded-2xl border-2 border-t-accent/40 bg-t-surface p-6 sm:p-8 shadow-t-lg relative overflow-hidden">
-          {/* Accent glow */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
-
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 rounded-full bg-t-accent-soft px-3 py-1 text-xs font-semibold text-t-accent-text mb-4">
-              <Sparkles className="size-3" /> PRO
+        {/* ── Pro member status (shown when already Pro) ── */}
+        {isPro && (
+          <div className="rounded-2xl border border-t-accent/30 bg-t-surface p-5 shadow-t mb-6">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-xl bg-t-accent-soft flex items-center justify-center">
+                <Sparkles className="size-5 text-t-accent-text" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-t-text">You&apos;re on Pro</p>
+                <p className="text-xs text-t-text-3">{profile?.credits ?? 0} credits remaining · 100 credits/month</p>
+              </div>
+              <button className="rounded-lg border border-t-edge-strong bg-t-surface-el px-3 py-1.5 text-xs font-medium text-t-text-2 hover:bg-t-hover transition">
+                Manage
+              </button>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-t-text mb-1">
-              $25<span className="text-lg text-t-text-3 font-normal">/month</span>
-            </h1>
-            <p className="text-sm text-t-text-2">Research topics with ease. 100 credits included.</p>
           </div>
+        )}
 
-          <ul className="space-y-3 mb-8">
-            {proFeatures.map((f, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <div className="size-6 rounded-full bg-t-accent-soft flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="size-3.5 text-t-accent-text" />
-                </div>
-                <span className="text-sm text-t-text leading-snug">{f.label}</span>
-              </li>
-            ))}
-          </ul>
+        {/* ── Pro Card (shown for non-Pro users) ── */}
+        {!isPro && (
+          <div className="rounded-2xl border-2 border-t-accent/40 bg-t-surface p-6 sm:p-8 shadow-t-lg relative overflow-hidden mb-8">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
 
-          <button className="w-full rounded-xl bg-t-accent py-3.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition">
-            {profile?.tier === 'pro' ? 'Manage Subscription' : 'Subscribe to Pro'}
-          </button>
-          <p className="mt-3 text-center text-xs text-t-text-4">Stripe checkout coming soon</p>
-        </div>
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-t-accent-soft px-3 py-1 text-xs font-semibold text-t-accent-text mb-4">
+                <Sparkles className="size-3" /> PRO
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-t-text mb-1">
+                $25<span className="text-lg text-t-text-3 font-normal">/month</span>
+              </h1>
+              <p className="text-sm text-t-text-2">Research topics with ease. 100 credits included.</p>
+            </div>
+
+            <ul className="space-y-3 mb-8">
+              {proFeatures.map((f, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <div className="size-6 rounded-full bg-t-accent-soft flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="size-3.5 text-t-accent-text" />
+                  </div>
+                  <span className="text-sm text-t-text leading-snug">{f.label}</span>
+                </li>
+              ))}
+            </ul>
+
+            <button className="w-full rounded-xl bg-t-accent py-3.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition">
+              Subscribe to Pro
+            </button>
+            <p className="mt-3 text-center text-xs text-t-text-4">Stripe checkout coming soon</p>
+          </div>
+        )}
 
         {/* ── Buy Credits ── */}
         <div className="mt-8 rounded-2xl border border-t-edge bg-t-surface p-6 shadow-t">

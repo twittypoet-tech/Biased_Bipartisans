@@ -8,6 +8,7 @@ import { Plus, X, Search, Phone, Globe, Zap, LogIn, Coins } from 'lucide-react'
 import { LANGUAGES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/components/auth-provider'
+import { TopUpModal } from '@/components/top-up-modal'
 import type { ReporterPreset } from '@bipi/db'
 
 // ── LiveKit preload ──────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ export function CallHero({ presets, agents }: CallHeroProps) {
   const [researchMode, setResearchMode] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [activeSheet, setActiveSheet] = useState<Sheet>(null)
+  const [showTopUp, setShowTopUp] = useState(false)
   const [langSearch, setLangSearch] = useState('')
   // Desktop: single state for which dropdown is open (null = none)
   const [desktopDropdown, setDesktopDropdown] = useState<'options' | 'language' | null>(null)
@@ -173,7 +175,16 @@ export function CallHero({ presets, agents }: CallHeroProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userQuery: query.trim() || 'breaking news today', language, timezone, researchMode }),
       })
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error ?? 'Failed to connect') }
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}))
+        if (res.status === 402) {
+          // Insufficient credits — show top-up modal
+          setStep('idle')
+          setShowTopUp(true)
+          return
+        }
+        throw new Error(e.error ?? 'Failed to connect')
+      }
       const { publicRoomUrl, browserToken, retellUrl, reporterToken, callId, wireCallId } = await res.json()
       callIdRef.current = callId; wireCallIdRef.current = wireCallId
 
@@ -522,6 +533,9 @@ export function CallHero({ presets, agents }: CallHeroProps) {
           </div>
         )}
       </div>
+
+      {/* Top-up modal */}
+      {showTopUp && <TopUpModal creditsNeeded={5} onClose={() => setShowTopUp(false)} />}
 
       {/* ═══════════════════════════════════════════════════════════════════════
          MOBILE BOTTOM SHEETS (sm:hidden)
