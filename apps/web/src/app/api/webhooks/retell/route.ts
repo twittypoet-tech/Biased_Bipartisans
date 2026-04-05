@@ -135,7 +135,7 @@ export async function POST(request: Request) {
   const isPublished =
     reportDelivered === true &&
     reportQuality === 'Complete' &&
-    (sourceCount ?? 0) > 4
+    (sourceCount ?? 0) >= 4
 
   // ── Write to DB ───────────────────────────────────────────────────────────
   try {
