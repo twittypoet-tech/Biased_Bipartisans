@@ -506,6 +506,8 @@ export interface ReporterCall {
   transcript: string | null
   report_image_url: string | null
   sources_json: SourceCitation[] | null
+  body: ContentBlock[] | null
+  callouts: Callout[] | null
 
   // Forum engagement
   upvotes: number

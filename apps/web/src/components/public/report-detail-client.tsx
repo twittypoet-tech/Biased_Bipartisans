@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUp, ArrowDown, MessageSquare, Share2, Clock, Globe, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import { AdSlot } from '@/components/ad-slot'
-import type { ReporterCall, ReportCommentary } from '@bipi/shared'
+import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { cn } from '@/lib/utils'
 
@@ -215,33 +215,39 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
           </div>
         )}
 
-        {/* ── Full Transcript ── */}
-        {reporterTurns.length > 0 && (
+        {/* ── Full Report (structured or plain text fallback) ── */}
+        {(report.body?.length || reporterTurns.length > 0) && (
           <div className="mb-8">
             <h2 className="text-base font-semibold text-t-text mb-4 flex items-center gap-2">
               <FileText className="size-4 text-t-text-3" />
               Full Report
             </h2>
-            <div className="rounded-xl border border-t-edge bg-t-surface p-4 sm:p-6 shadow-t space-y-4">
-              {visibleTurns.map((turn, i) => (
-                <p key={i} className="text-base leading-relaxed text-t-text-2">
-                  {turn}
-                </p>
-              ))}
 
-              {isLongTranscript && (
-                <button
-                  onClick={() => setShowFullTranscript(!showFullTranscript)}
-                  className="flex items-center gap-1.5 text-sm font-medium text-t-accent-text hover:underline transition mt-2"
-                >
-                  {showFullTranscript ? (
-                    <><ChevronUp className="size-4" /> Show less</>
-                  ) : (
-                    <><ChevronDown className="size-4" /> Continue reading ({reporterTurns.length - 6} more sections)</>
-                  )}
-                </button>
-              )}
-            </div>
+            {report.body && report.body.length > 0 ? (
+              /* ── Structured editorial content ── */
+              <div className="space-y-1">
+                {buildReportBody(report.body, report.callouts ?? [])}
+              </div>
+            ) : (
+              /* ── Plain text fallback for legacy reports ── */
+              <div className="rounded-xl border border-t-edge bg-t-surface p-4 sm:p-6 shadow-t space-y-4">
+                {visibleTurns.map((turn, i) => (
+                  <p key={i} className="text-base leading-relaxed text-t-text-2">{turn}</p>
+                ))}
+                {isLongTranscript && (
+                  <button
+                    onClick={() => setShowFullTranscript(!showFullTranscript)}
+                    className="flex items-center gap-1.5 text-sm font-medium text-t-accent-text hover:underline transition mt-2"
+                  >
+                    {showFullTranscript ? (
+                      <><ChevronUp className="size-4" /> Show less</>
+                    ) : (
+                      <><ChevronDown className="size-4" /> Continue reading ({reporterTurns.length - 6} more sections)</>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -532,6 +538,115 @@ function CommentaryRequestSheet({
 }
 
 // ── Icons ────────────────────────────────────────────────────────────────────
+
+// ── Structured content renderers ─────────────────────────────────────────────
+
+function renderReportBlock(block: ContentBlock, idx: number) {
+  switch (block.type) {
+    case 'paragraph':
+      return <p key={idx} className="text-base leading-relaxed text-t-text-2">{block.content}</p>
+    case 'heading':
+      if ((block.level ?? 2) <= 2) {
+        return <h2 key={idx} className="mt-8 mb-3 text-xl font-bold text-t-text sm:text-2xl" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{block.content}</h2>
+      }
+      return <h3 key={idx} className="mt-6 mb-2 text-lg font-semibold text-t-text">{block.content}</h3>
+    case 'quote':
+      return (
+        <blockquote key={idx} className="my-5 border-l-4 pl-5" style={{ borderColor: '#C8A44A' }}>
+          <p className="text-base italic leading-relaxed text-t-text">{block.content}</p>
+        </blockquote>
+      )
+    case 'divider':
+      return <hr key={idx} className="my-8 border-t-edge" />
+    default:
+      return null
+  }
+}
+
+function renderReportCallout(callout: Callout, idx: number) {
+  switch (callout.type) {
+    case 'fact':
+      return (
+        <div key={`co-${idx}`} className="my-6 rounded-xl bg-amber-950/30 border border-amber-800/40 p-5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1">Verified Fact</p>
+          <p className="text-sm font-semibold text-t-text">{callout.content}</p>
+        </div>
+      )
+    case 'person':
+      return (
+        <div key={`co-${idx}`} className="my-6 flex gap-4 rounded-r-xl border-l-4 border-blue-500 bg-blue-950/30 p-4">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-900/60 text-blue-300 text-sm font-bold">
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+          </div>
+          <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
+        </div>
+      )
+    case 'date':
+      return (
+        <div key={`co-${idx}`} className="my-6 flex gap-4 items-start rounded-xl border border-t-edge bg-t-surface-el p-4">
+          <div className="flex-shrink-0 rounded-lg bg-t-hover p-2">
+            <svg className="h-5 w-5 text-t-text-3 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" /></svg>
+          </div>
+          <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
+        </div>
+      )
+    case 'issue':
+      return (
+        <div key={`co-${idx}`} className="my-6 rounded-xl border border-orange-800/40 bg-orange-950/30 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-orange-400 mb-1">Key Issue</p>
+          <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
+        </div>
+      )
+    case 'quote':
+      return (
+        <blockquote key={`co-${idx}`} className="my-6 border-l-4 pl-5" style={{ borderColor: '#C8A44A' }}>
+          <p className="text-base italic leading-relaxed text-t-text">{callout.content}</p>
+        </blockquote>
+      )
+    default:
+      return null
+  }
+}
+
+function buildReportBody(blocks: ContentBlock[], callouts: Callout[]): React.ReactNode[] {
+  const nodes: React.ReactNode[] = []
+
+  // Build a map of callout positions
+  const calloutsByPosition: Record<number, Callout[]> = {}
+  const unpositioned: Callout[] = []
+
+  callouts.forEach((c) => {
+    if (c.block_order != null) {
+      const pos = c.block_order
+      if (!calloutsByPosition[pos]) calloutsByPosition[pos] = []
+      calloutsByPosition[pos]!.push(c)
+    } else {
+      unpositioned.push(c)
+    }
+  })
+
+  // Distribute unpositioned callouts evenly
+  if (unpositioned.length > 0 && blocks.length > 0) {
+    const step = Math.max(1, Math.floor(blocks.length / (unpositioned.length + 1)))
+    unpositioned.forEach((c, i) => {
+      const pos = Math.min((i + 1) * step, blocks.length - 1)
+      if (!calloutsByPosition[pos]) calloutsByPosition[pos] = []
+      calloutsByPosition[pos].push(c)
+    })
+  }
+
+  // Interleave blocks and callouts
+  blocks.forEach((block, i) => {
+    nodes.push(renderReportBlock(block, i))
+    if (calloutsByPosition[i]) {
+      calloutsByPosition[i].forEach((c, ci) => {
+        nodes.push(renderReportCallout(c, i * 100 + ci))
+      })
+    }
+  })
+
+  return nodes
+}
 
 function ShieldCheckIcon() {
   return (

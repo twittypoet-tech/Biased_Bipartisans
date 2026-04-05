@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
+import OpenAI from 'openai'
 import { createServerClient } from '@/lib/supabase/server'
 import { insertReporterCall, generateUniqueReportSlug } from '@bipi/db'
+import type { ContentBlock, Callout } from '@bipi/shared'
 
 const REPORTER_AGENT_ID = 'agent_0fd7ecb17c2e5717f23ed69511'
 const ONBOARDING_AGENT_ID = 'agent_dc30d418ef88204e5452f1eed5'
@@ -144,9 +146,26 @@ export async function POST(request: Request) {
       ? await generateUniqueReportSlug(db, reportHeadline)
       : callId
 
+    // ── Structure transcript into rich editorial content via GPT-4o ──────
+    let structuredBody: ContentBlock[] | null = null
+    let structuredCallouts: Callout[] | null = null
+
+    if (transcript) {
+      try {
+        const result = await structureTranscript(transcript)
+        structuredBody = result.body
+        structuredCallouts = result.callouts
+        console.log('reporter webhook: structured transcript into', structuredBody?.length ?? 0, 'blocks +', structuredCallouts?.length ?? 0, 'callouts')
+      } catch (err) {
+        console.warn('reporter webhook: transcript structuring failed, saving plain text only', err)
+      }
+    }
+
     await insertReporterCall(db, {
       slug,
       transcript,
+      body: structuredBody,
+      callouts: structuredCallouts,
       sources_json: sourcesJson,
       retell_call_id: callId,
       call_summary:    callSummary,
@@ -174,6 +193,79 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ ok: true, published: isPublished })
+}
+
+// ── Transcript structuring via GPT-4o ────────────────────────────────────────
+
+async function structureTranscript(rawTranscript: string): Promise<{ body: ContentBlock[]; callouts: Callout[] }> {
+  const openaiKey = process.env.OPENAI_API_KEY
+  if (!openaiKey) throw new Error('OPENAI_API_KEY not configured')
+
+  // Extract reporter-only speech
+  const reporterStart = rawTranscript.indexOf('The Reporter:')
+  const reporterText = reporterStart >= 0
+    ? rawTranscript.slice(reporterStart + 'The Reporter:'.length).trim()
+    : rawTranscript
+
+  if (reporterText.length < 50) {
+    return { body: [{ type: 'paragraph', content: reporterText }], callouts: [] }
+  }
+
+  const openai = new OpenAI({ apiKey: openaiKey })
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    temperature: 0.3,
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: `You are a news editor. Convert this spoken news transcript into structured editorial content.
+
+Output a JSON object with exactly two keys:
+- "body": array of ContentBlock objects (the article body)
+- "callouts": array of Callout objects (highlighted elements)
+
+ContentBlock types:
+- { "type": "heading", "content": "...", "level": 2 } — major section headers (use for topic transitions)
+- { "type": "heading", "content": "...", "level": 3 } — sub-section headers
+- { "type": "paragraph", "content": "..." } — body text paragraphs
+- { "type": "quote", "content": "..." } — direct quotes from people or sources (things someone actually said)
+- { "type": "divider" } — visual section breaks between major topics
+
+Callout types (sidebar/highlighted elements):
+- { "type": "fact", "content": "..." } — key verified facts worth highlighting
+- { "type": "person", "content": "..." } — notable people mentioned with brief context
+- { "type": "date", "content": "..." } — important dates or timeline events
+- { "type": "issue", "content": "..." } — key tensions, controversies, or open questions
+
+Rules:
+- Create 2-5 section headings based on topic transitions in the report
+- Extract actual direct quotes (words someone said, indicated by "quoting directly" or quotation patterns) as quote blocks
+- Identify 2-5 key callouts across the report
+- Clean up spoken artifacts (um, uh, filler words, false starts)
+- Convert spoken numbers ("twenty twenty-six") to written form ("2026")
+- Keep all factual content — do NOT add, invent, or remove information
+- Make paragraphs editorial and polished, not transcription-style
+- Each paragraph should be 2-4 sentences
+- Don't include the reporter's opening greeting or closing handoff
+- Callouts should have a "block_order" number indicating after which body block index to render them`,
+      },
+      {
+        role: 'user',
+        content: reporterText,
+      },
+    ],
+  })
+
+  const content = response.choices[0]?.message?.content
+  if (!content) throw new Error('Empty GPT response')
+
+  const parsed = JSON.parse(content)
+  const body = Array.isArray(parsed.body) ? parsed.body as ContentBlock[] : []
+  const callouts = Array.isArray(parsed.callouts) ? parsed.callouts as Callout[] : []
+
+  return { body, callouts }
 }
 
 // ── Onboarding call handler ─────────────────────────────────────────────────
