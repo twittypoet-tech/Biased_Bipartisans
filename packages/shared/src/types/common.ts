@@ -508,6 +508,7 @@ export interface ReporterCall {
   sources_json: SourceCitation[] | null
   body: ContentBlock[] | null
   callouts: Callout[] | null
+  chat_id: string | null
 
   // Forum engagement
   upvotes: number
@@ -527,6 +528,16 @@ export interface ReportComment {
   upvotes: number
   downvotes: number
   is_deleted: boolean
+  created_at: Timestamp
+}
+
+export interface ReportChatMessage {
+  id: UUID
+  report_call_id: UUID
+  user_id: UUID | null
+  display_name: string | null
+  role: 'user' | 'reporter'
+  content: string
   created_at: Timestamp
 }
 

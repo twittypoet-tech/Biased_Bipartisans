@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowUp, ArrowDown, MessageSquare, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink, AlignLeft } from 'lucide-react'
 import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
+import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/utils'
 
 // ── Category badge colors ────────────────────────────────────────────────────
@@ -411,7 +412,7 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
           </div>
         )}
 
-        {/* ── Comments Section (Empty State) ── */}
+        {/* ── Discussion: Live Chat with The Reporter ── */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-t-edge" />
@@ -419,44 +420,188 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
             <div className="flex-1 h-px bg-t-edge" />
           </div>
 
-          <div className="rounded-xl border border-t-edge bg-t-surface p-6 sm:p-8 shadow-t">
-            {/* Empty state */}
-            <div className="flex flex-col items-center text-center py-6">
-              <div className="size-14 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center mb-4">
-                <Lock className="size-6 text-t-text-4" />
-              </div>
-              <h3 className="text-base font-semibold text-t-text mb-1">Join the discussion</h3>
-              <p className="text-sm text-t-text-3 mb-5 max-w-xs">
-                Sign in to share your thoughts, ask questions, and engage with the community.
-              </p>
-              <button className="rounded-lg bg-t-surface-el border border-t-edge-strong px-5 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition">
-                Sign in to comment
-              </button>
+          <ReporterChat reportId={report.id} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Reporter Chat (Discussion) ───────────────────────────────────────────────
+
+interface ChatMsg {
+  id: string
+  role: 'user' | 'reporter'
+  display_name: string | null
+  content: string
+  created_at: string
+}
+
+function ReporterChat({ reportId }: { reportId: string }) {
+  const { user, profile } = useAuth()
+  const [messages, setMessages] = useState<ChatMsg[]>([])
+  const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Load chat history on mount
+  useEffect(() => {
+    fetch(`/api/reports/${reportId}/chat`)
+      .then((r) => r.json())
+      .then((d) => { setMessages(d.messages ?? []); setLoaded(true) })
+      .catch(() => setLoaded(true))
+  }, [reportId])
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages])
+
+  async function handleSend() {
+    if (!input.trim() || sending) return
+    const msg = input.trim()
+    setInput('')
+    setSending(true)
+
+    // Optimistic: add user message immediately
+    const tempUserMsg: ChatMsg = {
+      id: `temp-${Date.now()}`,
+      role: 'user',
+      display_name: profile?.display_name ?? 'You',
+      content: msg,
+      created_at: new Date().toISOString(),
+    }
+    setMessages((prev) => [...prev, tempUserMsg])
+
+    try {
+      const res = await fetch(`/api/reports/${reportId}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg }),
+      })
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}))
+        // Remove optimistic message on error
+        setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id))
+        alert(e.error ?? 'Failed to send')
+        setInput(msg)
+        return
+      }
+      const { userMessage, reporterMessage } = await res.json()
+      // Replace temp with real messages
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== tempUserMsg.id),
+        userMessage,
+        reporterMessage,
+      ])
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id))
+      setInput(msg)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  if (!loaded) return null
+
+  return (
+    <div className="rounded-xl border border-t-edge bg-t-surface shadow-t overflow-hidden">
+      {/* Chat thread */}
+      <div ref={scrollRef} className="max-h-96 overflow-y-auto p-4 sm:p-5 space-y-4">
+        {messages.length === 0 && !sending && (
+          <div className="text-center py-8">
+            <div className="size-12 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center mx-auto mb-3 text-sm font-bold text-t-text-2">
+              R
+            </div>
+            <p className="text-sm font-medium text-t-text mb-1">Ask The Reporter</p>
+            <p className="text-xs text-t-text-3 max-w-xs mx-auto">
+              Have a follow-up question about this report? The Reporter can answer based on the sources cited — and search for more.
+            </p>
+          </div>
+        )}
+
+        {messages.map((msg) => (
+          <div key={msg.id} className={cn('flex gap-3', msg.role === 'user' ? 'flex-row-reverse' : '')}>
+            {/* Avatar */}
+            <div className={cn(
+              'size-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold',
+              msg.role === 'reporter'
+                ? 'bg-t-surface-el border border-t-edge text-t-text-2'
+                : 'bg-t-accent-soft text-t-accent-text',
+            )}>
+              {msg.role === 'reporter' ? 'R' : (msg.display_name?.[0]?.toUpperCase() ?? 'U')}
             </div>
 
-            {/* Ghost skeleton comments for visual appeal */}
-            <div className="mt-6 pt-6 border-t border-t-edge-muted space-y-5 opacity-40 pointer-events-none">
-              {[0.9, 0.7, 0.5].map((w, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="size-7 rounded-full bg-t-surface-el shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 rounded bg-t-surface-el" style={{ width: '30%' }} />
-                    <div className="h-3 rounded bg-t-surface-el" style={{ width: `${w * 100}%` }} />
-                    {i === 0 && (
-                      <div className="ml-10 mt-3 flex gap-3">
-                        <div className="size-6 rounded-full bg-t-surface-el shrink-0" />
-                        <div className="flex-1 space-y-2">
-                          <div className="h-3 rounded bg-t-surface-el" style={{ width: '25%' }} />
-                          <div className="h-3 rounded bg-t-surface-el" style={{ width: '60%' }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+            {/* Bubble */}
+            <div className={cn(
+              'max-w-[80%] rounded-xl px-4 py-2.5',
+              msg.role === 'reporter'
+                ? 'bg-t-surface-el border border-t-edge'
+                : 'bg-t-accent-soft',
+            )}>
+              <p className="text-[10px] font-medium text-t-text-3 mb-0.5">
+                {msg.role === 'reporter' ? 'The Reporter' : (msg.display_name ?? 'You')}
+              </p>
+              <p className="text-sm text-t-text leading-relaxed">{msg.content}</p>
             </div>
           </div>
-        </div>
+        ))}
+
+        {/* Typing indicator */}
+        {sending && (
+          <div className="flex gap-3">
+            <div className="size-7 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center shrink-0 text-xs font-bold text-t-text-2">R</div>
+            <div className="bg-t-surface-el border border-t-edge rounded-xl px-4 py-3">
+              <div className="flex gap-1">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="size-1.5 rounded-full bg-t-text-3 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input bar */}
+      <div className="border-t border-t-edge p-3 sm:p-4">
+        {user ? (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+              placeholder="Ask The Reporter a follow-up..."
+              disabled={sending}
+              className="flex-1 rounded-lg bg-t-surface-el border border-t-edge-strong px-3 py-2.5 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-accent transition disabled:opacity-50"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || sending}
+              className={cn(
+                'shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold transition',
+                input.trim() && !sending
+                  ? 'bg-t-accent text-white hover:opacity-90 active:scale-95'
+                  : 'bg-t-surface-el text-t-text-4 cursor-not-allowed',
+              )}
+            >
+              Send
+            </button>
+          </div>
+        ) : (
+          <Link
+            href="/auth"
+            className="flex items-center justify-center gap-2 rounded-lg border border-t-edge-strong bg-t-surface-el py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"
+          >
+            <Lock className="size-4" /> Sign in to ask The Reporter
+          </Link>
+        )}
+        {user && !profile?.tier?.includes('pro') && (
+          <p className="mt-2 text-[10px] text-t-text-4 text-center">1 credit per question · {profile?.credits ?? 0} credits remaining</p>
+        )}
       </div>
     </div>
   )
