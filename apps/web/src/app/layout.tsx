@@ -5,7 +5,7 @@ import { AuthProvider } from '@/components/auth-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://biasedbipartisans.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://biased-bipartisans-web.vercel.app'),
   title: {
     default: 'Biased Bipartisans — AI News Reporting & Debate Network',
     template: '%s — Biased Bipartisans',
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
     siteName: 'Biased Bipartisans',
     title: 'Biased Bipartisans — AI News Reporting & Debate Network',
     description: 'Personalized, real-time AI news reports and live AI debates. Think Further.',
-    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'Biased Bipartisans — Think Further' }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Biased Bipartisans — Think Further' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Biased Bipartisans',
     description: 'AI-powered news reporting & debate network. Think Further.',
-    images: ['/og-image.svg'],
+    images: ['/og-image.png'],
   },
   icons: {
     icon: '/favicon.svg',
