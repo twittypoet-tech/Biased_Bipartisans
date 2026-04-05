@@ -18,6 +18,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <header className="sticky top-0 z-50 border-b border-t-edge bg-t-overlay backdrop-blur-md hidden md:block">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/bipi-mark.svg" alt="" className="size-7" />
             <span className="text-lg font-bold tracking-tight text-t-text">Biased Bipartisans</span>
           </Link>
           <div className="flex items-center gap-1">
@@ -42,7 +44,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       {/* Mobile header */}
       <header className="sticky top-0 z-50 border-b border-t-edge bg-t-overlay backdrop-blur-md md:hidden">
         <div className="flex h-12 items-center justify-between px-4">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center gap-1.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/bipi-mark.svg" alt="" className="size-6" />
             <span className="text-sm font-bold tracking-tight text-t-text">Biased Bipartisans</span>
           </Link>
           <HamburgerMenu />

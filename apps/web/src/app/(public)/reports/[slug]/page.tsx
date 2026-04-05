@@ -17,14 +17,33 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const db = createServerClient()
   const report = await getReporterCallBySlug(db, slug)
 
-  if (!report) return { title: 'Report Not Found — Bipi' }
+  if (!report) return { title: 'Report Not Found' }
+
+  const title = report.report_headline ?? 'Report'
+  const description = report.call_summary ?? 'AI-generated news report by Biased Bipartisans'
+  const keywords = [
+    report.report_category,
+    ...(report.key_entities?.split(',').map(e => e.trim()) ?? []),
+    'AI news', 'news report', 'Biased Bipartisans',
+  ].filter(Boolean) as string[]
 
   return {
-    title: `${report.report_headline ?? 'Report'} — Bipi`,
-    description: report.call_summary ?? undefined,
+    title,
+    description,
+    keywords: keywords.join(', '),
     openGraph: {
-      title: report.report_headline ?? 'Report',
-      description: report.call_summary ?? undefined,
+      type: 'article',
+      title,
+      description,
+      siteName: 'Biased Bipartisans',
+      locale: 'en_US',
+      publishedTime: report.created_at,
+      ...(report.report_image_url ? { images: [{ url: report.report_image_url, width: 1200, height: 630 }] } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
       ...(report.report_image_url ? { images: [report.report_image_url] } : {}),
     },
   }
@@ -52,6 +71,23 @@ export default async function ReportDetailPage({ params }: PageProps) {
       archetype: a.archetype,
     }))
 
+  // JSON-LD structured data for Google News / rich results
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: report.report_headline ?? 'Report',
+    description: report.call_summary ?? '',
+    datePublished: report.created_at,
+    author: { '@type': 'Organization', name: 'Biased Bipartisans' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Biased Bipartisans',
+      logo: { '@type': 'ImageObject', url: 'https://biasedbipartisans.com/bipi-mark.svg' },
+    },
+    ...(report.report_image_url ? { image: report.report_image_url } : {}),
+    mainEntityOfPage: `https://biasedbipartisans.com/reports/${report.slug}`,
+  }
+
   return (
     <>
       <Script
@@ -59,6 +95,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
         src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3338044547412009"
         crossOrigin="anonymous"
         strategy="lazyOnload"
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <ReportDetailClient
         report={report}

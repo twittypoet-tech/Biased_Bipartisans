@@ -1,0 +1,8 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <title>BIPI</title>
+  <rect width="180" height="180" rx="40" fill="#0B1122"/>
+  <polygon points="18,42 87,90 18,138 36,90" fill="#4D6EB8"/>
+  <polygon points="162,42 93,90 162,138 144,90" fill="#B84848"/>
+  <circle cx="90" cy="90" r="12" fill="#C8A44A"/>
+  <circle cx="90" cy="90" r="6" fill="white" opacity="0.4"/>
+</svg>

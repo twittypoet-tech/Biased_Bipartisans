@@ -1,0 +1,22 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <title>Biased Bipartisans — Think Further</title>
+  <rect width="1200" height="630" fill="#080F22"/>
+  <line x1="80" y1="315" x2="344" y2="315" stroke="#1e2d50" stroke-width="1" stroke-dasharray="4 7"/>
+  <line x1="856" y1="315" x2="1120" y2="315" stroke="#1e2d50" stroke-width="1" stroke-dasharray="4 7"/>
+  <polygon points="345,183 591,315 345,447 423,315" fill="#1B3070"/>
+  <polygon points="855,183 609,315 855,447 777,315" fill="#6E1414"/>
+  <circle cx="600" cy="315" r="22" fill="#C8A44A"/>
+  <circle cx="600" cy="315" r="11" fill="white" opacity="0.25"/>
+  <line x1="80" y1="490" x2="1120" y2="490" stroke="#1e2d50" stroke-width="0.5"/>
+  <text x="600" y="548" text-anchor="middle"
+        font-family="Georgia,'Times New Roman',serif"
+        font-size="44" font-weight="700" letter-spacing="6">
+    <tspan fill="#7A9FD8">BIASED</tspan>
+    <tspan fill="#C8A44A" font-size="32" letter-spacing="0" dx="10"> ·</tspan>
+    <tspan fill="#D07070" dx="10" letter-spacing="6">BIPARTISANS</tspan>
+  </text>
+  <text x="600" y="596" text-anchor="middle"
+        font-family="'Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="16" letter-spacing="9" fill="#556080">THINK FURTHER</text>
+  <rect x="80" y="18" width="1040" height="594" fill="none" stroke="#1a2540" stroke-width="0.5"/>
+</svg>

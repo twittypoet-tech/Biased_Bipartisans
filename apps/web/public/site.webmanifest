@@ -1,0 +1,12 @@
+{
+  "name": "Biased Bipartisans",
+  "short_name": "BIPI",
+  "description": "AI-powered news reporting and debate network. Think Further.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B1122",
+  "theme_color": "#0B1122",
+  "icons": [
+    { "src": "/bipi-mark.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
