@@ -78,101 +78,81 @@ export async function POST(
     return NextResponse.json({ error: 'Not enough credits' }, { status: 402 })
   }
 
-  // Create Retell chat session if none exists
+  // ── Helper: build dynamic vars for Retell chat session ─────────────────
+  async function buildChatVars() {
+    const bodyText = report.body
+      ? (report.body as ContentBlock[])
+          .filter((b) => b.type === 'paragraph' || b.type === 'heading' || b.type === 'quote')
+          .map((b) => b.content).join('\n\n').slice(0, 4000)
+      : ''
+
+    // Load last 20 messages from our DB for conversation continuity
+    const { data: priorMessages } = await db
+      .from('report_chat_messages')
+      .select('role, display_name, content')
+      .eq('report_call_id', report.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    const chatHistory = (priorMessages ?? [])
+      .reverse()
+      .map((m) => `${m.role === 'reporter' ? 'The Reporter' : (m.display_name ?? 'User')}: ${m.content}`)
+      .join('\n')
+
+    return {
+      report_headline: report.report_headline ?? '',
+      report_body: bodyText,
+      key_entities: report.key_entities ?? '',
+      sources_mentioned: report.sources_mentioned ?? '',
+      ...(chatHistory ? { prior_discussion: chatHistory } : {}),
+    }
+  }
+
+  // ── Helper: create a new Retell chat session ──────────────────────────
+  async function createChatSession(): Promise<string> {
+    const vars = await buildChatVars()
+    const res = await fetch(`${RETELL_API_BASE}/create-chat`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${retellApiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agent_id: REPORTER_CHAT_AGENT_ID,
+        retell_llm_dynamic_variables: vars,
+      }),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const data = await res.json()
+    const newChatId = data.chat_id as string
+    await db.from('reporter_calls').update({ chat_id: newChatId }).eq('id', report.id)
+    return newChatId
+  }
+
+  // ── Create session if needed ──────────────────────────────────────────
   let chatId = report.chat_id
   if (!chatId) {
     try {
-      // Serialize body ContentBlocks to readable text for the agent
-      const bodyText = report.body
-        ? (report.body as ContentBlock[])
-            .filter((b) => b.type === 'paragraph' || b.type === 'heading' || b.type === 'quote')
-            .map((b) => b.content)
-            .join('\n\n')
-            .slice(0, 4000)
-        : ''
-
-      const createRes = await fetch(`${RETELL_API_BASE}/create-chat`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${retellApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          agent_id: REPORTER_CHAT_AGENT_ID,
-          retell_llm_dynamic_variables: {
-            report_headline: report.report_headline ?? '',
-            report_body: bodyText,
-            key_entities: report.key_entities ?? '',
-            sources_mentioned: report.sources_mentioned ?? '',
-          },
-        }),
-      })
-
-      if (!createRes.ok) {
-        const errText = await createRes.text()
-        console.error('Retell create-chat failed:', errText)
-        return NextResponse.json({ error: 'Failed to start chat' }, { status: 500 })
-      }
-
-      const chatData = await createRes.json()
-      chatId = chatData.chat_id as string
-
-      // Save chat_id to report
-      await db
-        .from('reporter_calls')
-        .update({ chat_id: chatId })
-        .eq('id', report.id)
+      chatId = await createChatSession()
     } catch (err) {
       console.error('Create chat error:', err)
       return NextResponse.json({ error: 'Failed to start chat' }, { status: 500 })
     }
   }
 
-  // Send message to Retell (with retry: if session ended, create new one)
+  // ── Send message (retry once if session expired) ──────────────────────
   let reporterContent = ''
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const completionRes = await fetch(`${RETELL_API_BASE}/create-chat-completion`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${retellApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          content: message,
-        }),
+        headers: { Authorization: `Bearer ${retellApiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, content: message }),
       })
 
       if (!completionRes.ok) {
         const errText = await completionRes.text()
-        // If chat session ended, create a new one and retry
         if (attempt === 0 && (errText.includes('ended') || errText.includes('not found') || completionRes.status === 422)) {
-          console.log('Retell chat session expired, creating new one...')
-          const bodyText = report.body
-            ? (report.body as ContentBlock[])
-                .filter((b) => b.type === 'paragraph' || b.type === 'heading' || b.type === 'quote')
-                .map((b) => b.content).join('\n\n').slice(0, 4000)
-            : ''
-          const newChatRes = await fetch(`${RETELL_API_BASE}/create-chat`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${retellApiKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              agent_id: REPORTER_CHAT_AGENT_ID,
-              retell_llm_dynamic_variables: {
-                report_headline: report.report_headline ?? '',
-                report_body: bodyText,
-                key_entities: report.key_entities ?? '',
-                sources_mentioned: report.sources_mentioned ?? '',
-              },
-            }),
-          })
-          if (newChatRes.ok) {
-            const newChat = await newChatRes.json()
-            chatId = newChat.chat_id as string
-            await db.from('reporter_calls').update({ chat_id: chatId }).eq('id', report.id)
-            continue // retry with new session
-          }
+          console.log('Retell chat session expired, creating new one with conversation history...')
+          chatId = await createChatSession()
+          continue
         }
         console.error('Retell chat-completion failed:', errText)
         return NextResponse.json({ error: 'Failed to get response' }, { status: 500 })
@@ -182,7 +162,7 @@ export async function POST(
       const agentMessages = (completionData.messages ?? [])
         .filter((m: { role: string; content?: string }) => m.role === 'agent' && m.content)
       reporterContent = agentMessages.map((m: { content: string }) => m.content).join('\n\n') || 'No response.'
-      break // success, exit retry loop
+      break
     } catch (err) {
       console.error('Chat completion error:', err)
       if (attempt === 1) return NextResponse.json({ error: 'Failed to get response' }, { status: 500 })
