@@ -64,6 +64,8 @@ export async function POST(
   if (!report) {
     return NextResponse.json({ error: 'Report not found' }, { status: 404 })
   }
+  // Non-null assertion for TypeScript (guarded above)
+  const rpt = report!
 
   // Load user profile
   const { data: profile } = await db
@@ -80,8 +82,8 @@ export async function POST(
 
   // ── Helper: build dynamic vars for Retell chat session ─────────────────
   async function buildChatVars() {
-    const bodyText = report.body
-      ? (report.body as ContentBlock[])
+    const bodyText = rpt.body
+      ? (rpt.body as ContentBlock[])
           .filter((b) => b.type === 'paragraph' || b.type === 'heading' || b.type === 'quote')
           .map((b) => b.content).join('\n\n').slice(0, 4000)
       : ''
@@ -90,7 +92,7 @@ export async function POST(
     const { data: priorMessages } = await db
       .from('report_chat_messages')
       .select('role, display_name, content')
-      .eq('report_call_id', report.id)
+      .eq('report_call_id', rpt.id)
       .order('created_at', { ascending: false })
       .limit(20)
 
@@ -100,10 +102,10 @@ export async function POST(
       .join('\n')
 
     return {
-      report_headline: report.report_headline ?? '',
+      report_headline: rpt.report_headline ?? '',
       report_body: bodyText,
-      key_entities: report.key_entities ?? '',
-      sources_mentioned: report.sources_mentioned ?? '',
+      key_entities: rpt.key_entities ?? '',
+      sources_mentioned: rpt.sources_mentioned ?? '',
       ...(chatHistory ? { prior_discussion: chatHistory } : {}),
     }
   }
@@ -122,12 +124,12 @@ export async function POST(
     if (!res.ok) throw new Error(await res.text())
     const data = await res.json()
     const newChatId = data.chat_id as string
-    await db.from('reporter_calls').update({ chat_id: newChatId }).eq('id', report.id)
+    await db.from('reporter_calls').update({ chat_id: newChatId }).eq('id', rpt.id)
     return newChatId
   }
 
   // ── Create session if needed ──────────────────────────────────────────
-  let chatId = report.chat_id
+  let chatId = rpt.chat_id
   if (!chatId) {
     try {
       chatId = await createChatSession()
@@ -176,7 +178,7 @@ export async function POST(
   const { data: userMsg } = await db
     .from('report_chat_messages')
     .insert({
-      report_call_id: report.id,
+      report_call_id: rpt.id,
       user_id: user.id,
       display_name: displayName,
       role: 'user',
@@ -188,7 +190,7 @@ export async function POST(
   const { data: reporterMsg } = await db
     .from('report_chat_messages')
     .insert({
-      report_call_id: report.id,
+      report_call_id: rpt.id,
       role: 'reporter',
       display_name: 'The Reporter',
       content: reporterContent,
@@ -206,7 +208,7 @@ export async function POST(
       user_id: user.id,
       amount: -1,
       reason: 'commentary',
-      reference_id: report.id,
+      reference_id: rpt.id,
     })
   }
 
