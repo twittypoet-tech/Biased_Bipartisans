@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowUp, ArrowDown, MessageSquare, Share2, Clock, Globe, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
-import { AdSlot } from '@/components/ad-slot'
+import { motion } from 'framer-motion'
+import { ArrowUp, ArrowDown, MessageSquare, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { cn } from '@/lib/utils'
@@ -75,10 +75,20 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
     setUserVote(dir)
   }
 
-  function handleShare() {
-    navigator.clipboard.writeText(window.location.href)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  async function handleShare() {
+    const shareData = {
+      title: report.report_headline ?? 'Report — Biased Bipartisans',
+      text: report.call_summary ?? '',
+      url: window.location.href,
+    }
+    if (navigator.share) {
+      try { await navigator.share(shareData) } catch { /* user cancelled */ }
+    } else {
+      // Desktop fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   // Parse transcript — strip Caller lines, show only Reporter's report
@@ -130,7 +140,7 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
         </h1>
 
         {/* ── Author row ── */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <div className="size-9 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-xs font-bold text-t-text-2 shrink-0">
             R
           </div>
@@ -153,6 +163,13 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
             </div>
           </div>
         </div>
+
+        {/* ── Audio Player (top of page, below author) ── */}
+        {report.recording_url && (
+          <div className="mb-5">
+            <NewsAudioPlayer src={report.recording_url} durationHint={report.duration_seconds ?? undefined} />
+          </div>
+        )}
 
         {/* ── Engagement bar ── */}
         <div className="flex items-center gap-1 py-3 border-y border-t-edge mb-6">
@@ -190,28 +207,10 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
           </button>
         </div>
 
-        {/* ── User Query ── */}
-        {report.user_query && (
-          <div className="mb-6 rounded-xl border-l-4 border-t-accent bg-t-surface p-4 shadow-t">
-            <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-1">Query</p>
-            <p className="text-sm text-t-text italic">&ldquo;{report.user_query}&rdquo;</p>
-          </div>
-        )}
-
         {/* ── Summary ── */}
         {report.call_summary && (
           <div className="mb-6">
             <p className="text-base leading-relaxed text-t-text-2">{report.call_summary}</p>
-          </div>
-        )}
-
-        {/* ── Ad: after summary ── */}
-        <AdSlot format="horizontal" className="mb-6" />
-
-        {/* ── Audio Player ── */}
-        {report.recording_url && (
-          <div className="mb-8">
-            <NewsAudioPlayer src={report.recording_url} durationHint={report.duration_seconds ?? undefined} />
           </div>
         )}
 
@@ -250,9 +249,6 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
             )}
           </div>
         )}
-
-        {/* ── Ad: after transcript ── */}
-        <AdSlot format="auto" className="mb-8" />
 
         {/* ── Metadata Card ── */}
         <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
@@ -323,6 +319,14 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
               ) : report.sources_mentioned ? (
                 <p className="text-xs text-t-text-2 leading-relaxed">{report.sources_mentioned}</p>
               ) : null}
+            </div>
+          )}
+
+          {/* User query — blended into metadata card */}
+          {report.user_query && (
+            <div className="mt-4 pt-4 border-t border-t-edge-muted">
+              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Original Query</p>
+              <p className="text-sm text-t-text-2 italic leading-relaxed">&ldquo;{report.user_query}&rdquo;</p>
             </div>
           )}
         </div>
@@ -563,45 +567,74 @@ function renderReportBlock(block: ContentBlock, idx: number) {
   }
 }
 
+const calloutAnimation = {
+  initial: { opacity: 0, x: -20 } as const,
+  whileInView: { opacity: 1, x: 0 } as const,
+  viewport: { once: true, margin: '-50px' as any },
+  transition: { duration: 0.5, ease: 'easeOut' as const },
+}
+
 function renderReportCallout(callout: Callout, idx: number) {
   switch (callout.type) {
     case 'fact':
       return (
-        <div key={`co-${idx}`} className="my-6 rounded-xl bg-amber-950/30 border border-amber-800/40 p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1">Verified Fact</p>
-          <p className="text-sm font-semibold text-t-text">{callout.content}</p>
-        </div>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 rounded-xl overflow-hidden" style={{ boxShadow: '0 0 20px rgba(245,158,11,0.08)' }}>
+          <div className="h-1 w-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500" />
+          <div className="bg-amber-950/40 border border-amber-800/30 border-t-0 rounded-b-xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="size-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <svg className="size-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-400">Verified Fact</p>
+            </div>
+            <p className="text-sm font-semibold text-t-text leading-relaxed">{callout.content}</p>
+          </div>
+        </motion.div>
       )
     case 'person':
       return (
-        <div key={`co-${idx}`} className="my-6 flex gap-4 rounded-r-xl border-l-4 border-blue-500 bg-blue-950/30 p-4">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-900/60 text-blue-300 text-sm font-bold">
-            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 flex gap-4 rounded-xl border-l-4 border-blue-500 p-5" style={{ backgroundColor: 'rgba(30,64,175,0.08)', boxShadow: '0 0 20px rgba(59,130,246,0.06)' }}>
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/15 border border-blue-500/20">
+            <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
           </div>
-          <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
-        </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1">Key Person</p>
+            <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
+          </div>
+        </motion.div>
       )
     case 'date':
       return (
-        <div key={`co-${idx}`} className="my-6 flex gap-4 items-start rounded-xl border border-t-edge bg-t-surface-el p-4">
-          <div className="flex-shrink-0 rounded-lg bg-t-hover p-2">
-            <svg className="h-5 w-5 text-t-text-3 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" /></svg>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 flex gap-4 items-start rounded-xl border border-t-edge bg-t-surface p-5 shadow-t">
+          <div className="flex-shrink-0 size-10 rounded-lg bg-t-surface-el border border-t-edge flex items-center justify-center">
+            <svg className="h-5 w-5 text-t-text-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" /></svg>
           </div>
-          <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
-        </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-t-text-3 mb-1">Timeline</p>
+            <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
+          </div>
+        </motion.div>
       )
     case 'issue':
       return (
-        <div key={`co-${idx}`} className="my-6 rounded-xl border border-orange-800/40 bg-orange-950/30 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-orange-400 mb-1">Key Issue</p>
-          <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
-        </div>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 rounded-xl overflow-hidden" style={{ boxShadow: '0 0 20px rgba(249,115,22,0.06)' }}>
+          <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-500" />
+          <div className="bg-orange-950/30 border border-orange-800/30 border-t-0 rounded-b-xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="size-6 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <svg className="size-3.5 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75h.007v.008H12v-.008z"/></svg>
+              </div>
+              <p className="text-xs font-bold uppercase tracking-wider text-orange-400">Key Issue</p>
+            </div>
+            <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
+          </div>
+        </motion.div>
       )
     case 'quote':
       return (
-        <blockquote key={`co-${idx}`} className="my-6 border-l-4 pl-5" style={{ borderColor: '#C8A44A' }}>
-          <p className="text-base italic leading-relaxed text-t-text">{callout.content}</p>
-        </blockquote>
+        <motion.blockquote key={`co-${idx}`} {...calloutAnimation} className="my-8 border-l-4 pl-6 py-2" style={{ borderColor: '#C8A44A' }}>
+          <p className="text-lg italic leading-relaxed text-t-text" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{callout.content}</p>
+        </motion.blockquote>
       )
     default:
       return null
