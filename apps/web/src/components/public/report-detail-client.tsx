@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowUp, ArrowDown, MessageSquare, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
+import { ArrowUp, ArrowDown, MessageSquare, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ExternalLink, AlignLeft } from 'lucide-react'
 import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { cn } from '@/lib/utils'
@@ -62,6 +62,7 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
   const [votes, setVotes] = useState({ up: report.upvotes, down: report.downvotes })
   const [copied, setCopied] = useState(false)
   const [showFullTranscript, setShowFullTranscript] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
   const [showCommentaryRequest, setShowCommentaryRequest] = useState(false)
 
   const netVotes = votes.up - votes.down
@@ -196,6 +197,16 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
             <span className="hidden sm:inline">0 Comments</span>
           </button>
 
+          {report.call_summary && (
+            <button
+              onClick={() => setShowSummary(!showSummary)}
+              className={cn('flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition', showSummary ? 'text-t-accent-text bg-t-accent-soft' : 'text-t-text-3 hover:bg-t-hover')}
+            >
+              <AlignLeft className="size-4" />
+              <span className="hidden sm:inline">Summarize</span>
+            </button>
+          )}
+
           <div className="flex-1" />
 
           <button
@@ -207,20 +218,22 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
           </button>
         </div>
 
-        {/* ── Summary ── */}
-        {report.call_summary && (
-          <div className="mb-6">
-            <p className="text-base leading-relaxed text-t-text-2">{report.call_summary}</p>
-          </div>
+        {/* ── Summary (toggleable) ── */}
+        {showSummary && report.call_summary && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Summary</p>
+            <p className="text-sm leading-relaxed text-t-text-2">{report.call_summary}</p>
+          </motion.div>
         )}
 
-        {/* ── Full Report (structured or plain text fallback) ── */}
+        {/* ── Report body (structured or plain text fallback) ── */}
         {(report.body?.length || reporterTurns.length > 0) && (
           <div className="mb-8">
-            <h2 className="text-base font-semibold text-t-text mb-4 flex items-center gap-2">
-              <FileText className="size-4 text-t-text-3" />
-              Full Report
-            </h2>
 
             {report.body && report.body.length > 0 ? (
               /* ── Structured editorial content ── */
