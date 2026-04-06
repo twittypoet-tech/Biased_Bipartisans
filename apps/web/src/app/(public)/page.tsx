@@ -5,6 +5,7 @@ import { listDebates, listDebateParticipants, listPublishedReporterCalls, listAc
 import { DebateCard } from '@/components/public/debate-card'
 import { CallHero } from '@/components/home/call-hero'
 import { ReporterForum } from '@/components/home/reporter-forum'
+import { HomeSignUpCTA } from '@/components/public/promo-callouts'
 
 export default async function HomePage() {
   const db = createServerClient()
@@ -17,10 +18,12 @@ export default async function HomePage() {
 
   // Fetch user presets if authenticated
   let userPresets: { id: string; title: string; query_template: string; interest: string | null; sort_order: number }[] = []
+  let isAuthenticated = false
   try {
     const authClient = await createAuthServerClient()
     const { data: { user } } = await authClient.auth.getUser()
     if (user) {
+      isAuthenticated = true
       const up = await listUserPresets(db, user.id)
       userPresets = up
     }
@@ -99,6 +102,9 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ── Sign Up CTA (anon users only) ─────────────────────────────────── */}
+      {!isAuthenticated && <HomeSignUpCTA />}
 
       {/* ── Reporter Forum ────────────────────────────────────────────────── */}
       <ReporterForum initialCalls={reporterCalls} />

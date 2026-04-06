@@ -8,6 +8,7 @@ import { ArrowUp, ArrowDown, MessageSquare, Share2, FileText, Sparkles, Lock, Ch
 import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { useAuth } from '@/components/auth-provider'
+import { SignUpCallout, TournamentCallout, SponsoredCallout } from './promo-callouts'
 import { cn } from '@/lib/utils'
 
 // ── Category badge colors ────────────────────────────────────────────────────
@@ -306,7 +307,11 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
             {report.body && report.body.length > 0 ? (
               /* ── Structured editorial content ── */
               <div className="space-y-5">
-                {buildReportBody(report.body, report.callouts ?? [])}
+                {buildReportBody(report.body, report.callouts ?? [], [
+                  <SignUpCallout key="promo-signup" />,
+                  <TournamentCallout key="promo-tournament" />,
+                  <SponsoredCallout key="promo-sponsored" />,
+                ])}
               </div>
             ) : (
               /* ── Plain text fallback for legacy reports ── */
@@ -1071,7 +1076,7 @@ function renderReportCallout(callout: Callout, idx: number) {
   }
 }
 
-function buildReportBody(blocks: ContentBlock[], callouts: Callout[]): React.ReactNode[] {
+function buildReportBody(blocks: ContentBlock[], callouts: Callout[], promoNodes?: React.ReactNode[]): React.ReactNode[] {
   const nodes: React.ReactNode[] = []
 
   // Build a map of callout positions
@@ -1098,13 +1103,28 @@ function buildReportBody(blocks: ContentBlock[], callouts: Callout[]): React.Rea
     })
   }
 
-  // Interleave blocks and callouts
+  // Determine positions for promo callouts — place after existing callouts, evenly spaced
+  const promos = promoNodes ?? []
+  const promoPositions = new Set<number>()
+  if (promos.length > 0 && blocks.length > 3) {
+    const promoStep = Math.max(1, Math.floor(blocks.length / (promos.length + 1)))
+    promos.forEach((_, i) => {
+      promoPositions.add(Math.min((i + 1) * promoStep, blocks.length - 1))
+    })
+  }
+  const promoIter = promos[Symbol.iterator]()
+
+  // Interleave blocks, callouts, and promos
   blocks.forEach((block, i) => {
     nodes.push(renderReportBlock(block, i))
     if (calloutsByPosition[i]) {
       calloutsByPosition[i].forEach((c, ci) => {
         nodes.push(renderReportCallout(c, i * 100 + ci))
       })
+    }
+    if (promoPositions.has(i)) {
+      const next = promoIter.next()
+      if (!next.done) nodes.push(next.value)
     }
   })
 
