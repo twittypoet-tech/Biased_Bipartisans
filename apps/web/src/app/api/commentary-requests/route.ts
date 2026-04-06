@@ -151,23 +151,7 @@ export async function POST(request: Request) {
   if (retellApiKey) {
     // Commentary agent call
     try {
-      const res = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${retellApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          agent_id: agent.retell_commentary_agent_id,
-          retell_llm_dynamic_variables: dynamicVars,
-        }),
-      })
-
-      if (!res.ok) {
-        console.error('Retell create-web-call error (Commentary):', await res.text())
-      } else {
-        commentaryCall = await res.json()
-      }
+      commentaryCall = await createRetellCall(retellApiKey, agent.retell_commentary_agent_id!, dynamicVars)
     } catch (err) {
       console.error('Retell create-web-call failed (Commentary):', err)
     }
@@ -175,26 +159,10 @@ export async function POST(request: Request) {
     // Commentary Host call — introduces the agent, then goes silent
     if (hostAgent?.retell_agent_id) {
       try {
-        const hostRes = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${retellApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            agent_id: hostAgent.retell_agent_id,
-            retell_llm_dynamic_variables: {
-              report_headline: report.report_headline ?? 'Untitled Report',
-              agent_name: agent.name,
-            },
-          }),
+        hostCall = await createRetellCall(retellApiKey, hostAgent.retell_agent_id, {
+          report_headline: report.report_headline ?? 'Untitled Report',
+          agent_name: agent.name,
         })
-
-        if (!hostRes.ok) {
-          console.warn('Retell create-web-call warning (Commentary Host):', await hostRes.text())
-        } else {
-          hostCall = await hostRes.json()
-        }
       } catch (err) {
         console.warn('Retell create-web-call failed (Commentary Host):', err)
       }
@@ -209,15 +177,47 @@ export async function POST(request: Request) {
       .eq('id', commentaryRequest.id)
   }
 
+  // ── Relay: bridge Host ↔ Commentary Agent audio into public LiveKit room ─
+  let publicRoomUrl: string | null = null
+  let browserToken: string | null = null
+
+  if (hostCall && commentaryCall) {
+    const agentsUrl = process.env.AGENTS_SERVICE_URL
+    const triggerSecret = process.env.AGENTS_TRIGGER_SECRET
+    if (agentsUrl) {
+      try {
+        const relayRes = await fetch(`${agentsUrl}/reporter/relay`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(triggerSecret ? { Authorization: `Bearer ${triggerSecret}` } : {}),
+          },
+          body: JSON.stringify({
+            wireAccessToken: hostCall.access_token,
+            reporterAccessToken: commentaryCall.access_token,
+          }),
+        })
+        if (relayRes.ok) {
+          const relayData = await relayRes.json()
+          publicRoomUrl = relayData.publicRoomUrl ?? null
+          browserToken = relayData.browserToken ?? null
+        }
+      } catch (err) {
+        console.warn('Commentary relay trigger failed:', err)
+      }
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     requestId: commentaryRequest.id,
     agent: { id: agent.id, name: agent.name },
     callId: commentaryCall?.call_id ?? null,
     hostCallId: hostCall?.call_id ?? null,
-    accessToken: commentaryCall?.access_token ?? null,
-    hostAccessToken: hostCall?.access_token ?? null,
+    publicRoomUrl: publicRoomUrl ?? null,
+    browserToken: browserToken ?? null,
     retellUrl: 'wss://retell-ai-4ihahnq7.livekit.cloud',
+    commentaryToken: publicRoomUrl ? null : commentaryCall?.access_token ?? null,
     report: {
       id: report.id,
       headline: report.report_headline,
@@ -226,6 +226,22 @@ export async function POST(request: Request) {
     existingCommentaryCount: existingCommentary?.length ?? 0,
     creditsRemaining: profile.credits - COMMENTARY_CREDIT_COST,
   }, { status: 201 })
+}
+
+// ── Retell call helper ────────────────────────────────────────────────────────
+
+async function createRetellCall(
+  apiKey: string,
+  agentId: string,
+  dynamicVars: Record<string, string>,
+): Promise<{ access_token: string; call_id: string }> {
+  const res = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ agent_id: agentId, retell_llm_dynamic_variables: dynamicVars }),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
 }
 
 // ── Format existing commentaries for dynamic variable ─────────────────────

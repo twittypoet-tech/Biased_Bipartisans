@@ -777,14 +777,15 @@ function CommentaryRequestSheet({
         throw new Error(data.error || 'Request failed')
       }
 
-      const { accessToken, retellUrl } = await res.json()
+      const { publicRoomUrl, browserToken, retellUrl, commentaryToken } = await res.json()
       refreshProfile()
 
-      if (!accessToken || !retellUrl) {
+      if (!publicRoomUrl && !commentaryToken) {
         throw new Error('Commentary agent not configured yet')
       }
 
       // Connect to LiveKit to stream commentary audio
+      // Same pattern as reporter: prefer public room relay, fall back to direct token
       const { Room, RoomEvent, Track } = await preloadLiveKit()
       cleanupAudio()
       const room = new Room({ adaptiveStream: false, dynacast: false })
@@ -801,11 +802,14 @@ function CommentaryRequestSheet({
         cleanupAudio()
         roomRef.current = null
         setStep('done')
-        // Notify parent to refresh commentary list
         onCommentaryPublished?.()
       })
 
-      await room.connect(retellUrl, accessToken)
+      if (publicRoomUrl && browserToken) {
+        await room.connect(publicRoomUrl, browserToken)
+      } else if (commentaryToken) {
+        await room.connect(retellUrl, commentaryToken)
+      }
 
       try { await room.startAudio() } catch {
         try { await (room as any).startAudio?.() } catch {}
