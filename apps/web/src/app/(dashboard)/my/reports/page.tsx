@@ -139,42 +139,45 @@ export default function MyReportsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Recommended for You</p>
-            {hasInterests && (
-              <button
-                onClick={handleRefreshPresets}
-                disabled={refreshing}
-                className="flex items-center gap-1.5 text-xs text-t-text-3 hover:text-t-accent-text transition disabled:opacity-50"
-              >
-                <RefreshCw className={`size-3 ${refreshing ? 'animate-spin' : ''}`} />
-                {refreshing ? 'Generating...' : 'Refresh (1 credit)'}
-              </button>
-            )}
           </div>
 
           {presets.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
-              {presets.map((preset) => (
-                <Link
-                  key={preset.id}
-                  href={`/?query=${encodeURIComponent(preset.query_template)}`}
-                  className="snap-start shrink-0 w-[220px] sm:w-[240px] rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
-                >
-                  {preset.interest && (
-                    <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${interestColor(preset.interest)}`}>
-                      {preset.interest}
+            <>
+              <div className="space-y-3 mb-4">
+                {presets.map((preset) => (
+                  <Link
+                    key={preset.id}
+                    href={`/?query=${encodeURIComponent(preset.query_template)}`}
+                    className="block rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
+                  >
+                    {preset.interest && (
+                      <div className={`px-4 py-1 text-[10px] font-semibold uppercase tracking-wide ${interestColor(preset.interest)}`}>
+                        {preset.interest}
+                      </div>
+                    )}
+                    <div className="p-4">
+                      <p className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-1.5">
+                        {preset.title}
+                      </p>
+                      <p className="text-xs text-t-text-2 leading-relaxed">
+                        {preset.query_template}
+                      </p>
                     </div>
-                  )}
-                  <div className="p-3">
-                    <p className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-1">
-                      {preset.title}
-                    </p>
-                    <p className="text-xs text-t-text-3 line-clamp-2 leading-relaxed">
-                      {preset.query_template}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+
+              {hasInterests && (
+                <button
+                  onClick={handleRefreshPresets}
+                  disabled={refreshing}
+                  className="w-full rounded-xl border border-t-edge bg-t-surface py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Generating new suggestions...' : 'Refresh Suggestions (1 credit)'}
+                </button>
+              )}
+            </>
           ) : hasInterests ? (
             /* Has interests but no presets generated yet */
             <div className="rounded-xl border border-t-edge bg-t-surface p-5 text-center shadow-t">

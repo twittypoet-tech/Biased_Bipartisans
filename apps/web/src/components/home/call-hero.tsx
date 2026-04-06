@@ -31,9 +31,18 @@ interface AgentOption {
   available: boolean
 }
 
+interface UserPresetOption {
+  id: string
+  title: string
+  query_template: string
+  interest: string | null
+  sort_order: number
+}
+
 interface CallHeroProps {
   presets: ReporterPreset[]
   agents: AgentOption[]
+  userPresets?: UserPresetOption[]
 }
 
 // ── Category colors ──────────────────────────────────────────────────────────
@@ -50,12 +59,29 @@ const categoryColors: Record<string, string> = {
 }
 const defaultCategoryColor = 'border-t-badge-border bg-t-badge text-t-text-2'
 
+const INTEREST_COLORS = [
+  'border-rose-500/30 bg-rose-500/10 text-rose-300',
+  'border-sky-500/30 bg-sky-500/10 text-sky-300',
+  'border-violet-500/30 bg-violet-500/10 text-violet-300',
+  'border-teal-500/30 bg-teal-500/10 text-teal-300',
+  'border-orange-500/30 bg-orange-500/10 text-orange-300',
+  'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+  'border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300',
+  'border-lime-500/30 bg-lime-500/10 text-lime-300',
+]
+function interestColor(interest: string): string {
+  let hash = 0
+  for (let i = 0; i < interest.length; i++) hash = ((hash << 5) - hash + interest.charCodeAt(i)) | 0
+  return INTEREST_COLORS[Math.abs(hash) % INTEREST_COLORS.length]!
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
-export function CallHero({ presets, agents }: CallHeroProps) {
+export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
   const { user, profile, refreshProfile } = useAuth()
   const [step, setStep] = useState<Step>('idle')
   const [query, setQuery] = useState('')
+  const [presetTab, setPresetTab] = useState<'suggested' | 'recommended'>('suggested')
   const [language, setLanguage] = useState('en-US')
   const [selectedAgent, setSelectedAgent] = useState(agents[0]?.id ?? '')
   const [researchMode, setResearchMode] = useState(false)
@@ -458,30 +484,111 @@ export function CallHero({ presets, agents }: CallHeroProps) {
             </div>
 
             {/* ── Preset suggestions ── */}
-            {presets.length > 0 && (
+            {(presets.length > 0 || userPresets.length > 0) && (
               <div className="mt-6 sm:mt-8">
-                <p className="mb-3 sm:mb-4 text-center text-xs font-medium uppercase tracking-wider text-t-text-3">Suggested Topics</p>
-                {/* Mobile carousel */}
-                <div className="sm:hidden -mx-4 px-4">
-                  <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-none">
-                    {presets.map((preset) => (
-                      <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group snap-start shrink-0 w-[72vw] text-left rounded-xl border border-t-edge bg-t-surface p-3.5 shadow-t transition active:scale-[0.98]">
-                        {preset.category && <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-1.5 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>{preset.category}</span>}
-                        <p className="text-sm font-medium text-t-text leading-snug">{preset.title}</p>
-                        <p className="mt-1 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {/* Desktop grid */}
-                <div className="hidden sm:grid gap-3 sm:grid-cols-2">
-                  {presets.map((preset) => (
-                    <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group text-left rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
-                      {preset.category && <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-2 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>{preset.category}</span>}
-                      <p className="text-sm font-medium text-t-text leading-snug group-hover:text-t-accent-text transition">{preset.title}</p>
-                      <p className="mt-1.5 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
+
+                {/* Desktop: tab switcher (only if both lists exist) */}
+                {userPresets.length > 0 && presets.length > 0 && (
+                  <div className="hidden sm:flex items-center justify-center gap-1 mb-4">
+                    <button
+                      onClick={() => setPresetTab('suggested')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium uppercase tracking-wider transition ${presetTab === 'suggested' ? 'bg-t-surface-el text-t-text border border-t-edge-strong' : 'text-t-text-3 hover:text-t-text-2'}`}
+                    >
+                      Suggested Topics
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setPresetTab('recommended')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium uppercase tracking-wider transition ${presetTab === 'recommended' ? 'bg-t-surface-el text-t-text border border-t-edge-strong' : 'text-t-text-3 hover:text-t-text-2'}`}
+                    >
+                      Based on Your Interests
+                    </button>
+                  </div>
+                )}
+
+                {/* Desktop: single label if only one list */}
+                {(userPresets.length === 0 || presets.length === 0) && (
+                  <p className="hidden sm:block mb-4 text-center text-xs font-medium uppercase tracking-wider text-t-text-3">
+                    {userPresets.length > 0 ? 'Based on Your Interests' : 'Suggested Topics'}
+                  </p>
+                )}
+
+                {/* ── MOBILE: both carousels stacked ── */}
+                <div className="sm:hidden space-y-6">
+                  {/* Suggested Topics */}
+                  {presets.length > 0 && (
+                    <div>
+                      <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-t-text-3">Suggested Topics</p>
+                      <div className="-mx-4 px-4">
+                        <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+                          {presets.map((preset) => (
+                            <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group snap-start shrink-0 w-[72vw] text-left rounded-xl border border-t-edge bg-t-surface p-3.5 shadow-t transition active:scale-[0.98]">
+                              {preset.category && <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-1.5 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>{preset.category}</span>}
+                              <p className="text-sm font-medium text-t-text leading-snug">{preset.title}</p>
+                              <p className="mt-1 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User presets (mobile carousel) */}
+                  {userPresets.length > 0 && (
+                    <div>
+                      <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-t-text-3">Based on Your Interests</p>
+                      <div className="-mx-4 px-4">
+                        <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+                          {userPresets.map((preset) => (
+                            <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group snap-start shrink-0 w-[72vw] text-left rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition active:scale-[0.98]">
+                              {preset.interest && <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide border-b ${interestColor(preset.interest)}`}>{preset.interest}</div>}
+                              <div className="p-3.5">
+                                <p className="text-sm font-medium text-t-text leading-snug">{preset.title}</p>
+                                <p className="mt-1 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── DESKTOP: tabbed grid ── */}
+                <div className="hidden sm:block">
+                  {/* Suggested Topics grid */}
+                  {(presetTab === 'suggested' || userPresets.length === 0) && presets.length > 0 && userPresets.length === 0 ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {presets.map((preset) => (
+                        <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group text-left rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
+                          {preset.category && <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-2 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>{preset.category}</span>}
+                          <p className="text-sm font-medium text-t-text leading-snug group-hover:text-t-accent-text transition">{preset.title}</p>
+                          <p className="mt-1.5 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
+                        </button>
+                      ))}
+                    </div>
+                  ) : presetTab === 'suggested' && presets.length > 0 ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {presets.map((preset) => (
+                        <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group text-left rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
+                          {preset.category && <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium mb-2 ${categoryColors[preset.category] ?? defaultCategoryColor}`}>{preset.category}</span>}
+                          <p className="text-sm font-medium text-t-text leading-snug group-hover:text-t-accent-text transition">{preset.title}</p>
+                          <p className="mt-1.5 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
+                        </button>
+                      ))}
+                    </div>
+                  ) : userPresets.length > 0 ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {userPresets.map((preset) => (
+                        <button key={preset.id} onClick={() => setQuery(preset.query_template)} className="group text-left rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
+                          {preset.interest && <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide border-b ${interestColor(preset.interest)}`}>{preset.interest}</div>}
+                          <div className="p-4">
+                            <p className="text-sm font-medium text-t-text leading-snug group-hover:text-t-accent-text transition">{preset.title}</p>
+                            <p className="mt-1.5 text-xs text-t-text-3 line-clamp-2 leading-relaxed">{preset.query_template}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}

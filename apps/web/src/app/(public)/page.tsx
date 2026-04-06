@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
-import { createServerClient } from '@/lib/supabase/server'
-import { listDebates, listDebateParticipants, listPublishedReporterCalls, listActiveReporterPresets, listAgents } from '@bipi/db'
+import { createServerClient, createAuthServerClient } from '@/lib/supabase/server'
+import { listDebates, listDebateParticipants, listPublishedReporterCalls, listActiveReporterPresets, listAgents, listUserPresets } from '@bipi/db'
 import { DebateCard } from '@/components/public/debate-card'
 import { CallHero } from '@/components/home/call-hero'
 import { ReporterForum } from '@/components/home/reporter-forum'
@@ -14,6 +14,17 @@ export default async function HomePage() {
     listActiveReporterPresets(db),
     listAgents(db),
   ])
+
+  // Fetch user presets if authenticated
+  let userPresets: { id: string; title: string; query_template: string; interest: string | null; sort_order: number }[] = []
+  try {
+    const authClient = await createAuthServerClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    if (user) {
+      const up = await listUserPresets(db, user.id)
+      userPresets = up
+    }
+  } catch { /* not authenticated */ }
 
   const liveDebates  = debates.filter((d) => d.status === 'live')
   const endedDebates = debates.filter((d) => d.status === 'ended')
@@ -62,7 +73,7 @@ export default async function HomePage() {
     <div className="bg-t-bg">
 
       {/* ── Chat Hero ─────────────────────────────────────────────────────── */}
-      <CallHero presets={presets} agents={agentOptions} />
+      <CallHero presets={presets} agents={agentOptions} userPresets={userPresets} />
 
       {/* ── Live Debate Banner (when live) ────────────────────────────────── */}
       {featuredLive && (
