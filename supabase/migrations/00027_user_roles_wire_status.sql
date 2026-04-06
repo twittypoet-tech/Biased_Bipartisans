@@ -10,9 +10,10 @@ ALTER TABLE user_profiles ADD COLUMN role user_role NOT NULL DEFAULT 'subscriber
 
 CREATE INDEX idx_user_profiles_role ON user_profiles (role);
 
--- 2. Add wire_status column to reporter_calls
-ALTER TABLE reporter_calls ADD COLUMN wire_status TEXT NOT NULL DEFAULT 'none'
-  CHECK (wire_status IN ('none', 'auto', 'pending', 'approved', 'rejected'));
+-- 2. Add wire_status enum + column to reporter_calls
+CREATE TYPE wire_status AS ENUM ('none', 'auto', 'pending', 'approved', 'rejected');
+
+ALTER TABLE reporter_calls ADD COLUMN wire_status wire_status NOT NULL DEFAULT 'none';
 
 CREATE INDEX idx_reporter_calls_wire
   ON reporter_calls (wire_status)
