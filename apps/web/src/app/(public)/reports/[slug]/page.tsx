@@ -81,6 +81,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
       slug: a.slug,
       avatarUrl: a.avatar_url,
       archetype: a.archetype,
+      shortBio: a.short_bio,
     }))
 
   // JSON-LD structured data for Google News / rich results

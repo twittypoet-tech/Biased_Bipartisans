@@ -1,7 +1,7 @@
--- ── User roles, wire status, journalist applications ─────────────────────────
+-- ── User roles, wire status, tier enum, journalist applications ──────────────
 --
 -- Adds role-based access (subscriber/journalist/admin), wire publishing
--- controls, and a journalist application intake table.
+-- controls, tier enum, and a journalist application intake table.
 
 -- 1. Add role enum + column to user_profiles
 CREATE TYPE user_role AS ENUM ('subscriber', 'journalist', 'admin');
@@ -54,3 +54,12 @@ CREATE POLICY "Users can update own profile"
     auth.uid() = id
     AND role = (SELECT up.role FROM user_profiles up WHERE up.id = auth.uid())
   );
+
+-- 7. Convert tier column to enum for dropdown in Supabase dashboard
+CREATE TYPE user_tier AS ENUM ('free', 'pro');
+
+ALTER TABLE user_profiles
+  DROP CONSTRAINT IF EXISTS user_profiles_tier_check,
+  ALTER COLUMN tier DROP DEFAULT,
+  ALTER COLUMN tier TYPE user_tier USING tier::user_tier,
+  ALTER COLUMN tier SET DEFAULT 'free';

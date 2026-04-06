@@ -48,6 +48,7 @@ interface AgentForCommentary {
   slug: string
   avatarUrl: string | null
   archetype: string
+  shortBio: string
 }
 
 interface ReportDetailClientProps {
@@ -419,9 +420,10 @@ export function ReportDetailClient({ report, commentary, agents, isOwner = false
           </div>
         </div>
 
-        {/* ── Commentary Request Modal (Pro Gate) ── */}
+        {/* ── Commentary Request Modal ── */}
         {showCommentaryRequest && (
           <CommentaryRequestSheet
+            reportId={report.id}
             agents={agents}
             onClose={() => setShowCommentaryRequest(false)}
           />
@@ -660,21 +662,44 @@ function ReporterChat({ reportId }: { reportId: string }) {
 // ── Commentary Request Bottom Sheet / Modal ──────────────────────────────────
 
 function CommentaryRequestSheet({
+  reportId,
   agents,
   onClose,
 }: {
+  reportId: string
   agents: AgentForCommentary[]
   onClose: () => void
 }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const { user, profile, refreshProfile } = useAuth()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
-  function toggleAgent(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const selectedAgent = agents.find((a) => a.id === selectedId) ?? null
+  const isPro = profile?.tier === 'pro'
+
+  async function handleRequest() {
+    if (!selectedAgent || submitting) return
+    setError(null)
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/commentary-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId, agentId: selectedAgent.id }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Request failed')
+      }
+      setSuccess(true)
+      refreshProfile()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -693,57 +718,118 @@ function CommentaryRequestSheet({
           </button>
         </div>
 
-        <p className="text-sm text-t-text-3 mb-4">Select agents to provide their analysis and perspective on this report.</p>
-
-        <div className="space-y-2 mb-6">
-          {agents.map((a) => (
-            <button
-              key={a.id}
-              onClick={() => toggleAgent(a.id)}
-              className={cn(
-                'w-full flex items-center gap-3 rounded-xl px-4 py-3 transition border',
-                selected.has(a.id)
-                  ? 'border-t-accent bg-t-accent-soft'
-                  : 'border-t-edge hover:bg-t-hover',
-              )}
-            >
-              {a.avatarUrl ? (
-                <div className="relative size-9 rounded-full overflow-hidden shrink-0">
-                  <Image src={a.avatarUrl} alt={a.name} fill className="object-cover" sizes="36px" />
-                </div>
-              ) : (
-                <div className="size-9 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-xs font-bold text-t-text-2">
-                  {a.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </div>
-              )}
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-t-text">{a.name}</p>
-                <p className="text-xs text-t-text-3 capitalize">{a.archetype.replace(/_/g, ' ')}</p>
-              </div>
-              {selected.has(a.id) && (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-t-accent-text shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
-              )}
+        {success ? (
+          <div className="flex flex-col items-center py-6 gap-4">
+            <div className="size-12 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-400"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-t-text">Commentary requested</p>
+              <p className="mt-1 text-xs text-t-text-3">
+                {selectedAgent?.name} will analyze this report and share their perspective.
+              </p>
+            </div>
+            <button onClick={onClose} className="rounded-lg bg-t-surface-el border border-t-edge-strong px-5 py-2 text-sm text-t-text-2 hover:bg-t-hover transition">
+              Close
             </button>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-t-text-3 mb-4">Select an agent to analyze this report and share their perspective.</p>
 
-        <button
-          onClick={() => { onClose() }}
-          disabled={selected.size === 0}
-          className={cn(
-            'w-full rounded-xl py-3 text-sm font-semibold transition',
-            selected.size > 0
-              ? 'bg-t-accent text-white hover:opacity-90 active:scale-[0.98]'
-              : 'bg-t-surface-el text-t-text-4 cursor-not-allowed',
-          )}
-        >
-          {selected.size > 0 ? `Request from ${selected.size} agent${selected.size > 1 ? 's' : ''}` : 'Select agents'}
-        </button>
+            <div className="space-y-2 mb-4">
+              {agents.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setSelectedId(selectedId === a.id ? null : a.id)}
+                  className={cn(
+                    'w-full flex items-center gap-3 rounded-xl px-4 py-3 transition border',
+                    selectedId === a.id
+                      ? 'border-t-accent bg-t-accent-soft'
+                      : 'border-t-edge hover:bg-t-hover',
+                  )}
+                >
+                  {a.avatarUrl ? (
+                    <div className="relative size-9 rounded-full overflow-hidden shrink-0">
+                      <Image src={a.avatarUrl} alt={a.name} fill className="object-cover" sizes="36px" />
+                    </div>
+                  ) : (
+                    <div className="size-9 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-xs font-bold text-t-text-2">
+                      {a.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
+                  )}
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-t-text">{a.name}</p>
+                    <p className="text-xs text-t-text-3 capitalize">{a.archetype.replace(/_/g, ' ')}</p>
+                  </div>
+                  {selectedId === a.id && (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-t-accent-text shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
+                  )}
+                </button>
+              ))}
+            </div>
 
-        <p className="mt-3 text-center text-xs text-t-text-4">
-          <Lock className="inline size-3 mr-1" />
-          Pro feature — coming soon
-        </p>
+            {/* Selected agent callout */}
+            {selectedAgent && (
+              <div className="rounded-xl border border-t-accent/30 bg-t-accent-soft p-4 mb-4">
+                <div className="flex items-center gap-3 mb-2">
+                  {selectedAgent.avatarUrl ? (
+                    <div className="relative size-10 rounded-full overflow-hidden shrink-0">
+                      <Image src={selectedAgent.avatarUrl} alt={selectedAgent.name} fill className="object-cover" sizes="40px" />
+                    </div>
+                  ) : (
+                    <div className="size-10 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-sm font-bold text-t-text-2">
+                      {selectedAgent.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold text-t-text">{selectedAgent.name}</p>
+                    <p className="text-xs text-t-text-3 capitalize">{selectedAgent.archetype.replace(/_/g, ' ')}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-t-text-2 leading-relaxed">{selectedAgent.shortBio}</p>
+              </div>
+            )}
+
+            {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+
+            {!user ? (
+              <div className="text-center">
+                <p className="text-sm text-t-text-3 mb-3">Sign in to request commentary</p>
+                <a href="/auth" className="inline-flex rounded-xl bg-t-accent px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">
+                  Sign In
+                </a>
+              </div>
+            ) : !isPro ? (
+              <div className="text-center">
+                <p className="text-sm text-t-text-3 mb-3">Pro subscription required for commentary requests</p>
+                <a href="/subscribe" className="inline-flex rounded-xl bg-t-accent px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">
+                  Upgrade to Pro
+                </a>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={handleRequest}
+                  disabled={!selectedAgent || submitting}
+                  className={cn(
+                    'w-full rounded-xl py-3 text-sm font-semibold transition',
+                    selectedAgent
+                      ? 'bg-t-accent text-white hover:opacity-90 active:scale-[0.98]'
+                      : 'bg-t-surface-el text-t-text-4 cursor-not-allowed',
+                  )}
+                >
+                  {submitting
+                    ? 'Requesting...'
+                    : selectedAgent
+                      ? `Call ${selectedAgent.name}`
+                      : 'Select an agent'}
+                </button>
+                <p className="mt-2 text-center text-xs text-t-text-4">1 credit per commentary request</p>
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   )
