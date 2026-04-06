@@ -24,8 +24,19 @@ export async function POST(request: Request) {
 
   try {
     const db = createServerClient()
-    await requestWirePublish(db, callId, user.id)
-    return NextResponse.json({ ok: true })
+
+    // Check user role to determine publish behavior
+    const { data: profile } = await db
+      .from('user_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    // Journalists + admins: instant publish. Subscribers: pending approval.
+    const targetStatus = (profile?.role === 'journalist' || profile?.role === 'admin') ? 'auto' : 'pending'
+
+    await requestWirePublish(db, callId, user.id, targetStatus as 'pending' | 'auto')
+    return NextResponse.json({ ok: true, wireStatus: targetStatus })
   } catch (err) {
     console.error('request-publish error:', err)
     return NextResponse.json({ error: 'Failed to request publish' }, { status: 500 })

@@ -140,7 +140,8 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
         body: JSON.stringify({ callId: report.id }),
       })
       if (res.ok) {
-        setWireStatus('pending')
+        const data = await res.json()
+        setWireStatus(data.wireStatus ?? 'pending')
       }
     } catch {
       // silently fail
@@ -282,7 +283,11 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
                 disabled={publishRequesting}
                 className="rounded-lg bg-t-accent px-4 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
               >
-                {publishRequesting ? 'Requesting...' : 'Request Publish to Wire'}
+                {publishRequesting
+                  ? 'Publishing...'
+                  : profile?.role === 'journalist' || profile?.role === 'admin'
+                    ? 'Publish to Wire'
+                    : 'Request Publish to Wire'}
               </button>
             )}
           </div>

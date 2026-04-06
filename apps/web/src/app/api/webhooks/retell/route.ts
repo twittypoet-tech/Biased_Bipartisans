@@ -151,9 +151,10 @@ export async function POST(request: Request) {
         .select('role')
         .eq('id', userId)
         .single()
-      if (profile?.role === 'journalist' || profile?.role === 'admin') {
+      if (profile?.role === 'admin') {
         wireStatus = 'auto'
       }
+      // Journalists and subscribers default to 'none' — must publish manually
     } catch {
       console.warn('reporter webhook: failed to look up user role for wire_status')
     }

@@ -123,10 +123,11 @@ export async function requestWirePublish(
   db: SupabaseClient,
   callId: string,
   userId: string,
+  targetStatus: 'pending' | 'auto' = 'pending',
 ): Promise<void> {
   const { error } = await db
     .from('reporter_calls')
-    .update({ wire_status: 'pending' })
+    .update({ wire_status: targetStatus })
     .eq('id', callId)
     .eq('user_id', userId)
     .eq('wire_status', 'none')
