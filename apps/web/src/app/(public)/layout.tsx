@@ -21,7 +21,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Link href="/" className="flex items-center gap-2 shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/bipi-mark.svg" alt="" className="size-7" />
-            <span className="text-lg font-bold tracking-tight text-t-text">Biased Bipartisans</span>
+            <span className="text-lg font-bold tracking-tight text-t-text">BiPi</span>
           </Link>
           <div className="flex items-center gap-1">
             <nav className="flex items-center gap-1 mr-2">
@@ -48,7 +48,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Link href="/" className="flex items-center gap-1.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/bipi-mark.svg" alt="" className="size-6" />
-            <span className="text-sm font-bold tracking-tight text-t-text">Biased Bipartisans</span>
+            <span className="text-sm font-bold tracking-tight text-t-text">BiPi</span>
           </Link>
           <HamburgerMenu />
         </div>

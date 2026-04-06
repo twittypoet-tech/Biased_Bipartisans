@@ -26,6 +26,31 @@ export async function POST(request: Request) {
     const db = createServerClient()
     const { error } = await db.from('contact_messages').insert({ name, email, reason, message })
     if (error) throw error
+
+    // Send notification email via Brevo
+    const brevoKey = process.env.BREVO_API_KEY
+    if (brevoKey) {
+      await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': brevoKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'BIPI Contact Form', email: 'noreply@biasedbipartisans.com' },
+          to: [{ email: 'contact@biasedbipartisans.com', name: 'Biased Bipartisans' }],
+          replyTo: { email, name },
+          subject: `[BIPI Contact] ${reason}`,
+          htmlContent: `
+            <h2>${reason}</h2>
+            <p><strong>From:</strong> ${name} (${email})</p>
+            <hr>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+          `,
+        }),
+      }).catch((err) => console.error('Brevo email error:', err))
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Contact form error:', err)
