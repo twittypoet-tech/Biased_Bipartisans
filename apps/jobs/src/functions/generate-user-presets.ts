@@ -45,17 +45,18 @@ export const dailyPresetGeneration = inngest.createFunction(
             messages: [
               {
                 role: 'system',
-                content: `You generate investigative news search queries for a live AI news reporting agent. Today: ${today}
+                content: `You generate detailed, instructive research prompts for a live AI news reporting agent called "The Reporter". The Reporter searches the web in real-time, verifies sources, and delivers comprehensive sourced news reports. Today: ${today}
 
 The user has these interests: ${interests.join(', ')}
 
-Generate exactly 8 search queries. Each should:
-- Be specific (6-12 words), include names/dates/organizations
-- Mix: 2 breaking, 2 investigation, 2 fact-check, 2 discovery
-- Map each to the most relevant user interest
-- Distribute across ALL interests
+CRITICAL: Each query must be a DETAILED INSTRUCTION — NOT a short keyword search. Tell the agent exactly what to investigate, what angles to cover, and what evidence to look for.
 
-Output JSON: { "presets": [{ "title": "short title", "query": "full search query", "interest": "matched interest" }] }`,
+GOOD: "Give me an in depth report on everything we know about Jeffrey Epstein's Zorro Ranch, including ownership records, known visitors, and any connections to intelligence agencies."
+BAD: "latest Epstein news 2026" (too short, no instruction)
+
+Generate exactly 8 queries. Each MUST be 1-2 full instructive sentences specifying aspects to cover and evidence to find. Mix: 2 current developments, 2 deep investigations, 2 fact-checks, 2 emerging/discovery. Titles: 3-6 word hooks.
+
+Output JSON: { "presets": [{ "title": "short title", "query": "full detailed instruction", "interest": "matched interest" }] }`,
               },
             ],
           })

@@ -35,25 +35,33 @@ export async function generateUserPresets(
     messages: [
       {
         role: 'system',
-        content: `You generate investigative news search queries for a live AI news reporting agent called "The Reporter" on the Biased Bipartisans platform. The Reporter searches the web in real-time using Bright Data and delivers sourced news reports.
+        content: `You generate detailed, instructive research prompts for a live AI news reporting agent called "The Reporter" on the Biased Bipartisans platform. The Reporter searches the web in real-time, verifies sources, and delivers comprehensive sourced news reports.
 
 Today's date: ${today}
 
 The user has these interests: ${interests.join(', ')}
 
-Generate exactly 8 search queries optimized for a live news agent. Each query should:
-- Be specific enough to return actionable, current results (6-12 words works best)
-- Include context clues: names, dates, organizations, or specific events
-- Cover a balanced mix across query types:
-  • 2 BREAKING: What's happening right now? Latest developments, breaking stories
-  • 2 INVESTIGATION: Deep dives, hidden connections, follow the money
-  • 2 FACT-CHECK: Verify claims, confirm or debunk, compare official vs reported
-  • 2 DISCOVERY: Emerging trends, under-reported stories, what's being missed
-- Map each query to the most relevant user interest
-- Distribute queries across ALL the user's interests (don't cluster on one)
-- Write titles as compelling 3-6 word hooks
+CRITICAL: Each query must be a DETAILED INSTRUCTION to the reporter agent — NOT a short keyword search. The query tells the agent exactly what to investigate, what angles to cover, and what evidence to look for.
 
-Output JSON: { "presets": [{ "title": "compelling short title", "query": "the full search query for the reporter agent", "interest": "matched interest from the user's list" }] }`,
+GOOD EXAMPLE queries (follow this style):
+- "Give me an in depth report on everything we know about Jeffrey Epstein's Zorro Ranch, including ownership records, known visitors, and any connections to intelligence agencies."
+- "Provide a detailed report of the CIA MK Ultra Program, covering its origins, key experiments, institutional oversight failures, and long-term consequences on policy and public trust."
+- "Analyze current data on democratic instability in the United States, including institutional erosion indicators, public trust metrics, and comparisons to historical democratic backsliding patterns."
+
+BAD EXAMPLE queries (DO NOT do this):
+- "latest US Iran tensions April 2026" (too short, no instruction)
+- "current CIA operations controversies" (vague keyword dump)
+
+Generate exactly 8 queries. Each query MUST:
+- Be 1-2 full sentences that instruct the reporter what to investigate
+- Specify what aspects to cover (origins, key players, evidence, implications, comparisons)
+- Request specific types of evidence (records, data, testimony, declassified documents, metrics)
+- Be grounded in the user's interests but explore specific, concrete subtopics within them
+- Cover a balanced mix: 2 current developments, 2 deep investigations, 2 fact-checks/verifications, 2 emerging/discovery
+
+Titles should be compelling 3-6 word hooks.
+
+Output JSON: { "presets": [{ "title": "compelling short title", "query": "the full detailed instruction for the reporter agent", "interest": "matched interest from the user's list" }] }`,
       },
     ],
   })
