@@ -316,7 +316,24 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
           </div>
         )}
 
-        {/* ── Metadata Card ── */}
+        {/* ── Agent Commentary Section (immediately after article) ── */}
+        {commentary.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-t-edge" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Agent Commentary</span>
+              <div className="flex-1 h-px bg-t-edge" />
+            </div>
+
+            <div className="space-y-4">
+              {commentary.map((c) => (
+                <CommentaryCard key={c.id} commentary={c} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Metadata Card (sources, entities) ── */}
         <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
           <div className="grid grid-cols-3 gap-4 text-center">
             {report.source_count != null && (
@@ -352,7 +369,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
             </div>
           )}
 
-          {/* Sources Cited — structured links if available, plain text fallback */}
           {(report.sources_json?.length || report.sources_mentioned) && (
             <div className="mt-4 pt-4 border-t border-t-edge-muted">
               <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-3">Sources Cited</p>
@@ -363,12 +379,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
                       <span className="shrink-0 text-xs font-bold text-t-text-3 mt-0.5 w-5 text-right">{i + 1}.</span>
                       <div className="min-w-0">
                         {source.url ? (
-                          <a
-                            href={source.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group flex items-start gap-1.5"
-                          >
+                          <a href={source.url} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-1.5">
                             <span className="text-sm font-medium text-t-accent-text group-hover:underline">{source.title}</span>
                             <ExternalLink className="size-3 shrink-0 text-t-text-4 mt-1 group-hover:text-t-accent-text transition" />
                           </a>
@@ -388,7 +399,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
             </div>
           )}
 
-          {/* User query — blended into metadata card */}
           {report.user_query && (
             <div className="mt-4 pt-4 border-t border-t-edge-muted">
               <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Original Query</p>
@@ -398,7 +408,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
         </div>
 
         {/* ── Request Commentary CTA ── */}
-        <div className="mb-8 relative overflow-hidden rounded-xl border border-t-accent/30 bg-gradient-to-r from-t-accent-soft to-transparent p-5 sm:p-6">
+        <div className="mb-12 relative overflow-hidden rounded-xl border border-t-accent/30 bg-gradient-to-r from-t-accent-soft to-transparent p-5 sm:p-6">
           <div className="relative z-10">
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl bg-t-accent/20 flex items-center justify-center shrink-0">
@@ -428,7 +438,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
             agents={agents}
             onClose={() => setShowCommentaryRequest(false)}
             onCommentaryPublished={async () => {
-              // Wait a moment for the webhook to process, then refresh commentary
               await new Promise((r) => setTimeout(r, 3000))
               try {
                 const res = await fetch(`/api/reports/${report.id}/commentary`)
@@ -436,217 +445,9 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
                   const data = await res.json()
                   if (data.commentary) setCommentary(data.commentary)
                 }
-              } catch { /* page will show updated commentary on next visit */ }
+              } catch {}
             }}
           />
-        )}
-
-        {/* ── Agent Commentary Section ── */}
-        {commentary.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-t-edge" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Agent Commentary</span>
-              <div className="flex-1 h-px bg-t-edge" />
-            </div>
-
-            <div className="space-y-4">
-              {commentary.map((c) => (
-                <CommentaryCard key={c.id} commentary={c} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Discussion: Live Chat with The Reporter ── */}
-        <div className="mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-t-edge" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Discussion</span>
-            <div className="flex-1 h-px bg-t-edge" />
-          </div>
-
-          <ReporterChat reportId={report.id} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Reporter Chat (Discussion) ───────────────────────────────────────────────
-
-interface ChatMsg {
-  id: string
-  role: 'user' | 'reporter'
-  display_name: string | null
-  content: string
-  created_at: string
-}
-
-function ReporterChat({ reportId }: { reportId: string }) {
-  const { user, profile } = useAuth()
-  const [messages, setMessages] = useState<ChatMsg[]>([])
-  const [input, setInput] = useState('')
-  const [sending, setSending] = useState(false)
-  const [loaded, setLoaded] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
-
-  // Load chat history on mount
-  useEffect(() => {
-    fetch(`/api/reports/${reportId}/chat`)
-      .then((r) => r.json())
-      .then((d) => { setMessages(d.messages ?? []); setLoaded(true) })
-      .catch(() => setLoaded(true))
-  }, [reportId])
-
-  // Auto-scroll on new messages
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages])
-
-  async function handleSend() {
-    if (!input.trim() || sending) return
-    const msg = input.trim()
-    setInput('')
-    setSending(true)
-
-    // Optimistic: add user message immediately
-    const tempUserMsg: ChatMsg = {
-      id: `temp-${Date.now()}`,
-      role: 'user',
-      display_name: profile?.display_name ?? 'You',
-      content: msg,
-      created_at: new Date().toISOString(),
-    }
-    setMessages((prev) => [...prev, tempUserMsg])
-
-    try {
-      const res = await fetch(`/api/reports/${reportId}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg }),
-      })
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}))
-        // Remove optimistic message on error
-        setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id))
-        alert(e.error ?? 'Failed to send')
-        setInput(msg)
-        return
-      }
-      const { userMessage, reporterMessage } = await res.json()
-      // Replace temp with real messages
-      setMessages((prev) => [
-        ...prev.filter((m) => m.id !== tempUserMsg.id),
-        userMessage,
-        reporterMessage,
-      ])
-    } catch {
-      setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id))
-      setInput(msg)
-    } finally {
-      setSending(false)
-    }
-  }
-
-  if (!loaded) return null
-
-  return (
-    <div className="rounded-xl border border-t-edge bg-t-surface shadow-t overflow-hidden">
-      {/* Chat thread */}
-      <div ref={scrollRef} className="max-h-96 overflow-y-auto p-4 sm:p-5 space-y-4">
-        {messages.length === 0 && !sending && (
-          <div className="text-center py-8">
-            <div className="size-12 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center mx-auto mb-3 text-sm font-bold text-t-text-2">
-              R
-            </div>
-            <p className="text-sm font-medium text-t-text mb-1">Ask The Reporter</p>
-            <p className="text-xs text-t-text-3 max-w-xs mx-auto">
-              Have a follow-up question about this report? The Reporter can answer based on the sources cited — and search for more.
-            </p>
-          </div>
-        )}
-
-        {messages.map((msg) => (
-          <div key={msg.id} className={cn('flex gap-3', msg.role === 'user' ? 'flex-row-reverse' : '')}>
-            {/* Avatar */}
-            <div className={cn(
-              'size-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold',
-              msg.role === 'reporter'
-                ? 'bg-t-surface-el border border-t-edge text-t-text-2'
-                : 'bg-t-accent-soft text-t-accent-text',
-            )}>
-              {msg.role === 'reporter' ? 'R' : (msg.display_name?.[0]?.toUpperCase() ?? 'U')}
-            </div>
-
-            {/* Bubble */}
-            <div className={cn(
-              'max-w-[80%] rounded-xl px-4 py-2.5',
-              msg.role === 'reporter'
-                ? 'bg-t-surface-el border border-t-edge'
-                : 'bg-t-accent-soft',
-            )}>
-              <p className="text-[10px] font-medium text-t-text-3 mb-0.5">
-                {msg.role === 'reporter' ? 'The Reporter' : (msg.display_name ?? 'You')}
-              </p>
-              <p className="text-sm text-t-text leading-relaxed">{msg.content}</p>
-            </div>
-          </div>
-        ))}
-
-        {/* Typing indicator */}
-        {sending && (
-          <div className="flex gap-3">
-            <div className="size-7 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center shrink-0 text-xs font-bold text-t-text-2">R</div>
-            <div className="bg-t-surface-el border border-t-edge rounded-xl px-4 py-3">
-              <div className="flex gap-1">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="size-1.5 rounded-full bg-t-text-3 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Input bar */}
-      <div className="border-t border-t-edge p-3 sm:p-4">
-        {user ? (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-              placeholder="Ask The Reporter a follow-up..."
-              disabled={sending}
-              className="flex-1 rounded-lg bg-t-surface-el border border-t-edge-strong px-3 py-2.5 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-accent transition disabled:opacity-50"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || sending}
-              className={cn(
-                'shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold transition',
-                input.trim() && !sending
-                  ? 'bg-t-accent text-white hover:opacity-90 active:scale-95'
-                  : 'bg-t-surface-el text-t-text-4 cursor-not-allowed',
-              )}
-            >
-              Send
-            </button>
-          </div>
-        ) : (
-          <Link
-            href="/auth"
-            className="flex items-center justify-center gap-2 rounded-lg border border-t-edge-strong bg-t-surface-el py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"
-          >
-            <Lock className="size-4" /> Sign in to ask The Reporter
-          </Link>
-        )}
-        {user && !profile?.tier?.includes('pro') && (
-          <p className="mt-2 text-[10px] text-t-text-4 text-center">1 credit per question · {profile?.credits ?? 0} credits remaining</p>
         )}
       </div>
     </div>
@@ -1158,66 +959,84 @@ const calloutAnimation = {
 
 function renderReportCallout(callout: Callout, idx: number) {
   switch (callout.type) {
+
+    // ── FACT: Pull-stat / magazine highlight ──
+    // Centered, oversized serif text with gold rule. Feels like a stat in The Economist.
     case 'fact':
       return (
-        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 rounded-xl overflow-hidden" style={{ boxShadow: '0 0 20px rgba(245,158,11,0.08)' }}>
-          <div className="h-1 w-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500" />
-          <div className="bg-amber-950/40 border border-amber-800/30 border-t-0 rounded-b-xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="size-6 rounded-full bg-amber-500/20 flex items-center justify-center">
-                <svg className="size-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
-              <p className="text-xs font-bold uppercase tracking-wider text-amber-400">Verified Fact</p>
-            </div>
-            <p className="text-sm font-semibold text-t-text leading-relaxed">{callout.content}</p>
-          </div>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-10 py-8 text-center">
+          <div className="mx-auto w-16 h-px mb-5" style={{ backgroundColor: '#C8A44A' }} />
+          <p className="text-lg sm:text-xl font-medium leading-relaxed text-t-text max-w-lg mx-auto" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+            {callout.content}
+          </p>
+          <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-t-text-3" style={{ color: '#C8A44A' }}>
+            Verified
+          </p>
+          <div className="mx-auto w-16 h-px mt-5" style={{ backgroundColor: '#C8A44A' }} />
         </motion.div>
       )
+
+    // ── PERSON: Editorial aside ──
+    // Indented from the left with a thin vertical rule. Small-caps label, italic name treatment.
+    // Feels like an editorial margin note in a long-form Atlantic piece.
     case 'person':
       return (
-        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 flex gap-4 rounded-xl border-l-4 border-blue-500 p-5" style={{ backgroundColor: 'rgba(30,64,175,0.08)', boxShadow: '0 0 20px rgba(59,130,246,0.06)' }}>
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/15 border border-blue-500/20">
-            <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1">Key Person</p>
-            <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
-          </div>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 ml-4 sm:ml-8 pl-5 sm:pl-6 border-l border-t-edge relative">
+          <div className="absolute left-0 top-0 w-px h-full" style={{ backgroundColor: 'rgba(200,164,74,0.3)' }} />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-4 mb-2">Who</p>
+          <p className="text-sm leading-relaxed text-t-text-2" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+            {callout.content}
+          </p>
         </motion.div>
       )
+
+    // ── DATE: Timeline marker ──
+    // Left-aligned with a subtle dot-and-line treatment, like a timeline in a Reuters special report.
     case 'date':
       return (
-        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 flex gap-4 items-start rounded-xl border border-t-edge bg-t-surface p-5 shadow-t">
-          <div className="flex-shrink-0 size-10 rounded-lg bg-t-surface-el border border-t-edge flex items-center justify-center">
-            <svg className="h-5 w-5 text-t-text-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" /></svg>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 flex items-start gap-4 ml-4 sm:ml-8">
+          <div className="flex flex-col items-center shrink-0 pt-1">
+            <div className="size-2 rounded-full" style={{ backgroundColor: '#C8A44A' }} />
+            <div className="w-px flex-1 min-h-[24px] bg-t-edge" />
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-t-text-3 mb-1">Timeline</p>
+          <div className="pb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-4 mb-1">Timeline</p>
             <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
           </div>
         </motion.div>
       )
+
+    // ── ISSUE: Editorial note ──
+    // Full-width thin top/bottom rules with centered italic text.
+    // Feels like an editor's note in The New Yorker — flagging tension without shouting.
     case 'issue':
       return (
-        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 rounded-xl overflow-hidden" style={{ boxShadow: '0 0 20px rgba(249,115,22,0.06)' }}>
-          <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-500" />
-          <div className="bg-orange-950/30 border border-orange-800/30 border-t-0 rounded-b-xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="size-6 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <svg className="size-3.5 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75h.007v.008H12v-.008z"/></svg>
-              </div>
-              <p className="text-xs font-bold uppercase tracking-wider text-orange-400">Key Issue</p>
-            </div>
-            <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-10 py-6">
+          <div className="h-px w-full bg-t-edge mb-5" />
+          <div className="px-4 sm:px-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-4 mb-3">At Issue</p>
+            <p className="text-base leading-relaxed text-t-text italic" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+              {callout.content}
+            </p>
           </div>
+          <div className="h-px w-full bg-t-edge mt-5" />
         </motion.div>
       )
+
+    // ── QUOTE: Classic editorial pull-quote ──
+    // Large opening quotation mark, serif italic, gold accent. The anchor of the piece.
     case 'quote':
       return (
-        <motion.blockquote key={`co-${idx}`} {...calloutAnimation} className="my-8 border-l-4 pl-6 py-2" style={{ borderColor: '#C8A44A' }}>
-          <p className="text-lg italic leading-relaxed text-t-text" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{callout.content}</p>
+        <motion.blockquote key={`co-${idx}`} {...calloutAnimation} className="my-10 py-4 px-4 sm:px-8 relative">
+          <span className="absolute -top-2 left-2 sm:left-6 text-5xl sm:text-6xl leading-none font-bold select-none pointer-events-none" style={{ color: '#C8A44A', fontFamily: 'Georgia, "Times New Roman", serif', opacity: 0.25 }}>
+            &ldquo;
+          </span>
+          <p className="text-lg sm:text-xl italic leading-relaxed text-t-text relative z-10 pl-4 sm:pl-6" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+            {callout.content}
+          </p>
         </motion.blockquote>
       )
+
     default:
       return null
   }
