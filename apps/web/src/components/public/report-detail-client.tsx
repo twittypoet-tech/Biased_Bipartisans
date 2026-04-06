@@ -452,25 +452,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
 
             <div className="space-y-4">
               {commentary.map((c) => (
-                <div key={c.id} className="rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
-                  <div className="flex items-center gap-3 mb-3">
-                    {c.agent_avatar_url ? (
-                      <div className="relative size-8 rounded-full overflow-hidden shrink-0">
-                        <Image src={c.agent_avatar_url} alt={c.agent_name ?? ''} fill className="object-cover" sizes="32px" />
-                      </div>
-                    ) : (
-                      <div className="size-8 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-xs font-bold text-t-text-2">
-                        {(c.agent_name ?? '?')[0]}
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-semibold text-t-text">{c.agent_name}</p>
-                      <p className="text-xs text-t-text-3 capitalize">{c.agent_archetype?.replace(/_/g, ' ')}</p>
-                    </div>
-                  </div>
-                  {c.transcript && <p className="text-sm text-t-text-2 leading-relaxed mb-3">{c.transcript}</p>}
-                  {c.audio_url && <NewsAudioPlayer src={c.audio_url} durationHint={c.duration_seconds ?? undefined} />}
-                </div>
+                <CommentaryCard key={c.id} commentary={c} />
               ))}
             </div>
           </div>
@@ -667,6 +649,110 @@ function ReporterChat({ reportId }: { reportId: string }) {
           <p className="mt-2 text-[10px] text-t-text-4 text-center">1 credit per question · {profile?.credits ?? 0} credits remaining</p>
         )}
       </div>
+    </div>
+  )
+}
+
+// ── Commentary Card ──────────────────────────────────────────────────────────
+
+const TRANSCRIPT_PREVIEW_LENGTH = 280
+
+function CommentaryCard({ commentary: c }: { commentary: ReportCommentary }) {
+  const [expanded, setExpanded] = useState(false)
+  const [votes, setVotes] = useState({ up: c.upvotes, down: c.downvotes })
+  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
+
+  const netVotes = votes.up - votes.down
+  const needsTruncation = (c.transcript?.length ?? 0) > TRANSCRIPT_PREVIEW_LENGTH
+
+  function handleVote(dir: 'up' | 'down') {
+    if (userVote === dir) return
+    setVotes((v) => ({
+      up: v.up + (dir === 'up' ? 1 : 0) - (userVote === 'up' ? 1 : 0),
+      down: v.down + (dir === 'down' ? 1 : 0) - (userVote === 'down' ? 1 : 0),
+    }))
+    setUserVote(dir)
+    fetch('/api/commentary/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commentaryId: c.id, direction: dir }),
+    }).catch(() => {})
+  }
+
+  const avatarEl = c.agent_avatar_url ? (
+    <div className="relative size-9 rounded-full overflow-hidden shrink-0">
+      <Image src={c.agent_avatar_url} alt={c.agent_name ?? ''} fill className="object-cover" sizes="36px" />
+    </div>
+  ) : (
+    <div className="size-9 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-xs font-bold text-t-text-2">
+      {(c.agent_name ?? '?')[0]}
+    </div>
+  )
+
+  return (
+    <div className="rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
+      {/* Header: avatar (clickable) + name + archetype */}
+      <div className="flex items-center gap-3 mb-3">
+        {c.agent_slug ? (
+          <Link href={`/agents/${c.agent_slug}`} className="hover:opacity-80 transition">
+            {avatarEl}
+          </Link>
+        ) : avatarEl}
+        <div className="flex-1 min-w-0">
+          {c.agent_slug ? (
+            <Link href={`/agents/${c.agent_slug}`} className="hover:underline">
+              <p className="text-sm font-semibold text-t-text">{c.agent_name}</p>
+            </Link>
+          ) : (
+            <p className="text-sm font-semibold text-t-text">{c.agent_name}</p>
+          )}
+          <p className="text-xs text-t-text-3 capitalize">{c.agent_archetype?.replace(/_/g, ' ')}</p>
+        </div>
+
+        {/* Vote buttons */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => handleVote('up')}
+            aria-label="Upvote"
+            className={cn('rounded p-1.5 transition hover:bg-t-hover', userVote === 'up' ? 'text-amber-400' : 'text-t-text-3')}
+          >
+            <ArrowUp className="size-3.5" strokeWidth={2.5} />
+          </button>
+          <span className={cn('text-xs font-semibold tabular-nums min-w-[16px] text-center',
+            netVotes > 0 ? 'text-amber-400' : netVotes < 0 ? 'text-blue-400' : 'text-t-text-3')}>
+            {netVotes}
+          </span>
+          <button
+            onClick={() => handleVote('down')}
+            aria-label="Downvote"
+            className={cn('rounded p-1.5 transition hover:bg-t-hover', userVote === 'down' ? 'text-blue-400' : 'text-t-text-3')}
+          >
+            <ArrowDown className="size-3.5" strokeWidth={2.5} />
+          </button>
+        </div>
+      </div>
+
+      {/* Transcript with View All toggle */}
+      {c.transcript && (
+        <div className="mb-3">
+          <p className="text-sm text-t-text-2 leading-relaxed">
+            {expanded || !needsTruncation
+              ? c.transcript
+              : c.transcript.slice(0, TRANSCRIPT_PREVIEW_LENGTH).trimEnd() + '...'}
+          </p>
+          {needsTruncation && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="mt-1.5 text-xs font-medium text-t-accent-text hover:underline transition"
+            >
+              {expanded ? 'Show Less' : 'View All'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Audio player */}
+      {c.audio_url && <NewsAudioPlayer src={c.audio_url} durationHint={c.duration_seconds ?? undefined} />}
     </div>
   )
 }

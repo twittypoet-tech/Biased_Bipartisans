@@ -142,7 +142,8 @@ export async function listReportCommentary(
     .select('*, agents(name, slug, avatar_url, archetype)')
     .eq('report_call_id', reportCallId)
     .eq('is_published', true)
-    .order('created_at', { ascending: true })
+    .order('upvotes', { ascending: false })
+    .order('created_at', { ascending: false })
   if (error) throw error
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((r: any) => {
@@ -221,5 +222,41 @@ export async function downvoteReporterCall(
       .from('reporter_calls')
       .update({ downvotes: (row.downvotes ?? 0) + 1 })
       .eq('id', callId)
+  }
+}
+
+// ── Commentary Voting ───────────────────────────────────────────────────────
+
+export async function upvoteCommentary(
+  db: SupabaseClient,
+  commentaryId: string,
+): Promise<void> {
+  const { data: row } = await db
+    .from('report_commentary')
+    .select('upvotes')
+    .eq('id', commentaryId)
+    .single()
+  if (row) {
+    await db
+      .from('report_commentary')
+      .update({ upvotes: (row.upvotes ?? 0) + 1 })
+      .eq('id', commentaryId)
+  }
+}
+
+export async function downvoteCommentary(
+  db: SupabaseClient,
+  commentaryId: string,
+): Promise<void> {
+  const { data: row } = await db
+    .from('report_commentary')
+    .select('downvotes')
+    .eq('id', commentaryId)
+    .single()
+  if (row) {
+    await db
+      .from('report_commentary')
+      .update({ downvotes: (row.downvotes ?? 0) + 1 })
+      .eq('id', commentaryId)
   }
 }

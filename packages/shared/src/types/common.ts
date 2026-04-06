@@ -554,6 +554,8 @@ export interface ReportCommentary {
   transcript: string | null
   duration_seconds: number | null
   is_published: boolean
+  upvotes: number
+  downvotes: number
   created_at: Timestamp
   agent_name?: string
   agent_slug?: string
