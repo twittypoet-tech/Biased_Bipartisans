@@ -217,6 +217,7 @@ export async function POST(request: Request) {
     hostCallId: hostCall?.call_id ?? null,
     accessToken: commentaryCall?.access_token ?? null,
     hostAccessToken: hostCall?.access_token ?? null,
+    retellUrl: 'wss://retell-ai-4ihahnq7.livekit.cloud',
     report: {
       id: report.id,
       headline: report.report_headline,

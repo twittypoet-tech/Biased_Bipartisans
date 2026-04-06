@@ -68,7 +68,8 @@ const WIRE_STATUS_BADGE: Record<string, { label: string; className: string }> = 
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function ReportDetailClient({ report, commentary, agents, isOwner = false }: ReportDetailClientProps) {
+export function ReportDetailClient({ report, commentary: initialCommentary, agents, isOwner = false }: ReportDetailClientProps) {
+  const [commentary, setCommentary] = useState(initialCommentary)
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
   const [votes, setVotes] = useState({ up: report.upvotes, down: report.downvotes })
   const [copied, setCopied] = useState(false)
@@ -426,6 +427,17 @@ export function ReportDetailClient({ report, commentary, agents, isOwner = false
             reportId={report.id}
             agents={agents}
             onClose={() => setShowCommentaryRequest(false)}
+            onCommentaryPublished={async () => {
+              // Wait a moment for the webhook to process, then refresh commentary
+              await new Promise((r) => setTimeout(r, 3000))
+              try {
+                const res = await fetch(`/api/reports/${report.id}/commentary`)
+                if (res.ok) {
+                  const data = await res.json()
+                  if (data.commentary) setCommentary(data.commentary)
+                }
+              } catch { /* page will show updated commentary on next visit */ }
+            }}
           />
         )}
 
@@ -659,30 +671,101 @@ function ReporterChat({ reportId }: { reportId: string }) {
   )
 }
 
+// ── LiveKit preload (shared singleton) ───────────────────────────────────────
+
+let livekitReady: Promise<typeof import('livekit-client')> | null = null
+function preloadLiveKit() {
+  if (!livekitReady) livekitReady = import('livekit-client')
+  return livekitReady
+}
+
 // ── Commentary Request Bottom Sheet / Modal ──────────────────────────────────
+
+type CommentaryStep = 'select' | 'confirm' | 'connecting' | 'live' | 'done' | 'error'
 
 function CommentaryRequestSheet({
   reportId,
   agents,
   onClose,
+  onCommentaryPublished,
 }: {
   reportId: string
   agents: AgentForCommentary[]
   onClose: () => void
+  onCommentaryPublished?: () => void
 }) {
   const { user, profile, refreshProfile } = useAuth()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [step, setStep] = useState<CommentaryStep>('select')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [audioBlocked, setAudioBlocked] = useState(false)
+
+  const roomRef = useRef<any>(null)
+  const audioElsRef = useRef<HTMLAudioElement[]>([])
 
   const selectedAgent = agents.find((a) => a.id === selectedId) ?? null
   const isPro = profile?.tier === 'pro'
 
+  // Preload LiveKit on mount
+  useEffect(() => { preloadLiveKit() }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { cleanupAudio(); roomRef.current?.disconnect() }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function attachAudio(el: HTMLAudioElement) {
+    el.autoplay = true
+    el.style.display = 'none'
+    document.body.appendChild(el)
+    audioElsRef.current.push(el)
+    el.play()
+      .then(() => setAudioBlocked(false))
+      .catch(() => {
+        setTimeout(() => {
+          el.play()
+            .then(() => setAudioBlocked(false))
+            .catch(() => setAudioBlocked(true))
+        }, 500)
+      })
+  }
+
+  function cleanupAudio() {
+    for (const el of audioElsRef.current) { el.pause(); el.srcObject = null; el.remove() }
+    audioElsRef.current = []
+    setAudioBlocked(false)
+  }
+
+  function forceUnmute() {
+    for (const el of audioElsRef.current) el.play().catch(() => {})
+    try { (roomRef.current as any)?.startAudio?.() } catch {}
+    setAudioBlocked(false)
+  }
+
+  function unlockAudio() {
+    try {
+      const AC = window.AudioContext || (window as any).webkitAudioContext
+      if (!AC) return
+      if (!(window as any).__bipiAudioCtx) (window as any).__bipiAudioCtx = new AC()
+      const ctx = (window as any).__bipiAudioCtx as AudioContext
+      if (ctx.state === 'suspended') ctx.resume()
+      const buf = ctx.createBuffer(1, 1, 22050)
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      src.connect(ctx.destination)
+      src.start(0)
+    } catch {}
+  }
+
   async function handleRequest() {
-    if (!selectedAgent || submitting) return
+    if (!selectedAgent) return
+
+    // Unlock audio SYNCHRONOUSLY before any await (browser autoplay policy)
+    unlockAudio()
+    setStep('connecting')
     setError(null)
-    setSubmitting(true)
+
     try {
       const res = await fetch('/api/commentary-requests', {
         method: 'POST',
@@ -693,67 +776,115 @@ function CommentaryRequestSheet({
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || 'Request failed')
       }
-      setSuccess(true)
+
+      const { accessToken, retellUrl } = await res.json()
       refreshProfile()
+
+      if (!accessToken || !retellUrl) {
+        throw new Error('Commentary agent not configured yet')
+      }
+
+      // Connect to LiveKit to stream commentary audio
+      const { Room, RoomEvent, Track } = await preloadLiveKit()
+      cleanupAudio()
+      const room = new Room({ adaptiveStream: false, dynacast: false })
+      roomRef.current = room
+
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind === Track.Kind.Audio) {
+          attachAudio(track.attach())
+          setStep('live')
+        }
+      })
+
+      room.on(RoomEvent.Disconnected, () => {
+        cleanupAudio()
+        roomRef.current = null
+        setStep('done')
+        // Notify parent to refresh commentary list
+        onCommentaryPublished?.()
+      })
+
+      await room.connect(retellUrl, accessToken)
+
+      try { await room.startAudio() } catch {
+        try { await (room as any).startAudio?.() } catch {}
+      }
+
+      // Attach any already-published tracks
+      for (const p of room.remoteParticipants.values()) {
+        for (const pub of p.audioTrackPublications.values()) {
+          if (pub.track && pub.isSubscribed) {
+            attachAudio(pub.track.attach())
+            setStep('live')
+          }
+        }
+      }
+
+      // Periodic retry for stubborn browsers
+      const retryInterval = setInterval(() => {
+        for (const el of audioElsRef.current) {
+          if (el.paused && el.srcObject) el.play().catch(() => {})
+        }
+      }, 2000)
+
+      // Safety timeout: 3 min max
+      setTimeout(() => { clearInterval(retryInterval); room.disconnect() }, 3 * 60 * 1000)
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
-    } finally {
-      setSubmitting(false)
+      setStep('error')
     }
+  }
+
+  // ── Render helper: agent avatar ──
+  function AgentAvatarEl({ agent, size = 48 }: { agent: AgentForCommentary; size?: number }) {
+    if (agent.avatarUrl) {
+      return (
+        <div className="relative rounded-full overflow-hidden shrink-0" style={{ width: size, height: size }}>
+          <Image src={agent.avatarUrl} alt={agent.name} fill className="object-cover" sizes={`${size}px`} />
+        </div>
+      )
+    }
+    return (
+      <div className="rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center font-bold text-t-text-2 shrink-0"
+        style={{ width: size, height: size, fontSize: size > 40 ? 14 : 11 }}>
+        {agent.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+      </div>
+    )
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={step === 'live' || step === 'connecting' ? undefined : onClose} />
       <div className="relative z-10 w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-t-surface border border-t-edge shadow-t-lg p-5 mx-0 sm:mx-4 mb-0 sm:mb-0 max-h-[80vh] overflow-y-auto">
         {/* Handle */}
         <div className="sm:hidden flex justify-center mb-3">
           <div className="w-10 h-1 rounded-full bg-t-edge-strong" />
         </div>
 
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-t-text">Request Commentary</h3>
-          <button onClick={onClose} className="size-8 rounded-full bg-t-surface-el flex items-center justify-center text-t-text-3 hover:text-t-text-2 transition">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-
-        {success ? (
-          <div className="flex flex-col items-center py-6 gap-4">
-            <div className="size-12 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-400"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-semibold text-t-text">Commentary requested</p>
-              <p className="mt-1 text-xs text-t-text-3">
-                {selectedAgent?.name} will analyze this report and share their perspective.
-              </p>
-            </div>
-            <button onClick={onClose} className="rounded-lg bg-t-surface-el border border-t-edge-strong px-5 py-2 text-sm text-t-text-2 hover:bg-t-hover transition">
-              Close
+        {/* ── Header (hidden during live/connecting) ── */}
+        {(step === 'select' || step === 'confirm') && (
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-lg font-semibold text-t-text">Request Commentary</h3>
+            <button onClick={onClose} className="size-8 rounded-full bg-t-surface-el flex items-center justify-center text-t-text-3 hover:text-t-text-2 transition">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
-        ) : !selectedAgent ? (
-          /* ── Agent selection list ── */
+        )}
+
+        {/* ── Step: Select Agent ── */}
+        {step === 'select' && (
           <>
             <p className="text-sm text-t-text-3 mb-4">Select an agent to analyze this report and share their perspective.</p>
-
             <div className="space-y-2">
               {agents.map((a) => (
                 <button
                   key={a.id}
-                  onClick={() => setSelectedId(a.id)}
+                  onClick={() => { setSelectedId(a.id); setStep('confirm') }}
                   className="w-full flex items-center gap-3 rounded-xl px-4 py-3 transition border border-t-edge hover:bg-t-hover hover:border-t-edge-strong"
                 >
-                  {a.avatarUrl ? (
-                    <div className="relative size-9 rounded-full overflow-hidden shrink-0">
-                      <Image src={a.avatarUrl} alt={a.name} fill className="object-cover" sizes="36px" />
-                    </div>
-                  ) : (
-                    <div className="size-9 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-xs font-bold text-t-text-2">
-                      {a.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
-                  )}
+                  <AgentAvatarEl agent={a} size={36} />
                   <div className="flex-1 text-left">
                     <p className="text-sm font-medium text-t-text">{a.name}</p>
                     <p className="text-xs text-t-text-3 capitalize">{a.archetype.replace(/_/g, ' ')}</p>
@@ -763,11 +894,13 @@ function CommentaryRequestSheet({
               ))}
             </div>
           </>
-        ) : (
-          /* ── Selected agent view ── */
+        )}
+
+        {/* ── Step: Confirm Agent ── */}
+        {step === 'confirm' && selectedAgent && (
           <>
             <button
-              onClick={() => { setSelectedId(null); setError(null) }}
+              onClick={() => { setSelectedId(null); setStep('select'); setError(null) }}
               className="flex items-center gap-1.5 text-sm text-t-text-3 hover:text-t-text-2 transition mb-4"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -776,15 +909,7 @@ function CommentaryRequestSheet({
 
             <div className="rounded-xl border border-t-accent/30 bg-t-accent-soft p-5 mb-5">
               <div className="flex items-center gap-3 mb-3">
-                {selectedAgent.avatarUrl ? (
-                  <div className="relative size-12 rounded-full overflow-hidden shrink-0">
-                    <Image src={selectedAgent.avatarUrl} alt={selectedAgent.name} fill className="object-cover" sizes="48px" />
-                  </div>
-                ) : (
-                  <div className="size-12 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-sm font-bold text-t-text-2">
-                    {selectedAgent.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
-                )}
+                <AgentAvatarEl agent={selectedAgent} size={48} />
                 <div>
                   <p className="text-base font-semibold text-t-text">{selectedAgent.name}</p>
                   <p className="text-xs text-t-text-3 capitalize">{selectedAgent.archetype.replace(/_/g, ' ')}</p>
@@ -798,30 +923,110 @@ function CommentaryRequestSheet({
             {!user ? (
               <div className="text-center">
                 <p className="text-sm text-t-text-3 mb-3">Sign in to request commentary</p>
-                <a href="/auth" className="inline-flex rounded-xl bg-t-accent px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">
-                  Sign In
-                </a>
+                <a href="/auth" className="inline-flex rounded-xl bg-t-accent px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">Sign In</a>
               </div>
             ) : !isPro ? (
               <div className="text-center">
                 <p className="text-sm text-t-text-3 mb-3">Pro subscription required for commentary requests</p>
-                <a href="/subscribe" className="inline-flex rounded-xl bg-t-accent px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">
-                  Upgrade to Pro
-                </a>
+                <a href="/subscribe" className="inline-flex rounded-xl bg-t-accent px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">Upgrade to Pro</a>
               </div>
             ) : (
               <>
                 <button
                   onClick={handleRequest}
-                  disabled={submitting}
-                  className="w-full rounded-xl py-3 text-sm font-semibold bg-t-accent text-white hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50"
+                  className="w-full rounded-xl py-3 text-sm font-semibold bg-t-accent text-white hover:opacity-90 active:scale-[0.98] transition"
                 >
-                  {submitting ? 'Requesting...' : `Call ${selectedAgent.name}`}
+                  Call {selectedAgent.name}
                 </button>
                 <p className="mt-2 text-center text-xs text-t-text-4">1 credit per commentary request</p>
               </>
             )}
           </>
+        )}
+
+        {/* ── Step: Connecting ── */}
+        {step === 'connecting' && selectedAgent && (
+          <div className="flex flex-col items-center py-10 gap-5">
+            <AgentAvatarEl agent={selectedAgent} size={56} />
+            <div className="text-center">
+              <p className="text-sm font-semibold text-t-text mb-1">Connecting to {selectedAgent.name}</p>
+              <p className="text-xs text-t-text-3">Preparing commentary on this report...</p>
+            </div>
+            <svg className="animate-spin text-t-accent-text" width="24" height="24" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          </div>
+        )}
+
+        {/* ── Step: Live Listening ── */}
+        {step === 'live' && selectedAgent && (
+          <div className="flex flex-col items-center py-8 gap-5">
+            <div className="relative">
+              <AgentAvatarEl agent={selectedAgent} size={64} />
+              <div className="absolute -top-1 -right-1 size-4 rounded-full bg-green-500 border-2 border-t-surface animate-pulse" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-t-text">{selectedAgent.name}</p>
+              <p className="text-xs text-t-accent-text font-medium uppercase tracking-wider mt-1">Live Commentary</p>
+            </div>
+
+            {/* Waveform */}
+            <div className="flex items-end gap-1 h-10">
+              {[0.4, 0.7, 1, 0.6, 0.9, 0.5, 0.8, 0.65, 0.45, 0.75, 0.55, 0.85].map((h, i) => (
+                <div key={i} className="w-1.5 rounded-full bg-amber-400 animate-pulse"
+                  style={{ height: `${h * 100}%`, animationDelay: `${i * 70}ms`, animationDuration: '900ms' }} />
+              ))}
+            </div>
+
+            {/* Audio blocked fallback */}
+            {audioBlocked && (
+              <button onClick={forceUnmute}
+                className="rounded-xl border border-amber-600/50 bg-amber-950/30 px-5 py-2.5 text-sm font-medium text-amber-400 hover:bg-amber-950/50 transition">
+                Tap to Enable Audio
+              </button>
+            )}
+
+            <p className="text-xs text-t-text-3 text-center max-w-xs">
+              {selectedAgent.name} is analyzing the report and delivering their perspective live.
+            </p>
+          </div>
+        )}
+
+        {/* ── Step: Done ── */}
+        {step === 'done' && selectedAgent && (
+          <div className="flex flex-col items-center py-8 gap-4">
+            <div className="size-14 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-400"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-t-text">Commentary Complete</p>
+              <p className="mt-1 text-sm text-t-text-3">
+                {selectedAgent.name}&apos;s commentary has been published to this report.
+              </p>
+            </div>
+            <button onClick={onClose}
+              className="rounded-xl bg-t-accent px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">
+              View Commentary
+            </button>
+          </div>
+        )}
+
+        {/* ── Step: Error ── */}
+        {step === 'error' && (
+          <div className="flex flex-col items-center py-8 gap-4">
+            <div className="size-14 rounded-full bg-red-950/40 border border-red-800/60 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+            </div>
+            <p className="text-sm text-red-400 text-center">{error || 'Something went wrong'}</p>
+            <div className="flex gap-3">
+              <button onClick={() => { setStep('confirm'); setError(null) }}
+                className="rounded-xl bg-t-surface-el border border-t-edge-strong px-5 py-2 text-sm text-t-text-2 hover:bg-t-hover transition">
+                Try Again
+              </button>
+              <button onClick={onClose}
+                className="rounded-xl px-5 py-2 text-sm text-t-text-3 hover:text-t-text-2 transition">
+                Close
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
