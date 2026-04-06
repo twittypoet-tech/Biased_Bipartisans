@@ -917,13 +917,21 @@ function AgentCommentaryCard({
     <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
       {/* Report reference banner */}
       {c.report_slug && (
-        <Link href={`/reports/${c.report_slug}`} className="group block">
-          <div className={`px-4 py-2 flex items-center gap-2 transition hover:opacity-90 ${c.report_category ? CATEGORY_BANNER[c.report_category] ?? 'bg-neutral-800 text-neutral-400' : 'bg-neutral-800 text-neutral-400'}`}>
-            <FileText className="size-3.5 shrink-0 opacity-60" />
-            <span className="text-[11px] font-medium truncate flex-1">
-              {c.report_headline ?? 'Untitled Report'}
-            </span>
-            <ChevronRight className="size-3.5 shrink-0 opacity-40 group-hover:opacity-80 transition" />
+        <Link href={`/reports/${c.report_slug}`} className="block transition hover:opacity-90">
+          <div className={c.report_category ? CATEGORY_BANNER[c.report_category] ?? 'bg-neutral-800 text-neutral-400' : 'bg-neutral-800 text-neutral-400'}>
+            <div className="px-4 py-2 flex items-center gap-2">
+              <FileText className="size-3.5 shrink-0 opacity-60" />
+              <span className="text-[11px] font-medium uppercase tracking-wide flex-1">
+                {c.report_category ?? 'Report'}
+              </span>
+              <ChevronRight className="size-3.5 shrink-0 opacity-40" />
+            </div>
+            <div className="px-4 pb-2.5">
+              <p className="text-sm font-semibold leading-snug" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                {c.report_headline ?? 'Untitled Report'}
+              </p>
+              <p className="text-[10px] opacity-60 mt-1">Tap to read full report</p>
+            </div>
           </div>
         </Link>
       )}

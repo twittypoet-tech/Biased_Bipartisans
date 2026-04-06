@@ -76,7 +76,6 @@ export function CommentaryFeedClient({ initialCommentary }: Props) {
 
 function CommentaryFeedCard({ commentary: c }: { commentary: CommentaryWithReport }) {
   const [expanded, setExpanded] = useState(false)
-  const [bannerExpanded, setBannerExpanded] = useState(false)
   const [votes, setVotes] = useState({ up: c.upvotes, down: c.downvotes })
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
 
@@ -99,34 +98,25 @@ function CommentaryFeedCard({ commentary: c }: { commentary: CommentaryWithRepor
 
   return (
     <article className="rounded-xl border border-t-edge bg-t-surface shadow-t overflow-hidden">
-      {/* Report reference banner — click to expand headline, click again to navigate */}
+      {/* Report reference banner — links to full report */}
       {c.report_slug && (
-        <div
-          className={`cursor-pointer transition hover:opacity-90 ${c.report_category ? CATEGORY_BANNER[c.report_category] ?? 'bg-t-surface-el text-t-text-3' : 'bg-t-surface-el text-t-text-3'}`}
-          onClick={() => {
-            if (bannerExpanded) {
-              window.location.href = `/reports/${c.report_slug}`
-            } else {
-              setBannerExpanded(true)
-            }
-          }}
-        >
-          <div className="px-4 py-2 flex items-center gap-2">
-            <FileText className="size-3.5 shrink-0 opacity-60" />
-            <span className="text-[11px] font-medium uppercase tracking-wide flex-1">
-              {c.report_category ?? 'Report'}
-            </span>
-            <ChevronRight className={`size-3.5 shrink-0 opacity-40 transition-transform ${bannerExpanded ? 'rotate-90' : ''}`} />
-          </div>
-          {bannerExpanded && (
+        <Link href={`/reports/${c.report_slug}`} className="block transition hover:opacity-90">
+          <div className={c.report_category ? CATEGORY_BANNER[c.report_category] ?? 'bg-t-surface-el text-t-text-3' : 'bg-t-surface-el text-t-text-3'}>
+            <div className="px-4 py-2 flex items-center gap-2">
+              <FileText className="size-3.5 shrink-0 opacity-60" />
+              <span className="text-[11px] font-medium uppercase tracking-wide flex-1">
+                {c.report_category ?? 'Report'}
+              </span>
+              <ChevronRight className="size-3.5 shrink-0 opacity-40" />
+            </div>
             <div className="px-4 pb-2.5">
               <p className="text-sm font-semibold leading-snug" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
                 {c.report_headline ?? 'Untitled Report'}
               </p>
               <p className="text-[10px] opacity-60 mt-1">Tap to read full report</p>
             </div>
-          )}
-        </div>
+          </div>
+        </Link>
       )}
 
       <div className="p-4">
