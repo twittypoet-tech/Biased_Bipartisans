@@ -367,7 +367,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
                       </div>
                     )}
                     <div className="p-3.5">
-                      <h4 className="text-sm font-semibold text-t-text leading-snug line-clamp-2 group-hover:text-t-accent-text transition mb-2">
+                      <h4 className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-2">
                         {r.report_headline ?? 'Untitled'}
                       </h4>
                       <p className="text-[11px] text-t-text-3">{formatAge(r.created_at)}</p>
