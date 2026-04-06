@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { ArrowUp, ArrowDown, FileText, ChevronRight } from 'lucide-react'
 import { getExpertiseColor } from '@/lib/agent-colors'
 import { AgentIntroPlayer } from './agent-intro-player'
+import { NewsAudioPlayer } from './news-audio-player'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -63,6 +65,18 @@ export interface AgentProfileData {
     commentaryUpvotes: number
     commentaryDownvotes: number
   }
+  agentCommentary: Array<{
+    id: string
+    transcript: string | null
+    audio_url: string | null
+    duration_seconds: number | null
+    upvotes: number
+    downvotes: number
+    created_at: string
+    report_headline: string | null
+    report_slug: string | null
+    report_category: string | null
+  }>
   colors: {
     bg: string
     text: string
@@ -71,7 +85,7 @@ export interface AgentProfileData {
   }
 }
 
-type Tab = 'overview' | 'debates' | 'voice'
+type Tab = 'overview' | 'commentary' | 'debates' | 'voice'
 
 // ── Expertise Badges Component ─────────────────────────────────────────────────
 
@@ -140,7 +154,7 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [isFollowing, setIsFollowing] = useState(false)
 
-  const { agent, worldview, style, phrases, hardLimits, relationships, recentDebates, stats, colors } = data
+  const { agent, worldview, style, phrases, hardLimits, relationships, recentDebates, stats, agentCommentary, colors } = data
 
   const initials = agent.name
     .split(' ')
@@ -319,6 +333,7 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
           {(
             [
               { id: 'overview', label: 'Overview' },
+              { id: 'commentary', label: 'Commentary' },
               { id: 'debates', label: 'Recent Debates' },
               { id: 'voice', label: 'Voice Profile' },
             ] as { id: Tab; label: string }[]
@@ -397,58 +412,61 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
               {relationships.length > 0 && (
                 <ProfileCard title="Rivals & Alliances" icon={<RelationshipsIcon />}>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {relationships.map((rel) => {
-                      const isRival = rel.rivalryScore >= 0.6
-                      const borderColor = isRival ? 'border-red-800/30' : 'border-emerald-800/30'
-                      const bgColor = isRival ? 'bg-red-950/20' : 'bg-emerald-950/20'
-                      const typeColor = isRival ? 'text-red-400' : 'text-emerald-400'
-                      return (
-                        <div key={rel.id} className={`rounded-xl border ${borderColor} ${bgColor} p-4`}>
-                          <div className="flex items-center gap-3 mb-2">
+                    {relationships.map((rel) => (
+                      <div key={rel.id} className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+                        <div className="flex items-center gap-3">
+                          {rel.targetSlug ? (
+                            <Link href={`/agents/${rel.targetSlug}`} className="shrink-0 hover:opacity-80 transition">
+                              {rel.targetAvatarUrl ? (
+                                <img src={rel.targetAvatarUrl} alt={rel.targetName ?? ''} className="size-9 rounded-full object-cover" />
+                              ) : (
+                                <div className="size-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-400">
+                                  {(rel.targetName ?? '?')[0]}
+                                </div>
+                              )}
+                            </Link>
+                          ) : (
+                            <div className="size-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-400">?</div>
+                          )}
+                          <div className="flex-1 min-w-0">
                             {rel.targetSlug ? (
-                              <Link href={`/agents/${rel.targetSlug}`} className="shrink-0 hover:opacity-80 transition">
-                                {rel.targetAvatarUrl ? (
-                                  <img src={rel.targetAvatarUrl} alt={rel.targetName ?? ''} className="size-9 rounded-full object-cover" />
-                                ) : (
-                                  <div className="size-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-400">
-                                    {(rel.targetName ?? '?')[0]}
-                                  </div>
-                                )}
+                              <Link href={`/agents/${rel.targetSlug}`} className="text-sm font-semibold text-white hover:underline">
+                                {rel.targetName ?? 'Unknown'}
                               </Link>
                             ) : (
-                              <div className="size-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-400">?</div>
+                              <p className="text-sm font-semibold text-white">{rel.targetName ?? 'Unknown'}</p>
                             )}
-                            <div className="flex-1 min-w-0">
-                              {rel.targetSlug ? (
-                                <Link href={`/agents/${rel.targetSlug}`} className="text-sm font-semibold text-white hover:underline">
-                                  {rel.targetName ?? 'Unknown'}
-                                </Link>
-                              ) : (
-                                <p className="text-sm font-semibold text-white">{rel.targetName ?? 'Unknown'}</p>
-                              )}
-                              <span className={`text-[11px] font-medium capitalize ${typeColor}`}>
-                                {rel.relationshipType.replace(/_/g, ' ')}
-                              </span>
-                            </div>
-                            <div className="flex flex-col items-end gap-0.5 text-[10px] text-neutral-500 shrink-0">
-                              <span>Respect {Math.round(rel.respectScore * 100)}%</span>
-                              <span>Rivalry {Math.round(rel.rivalryScore * 100)}%</span>
-                            </div>
                           </div>
-                          {rel.attackAngles.length > 0 && (
-                            <p className="text-xs text-neutral-500 leading-relaxed">
-                              {rel.attackAngles.join(' · ')}
-                            </p>
-                          )}
+                          <span className="shrink-0 rounded-full border border-neutral-700 bg-neutral-800 px-2.5 py-0.5 text-[10px] font-semibold capitalize text-neutral-400">
+                            {rel.relationshipType.replace(/_/g, ' ')}
+                          </span>
                         </div>
-                      )
-                    })}
+                        {rel.attackAngles.length > 0 && (
+                          <p className="mt-2.5 text-xs text-neutral-500 leading-relaxed">
+                            {rel.attackAngles.join(' · ')}
+                          </p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </ProfileCard>
               )}
 
               {!worldview && relationships.length === 0 && (
                 <EmptyState message="No overview data available yet." />
+              )}
+            </div>
+          )}
+
+          {/* ── Commentary Tab ──────────────────────────────────────────── */}
+          {activeTab === 'commentary' && (
+            <div className="space-y-4">
+              {agentCommentary.length > 0 ? (
+                agentCommentary.map((c) => (
+                  <AgentCommentaryCard key={c.id} commentary={c} agentName={agent.name} agentAvatarUrl={agent.avatarUrl} />
+                ))
+              ) : (
+                <EmptyState message={`${agent.name} hasn't provided any commentary yet.`} />
               )}
             </div>
           )}
@@ -825,5 +843,142 @@ function SpeakIcon() {
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       <line x1="9" y1="10" x2="15" y2="10" />
     </svg>
+  )
+}
+
+// ── Agent Commentary Card (for profile tab) ─────────────────────────────────
+
+const CATEGORY_BANNER: Record<string, string> = {
+  'Environmental Science':     'bg-green-950/80 text-green-300',
+  'History & Politics':        'bg-red-950/80 text-red-300',
+  'Law & Jurisprudence':       'bg-blue-950/80 text-blue-300',
+  'Medicine & Healthcare':     'bg-pink-950/80 text-pink-300',
+  'Philosophy & Ethics':       'bg-purple-950/80 text-purple-300',
+  'Rhetoric & Persuasion':     'bg-orange-950/80 text-orange-300',
+  'Statistics & Data Science':  'bg-cyan-950/80 text-cyan-300',
+  'Technology & Innovation':   'bg-amber-950/80 text-amber-300',
+}
+
+const COMMENTARY_PREVIEW = 300
+
+function formatCommentaryAge(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins  = Math.floor(diff / 60_000)
+  const hours = Math.floor(mins / 60)
+  const days  = Math.floor(hours / 24)
+  if (days  > 0) return `${days}d ago`
+  if (hours > 0) return `${hours}h ago`
+  if (mins  > 0) return `${mins}m ago`
+  return 'just now'
+}
+
+function AgentCommentaryCard({
+  commentary: c,
+  agentName,
+  agentAvatarUrl,
+}: {
+  commentary: {
+    id: string
+    transcript: string | null
+    audio_url: string | null
+    duration_seconds: number | null
+    upvotes: number
+    downvotes: number
+    created_at: string
+    report_headline: string | null
+    report_slug: string | null
+    report_category: string | null
+  }
+  agentName: string
+  agentAvatarUrl: string | null
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [votes, setVotes] = useState({ up: c.upvotes, down: c.downvotes })
+  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
+
+  const netVotes = votes.up - votes.down
+  const needsTruncation = (c.transcript?.length ?? 0) > COMMENTARY_PREVIEW
+
+  function handleVote(dir: 'up' | 'down') {
+    if (userVote === dir) return
+    setVotes((v) => ({
+      up: v.up + (dir === 'up' ? 1 : 0) - (userVote === 'up' ? 1 : 0),
+      down: v.down + (dir === 'down' ? 1 : 0) - (userVote === 'down' ? 1 : 0),
+    }))
+    setUserVote(dir)
+    fetch('/api/commentary/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commentaryId: c.id, direction: dir }),
+    }).catch(() => {})
+  }
+
+  return (
+    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+      {/* Report reference banner */}
+      {c.report_slug && (
+        <Link href={`/reports/${c.report_slug}`} className="group block">
+          <div className={`px-4 py-2 flex items-center gap-2 transition hover:opacity-90 ${c.report_category ? CATEGORY_BANNER[c.report_category] ?? 'bg-neutral-800 text-neutral-400' : 'bg-neutral-800 text-neutral-400'}`}>
+            <FileText className="size-3.5 shrink-0 opacity-60" />
+            <span className="text-[11px] font-medium truncate flex-1">
+              {c.report_headline ?? 'Untitled Report'}
+            </span>
+            <ChevronRight className="size-3.5 shrink-0 opacity-40 group-hover:opacity-80 transition" />
+          </div>
+        </Link>
+      )}
+
+      <div className="p-4">
+        {/* Header + votes */}
+        <div className="flex items-center gap-3 mb-3">
+          {agentAvatarUrl ? (
+            <img src={agentAvatarUrl} alt={agentName} className="size-9 rounded-full object-cover shrink-0" />
+          ) : (
+            <div className="size-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-400 shrink-0">
+              {agentName[0]}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white">{agentName}</p>
+            <p className="text-xs text-neutral-500">{formatCommentaryAge(c.created_at)}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={() => handleVote('up')} aria-label="Upvote"
+              className={`rounded p-1.5 transition hover:bg-neutral-800 ${userVote === 'up' ? 'text-amber-400' : 'text-neutral-500'}`}>
+              <ArrowUp className="size-3.5" strokeWidth={2.5} />
+            </button>
+            <span className={`text-xs font-semibold tabular-nums min-w-[16px] text-center ${netVotes > 0 ? 'text-amber-400' : netVotes < 0 ? 'text-blue-400' : 'text-neutral-500'}`}>
+              {netVotes}
+            </span>
+            <button onClick={() => handleVote('down')} aria-label="Downvote"
+              className={`rounded p-1.5 transition hover:bg-neutral-800 ${userVote === 'down' ? 'text-blue-400' : 'text-neutral-500'}`}>
+              <ArrowDown className="size-3.5" strokeWidth={2.5} />
+            </button>
+          </div>
+        </div>
+
+        {/* Transcript */}
+        {c.transcript && (
+          <div className="mb-3">
+            <p className="text-sm text-neutral-300 leading-relaxed">
+              {expanded || !needsTruncation
+                ? c.transcript
+                : c.transcript.slice(0, COMMENTARY_PREVIEW).trimEnd() + '...'}
+            </p>
+            {needsTruncation && (
+              <button onClick={() => setExpanded(!expanded)}
+                className="mt-1.5 text-xs font-medium text-amber-400 hover:underline transition">
+                {expanded ? 'Show Less' : 'View All'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Audio */}
+        {c.audio_url && (
+          <NewsAudioPlayer src={c.audio_url} durationHint={c.duration_seconds ?? undefined} />
+        )}
+      </div>
+    </div>
   )
 }

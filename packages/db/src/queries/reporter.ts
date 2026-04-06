@@ -257,6 +257,34 @@ export async function listAllCommentary(
   })
 }
 
+// ── Agent Commentary List ────────────────────────────────────────────────────
+
+export async function listAgentReportCommentary(
+  db: SupabaseClient,
+  agentId: string,
+  limit = 20,
+): Promise<(ReportCommentary & { report_headline?: string; report_slug?: string; report_category?: string })[]> {
+  const { data, error } = await db
+    .from('report_commentary')
+    .select('*, reporter_calls!report_commentary_report_call_id_fkey(report_headline, slug, report_category)')
+    .eq('agent_id', agentId)
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((r: any) => {
+    const report = r.reporter_calls
+    return {
+      ...r,
+      reporter_calls: undefined,
+      report_headline: report?.report_headline ?? null,
+      report_slug: report?.slug ?? null,
+      report_category: report?.report_category ?? null,
+    }
+  })
+}
+
 // ── Agent Vote Aggregates ────────────────────────────────────────────────────
 
 export async function getAgentCommentaryVotes(

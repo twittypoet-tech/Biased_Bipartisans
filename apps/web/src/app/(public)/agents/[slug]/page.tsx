@@ -11,6 +11,7 @@ import {
   getAgentRelationships,
   getEvalRunsForAgent,
   getAgentCommentaryVotes,
+  listAgentReportCommentary,
 } from '@bipi/db'
 import { getArchetypeColor } from '@/lib/agent-colors'
 import { AgentProfileClient, type AgentProfileData } from '@/components/public/agent-profile-client'
@@ -49,7 +50,7 @@ export default async function AgentProfilePage({ params }: Props) {
     )
   }
 
-  const [worldview, style, phrases, epistemic, relationships, evalRuns, commentaryVotes] = await Promise.all([
+  const [worldview, style, phrases, epistemic, relationships, evalRuns, commentaryVotes, agentCommentary] = await Promise.all([
     getActiveWorldview(db, agent.id),
     getActiveStyleProfile(db, agent.id),
     getActivePhraseBank(db, agent.id),
@@ -57,6 +58,7 @@ export default async function AgentProfilePage({ params }: Props) {
     getAgentRelationships(db, agent.id),
     getEvalRunsForAgent(db, agent.id, 10),
     getAgentCommentaryVotes(db, agent.id),
+    listAgentReportCommentary(db, agent.id, 20),
   ])
 
   // Fetch debate metadata for eval runs
@@ -138,6 +140,18 @@ export default async function AgentProfilePage({ params }: Props) {
         endedAt: debate?.ended_at ?? null,
       }
     }),
+    agentCommentary: agentCommentary.map((c) => ({
+      id: c.id,
+      transcript: c.transcript,
+      audio_url: c.audio_url,
+      duration_seconds: c.duration_seconds,
+      upvotes: c.upvotes,
+      downvotes: c.downvotes,
+      created_at: c.created_at,
+      report_headline: c.report_headline ?? null,
+      report_slug: c.report_slug ?? null,
+      report_category: c.report_category ?? null,
+    })),
     stats: {
       totalDebates: evalRuns.length,
       avgScore: avgComposite,
