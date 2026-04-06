@@ -69,6 +69,7 @@ interface ReportDetailClientProps {
   agents: AgentForCommentary[]
   isOwner?: boolean
   relatedReports?: ReporterCall[]
+  upcomingTournament?: { title: string; slug: string } | null
 }
 
 const WIRE_STATUS_BADGE: Record<string, { label: string; className: string }> = {
@@ -81,7 +82,7 @@ const WIRE_STATUS_BADGE: Record<string, { label: string; className: string }> = 
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function ReportDetailClient({ report, commentary: initialCommentary, agents, isOwner = false, relatedReports = [] }: ReportDetailClientProps) {
+export function ReportDetailClient({ report, commentary: initialCommentary, agents, isOwner = false, relatedReports = [], upcomingTournament }: ReportDetailClientProps) {
   const { profile } = useAuth()
   const [commentary, setCommentary] = useState(initialCommentary)
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
@@ -309,7 +310,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
               <div className="space-y-5">
                 {buildReportBody(report.body, report.callouts ?? [], [
                   <SignUpCallout key="promo-signup" />,
-                  <TournamentCallout key="promo-tournament" />,
+                  <TournamentCallout key="promo-tournament" title={upcomingTournament?.title} slug={upcomingTournament?.slug} />,
                   <SponsoredCallout key="promo-sponsored" />,
                 ])}
               </div>

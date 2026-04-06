@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import { notFound } from 'next/navigation'
 import { createServerClient, createAuthServerClient } from '@/lib/supabase/server'
-import { getReporterCallBySlug, listReportCommentary, getRelatedReports } from '@bipi/db'
+import { getReporterCallBySlug, listReportCommentary, getRelatedReports, listTournaments } from '@bipi/db'
 import { listAgents } from '@bipi/db'
 import { ReportDetailClient } from '@/components/public/report-detail-client'
 
@@ -85,6 +85,14 @@ export default async function ReportDetailPage({ params }: PageProps) {
       shortBio: a.short_bio,
     }))
 
+  // Fetch upcoming tournament for promo callout
+  let upcomingTournament: { title: string; slug: string } | null = null
+  try {
+    const tournaments = await listTournaments(db)
+    const upcoming = tournaments.find((t) => t.status === 'pending' || t.status === 'active')
+    if (upcoming) upcomingTournament = { title: upcoming.title, slug: upcoming.slug }
+  } catch {}
+
   // JSON-LD structured data for Google News / rich results
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -120,6 +128,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         agents={agentsForCommentary}
         isOwner={isOwner}
         relatedReports={relatedReports}
+        upcomingTournament={upcomingTournament}
       />
     </>
   )
