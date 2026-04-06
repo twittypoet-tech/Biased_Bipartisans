@@ -81,7 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 pb-20 md:pb-0">{children}</main>
+        <main className="flex-1 min-w-0 overflow-x-hidden pb-20 md:pb-0">{children}</main>
       </div>
 
       {/* Mobile bottom tabs */}

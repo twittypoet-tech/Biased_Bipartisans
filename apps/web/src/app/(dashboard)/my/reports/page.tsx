@@ -131,7 +131,7 @@ export default function MyReportsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10 overflow-x-hidden">
+    <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10 w-full overflow-hidden">
       <h1 className="text-2xl font-bold text-t-text mb-6">My Reports</h1>
 
       {/* ── Recommended Presets ── */}
@@ -143,8 +143,8 @@ export default function MyReportsPage() {
 
           {presets.length > 0 ? (
             <>
-              <div className="-mx-4 px-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-              <div className="flex gap-3 pb-2 snap-x snap-mandatory w-max">
+              <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex gap-3 pb-2 snap-x snap-mandatory">
                 {presets.map((preset) => (
                   <Link
                     key={preset.id}
@@ -246,13 +246,13 @@ export default function MyReportsPage() {
                   </div>
 
                   {/* Headline */}
-                  <h3 className="text-sm font-semibold text-t-text leading-snug mb-1.5 group-hover:text-t-accent-text transition">
+                  <h3 className="text-sm font-semibold text-t-text leading-snug mb-1.5 group-hover:text-t-accent-text transition break-words">
                     {report.report_headline ?? 'Untitled Report'}
                   </h3>
 
                   {/* Summary */}
                   {report.call_summary && (
-                    <p className="text-xs text-t-text-2 leading-relaxed mb-3 line-clamp-2">
+                    <p className="text-xs text-t-text-2 leading-relaxed mb-3 line-clamp-2 break-words">
                       {report.call_summary}
                     </p>
                   )}
