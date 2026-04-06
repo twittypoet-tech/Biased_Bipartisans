@@ -258,9 +258,9 @@ export function CallHero({ presets, agents }: CallHeroProps) {
                 <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
                 AI News Agent
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-t-text sm:text-4xl">Make a Call</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-t-text sm:text-4xl">Call The Reporter</h1>
               <p className="mt-2 sm:mt-3 text-sm leading-relaxed text-t-text-2 sm:text-base">
-                Request News Reports on any topic or try one of the suggestions below
+                Generate Real-time, Evidence Based News Reports on any topic or try one of the suggestions below
               </p>
             </div>
 

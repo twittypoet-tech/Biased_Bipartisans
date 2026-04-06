@@ -107,7 +107,7 @@ export default function MissionPage() {
               Explore Debates <ArrowRight className="size-4 text-t-text-3" />
             </Link>
             <Link href="/" className="flex-1 flex items-center justify-center gap-2 rounded-xl py-4 text-sm font-medium text-white transition" style={{ backgroundColor: '#C8A44A' }}>
-              Make a Call <ArrowRight className="size-4" />
+              Call The Reporter <ArrowRight className="size-4" />
             </Link>
           </div>
           <Link href="/about" className="inline-block mt-6 text-xs text-t-text-3 hover:text-t-text-2 transition">

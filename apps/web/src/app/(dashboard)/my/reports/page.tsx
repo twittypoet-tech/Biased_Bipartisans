@@ -82,7 +82,7 @@ export default function MyReportsPage() {
           </p>
           <a href="/" className="inline-flex rounded-xl bg-t-accent px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">
             <Phone className="size-4 mr-1.5" />
-            Make a Call
+            Call The Reporter
           </a>
         </div>
       ) : (
