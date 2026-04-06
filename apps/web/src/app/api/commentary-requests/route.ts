@@ -3,6 +3,7 @@ import { createAuthServerClient, createServerClient } from '@/lib/supabase/serve
 
 const COMMENTARY_CREDIT_COST = 1
 const RETELL_API_BASE = 'https://api.retellai.com'
+const COMMENTARY_HOST_AGENT_ID = '30000000-0000-0000-0000-000000000003'
 
 // POST /api/commentary-requests  { reportId, agentId }
 export async function POST(request: Request) {
@@ -136,10 +137,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create request' }, { status: 500 })
   }
 
-  // ── Create Retell web call ──────────────────────────────────────────────
-  let callData: { access_token: string; call_id: string } | null = null
+  // ── Fetch Commentary Host's Retell agent ID ─────────────────────────────
+  const { data: hostAgent } = await serviceDb
+    .from('agents')
+    .select('retell_agent_id')
+    .eq('id', COMMENTARY_HOST_AGENT_ID)
+    .single()
+
+  // ── Create Retell web calls (commentator + host) ───────────────────────
+  let commentaryCall: { access_token: string; call_id: string } | null = null
+  let hostCall: { access_token: string; call_id: string } | null = null
 
   if (retellApiKey) {
+    // Commentary agent call
     try {
       const res = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
         method: 'POST',
@@ -156,18 +166,46 @@ export async function POST(request: Request) {
       if (!res.ok) {
         console.error('Retell create-web-call error (Commentary):', await res.text())
       } else {
-        callData = await res.json()
+        commentaryCall = await res.json()
       }
     } catch (err) {
       console.error('Retell create-web-call failed (Commentary):', err)
     }
+
+    // Commentary Host call — introduces the agent, then goes silent
+    if (hostAgent?.retell_agent_id) {
+      try {
+        const hostRes = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${retellApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            agent_id: hostAgent.retell_agent_id,
+            retell_llm_dynamic_variables: {
+              report_headline: report.report_headline ?? 'Untitled Report',
+              agent_name: agent.name,
+            },
+          }),
+        })
+
+        if (!hostRes.ok) {
+          console.warn('Retell create-web-call warning (Commentary Host):', await hostRes.text())
+        } else {
+          hostCall = await hostRes.json()
+        }
+      } catch (err) {
+        console.warn('Retell create-web-call failed (Commentary Host):', err)
+      }
+    }
   }
 
   // ── Update commentary request with Retell call ID ───────────────────────
-  if (callData) {
+  if (commentaryCall) {
     await serviceDb
       .from('report_commentary_requests')
-      .update({ retell_call_id: callData.call_id, status: 'in_progress' })
+      .update({ retell_call_id: commentaryCall.call_id, status: 'in_progress' })
       .eq('id', commentaryRequest.id)
   }
 
@@ -175,8 +213,10 @@ export async function POST(request: Request) {
     ok: true,
     requestId: commentaryRequest.id,
     agent: { id: agent.id, name: agent.name },
-    callId: callData?.call_id ?? null,
-    accessToken: callData?.access_token ?? null,
+    callId: commentaryCall?.call_id ?? null,
+    hostCallId: hostCall?.call_id ?? null,
+    accessToken: commentaryCall?.access_token ?? null,
+    hostAccessToken: hostCall?.access_token ?? null,
     report: {
       id: report.id,
       headline: report.report_headline,
