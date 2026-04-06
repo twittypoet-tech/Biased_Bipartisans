@@ -169,7 +169,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
         </div>
 
         {/* ── Headline ── */}
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-t-text leading-tight mb-4">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-t-text leading-snug mb-5" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
           {report.report_headline ?? 'Untitled Report'}
         </h1>
 
@@ -290,7 +290,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
 
             {report.body && report.body.length > 0 ? (
               /* ── Structured editorial content ── */
-              <div className="space-y-1">
+              <div className="space-y-5">
                 {buildReportBody(report.body, report.callouts ?? [])}
               </div>
             ) : (
@@ -931,20 +931,20 @@ function CommentaryRequestSheet({
 function renderReportBlock(block: ContentBlock, idx: number) {
   switch (block.type) {
     case 'paragraph':
-      return <p key={idx} className="text-base leading-relaxed text-t-text-2">{block.content}</p>
+      return <p key={idx} className="text-[17px] leading-[1.8] text-t-text-2 mb-1">{block.content}</p>
     case 'heading':
       if ((block.level ?? 2) <= 2) {
-        return <h2 key={idx} className="mt-8 mb-3 text-xl font-bold text-t-text sm:text-2xl" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{block.content}</h2>
+        return <h2 key={idx} className="mt-10 mb-4 text-xl sm:text-2xl font-bold text-t-text" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{block.content}</h2>
       }
-      return <h3 key={idx} className="mt-6 mb-2 text-lg font-semibold text-t-text">{block.content}</h3>
+      return <h3 key={idx} className="mt-8 mb-3 text-lg sm:text-xl font-semibold text-t-text">{block.content}</h3>
     case 'quote':
       return (
-        <blockquote key={idx} className="my-5 border-l-4 pl-5" style={{ borderColor: '#C8A44A' }}>
-          <p className="text-base italic leading-relaxed text-t-text">{block.content}</p>
+        <blockquote key={idx} className="my-6 border-l-4 pl-6" style={{ borderColor: '#C8A44A' }}>
+          <p className="text-lg italic leading-[1.7] text-t-text" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{block.content}</p>
         </blockquote>
       )
     case 'divider':
-      return <hr key={idx} className="my-8 border-t-edge" />
+      return <hr key={idx} className="my-10 border-t-edge" />
     default:
       return null
   }
@@ -961,77 +961,70 @@ function renderReportCallout(callout: Callout, idx: number) {
   switch (callout.type) {
 
     // ── FACT: Pull-stat / magazine highlight ──
-    // Centered, oversized serif text with gold rule. Feels like a stat in The Economist.
     case 'fact':
       return (
-        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-10 py-8 text-center">
-          <div className="mx-auto w-16 h-px mb-5" style={{ backgroundColor: '#C8A44A' }} />
-          <p className="text-lg sm:text-xl font-medium leading-relaxed text-t-text max-w-lg mx-auto" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-12 py-8 text-center">
+          <div className="mx-auto w-20 h-px mb-6" style={{ backgroundColor: '#C8A44A' }} />
+          <p className="text-xl sm:text-2xl font-medium leading-snug text-t-text max-w-xl mx-auto" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
             {callout.content}
           </p>
-          <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-t-text-3" style={{ color: '#C8A44A' }}>
+          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.25em]" style={{ color: '#C8A44A' }}>
             Verified
           </p>
-          <div className="mx-auto w-16 h-px mt-5" style={{ backgroundColor: '#C8A44A' }} />
+          <div className="mx-auto w-20 h-px mt-6" style={{ backgroundColor: '#C8A44A' }} />
         </motion.div>
       )
 
     // ── PERSON: Editorial aside ──
-    // Indented from the left with a thin vertical rule. Small-caps label, italic name treatment.
-    // Feels like an editorial margin note in a long-form Atlantic piece.
     case 'person':
       return (
-        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 ml-4 sm:ml-8 pl-5 sm:pl-6 border-l border-t-edge relative">
-          <div className="absolute left-0 top-0 w-px h-full" style={{ backgroundColor: 'rgba(200,164,74,0.3)' }} />
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-4 mb-2">Who</p>
-          <p className="text-sm leading-relaxed text-t-text-2" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-10 ml-4 sm:ml-8 pl-5 sm:pl-6 relative">
+          <div className="absolute left-0 top-0 w-[2px] h-full rounded-full" style={{ backgroundColor: 'rgba(200,164,74,0.4)' }} />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-2" style={{ color: '#C8A44A' }}>Who</p>
+          <p className="text-base sm:text-lg leading-[1.7] text-t-text" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
             {callout.content}
           </p>
         </motion.div>
       )
 
     // ── DATE: Timeline marker ──
-    // Left-aligned with a subtle dot-and-line treatment, like a timeline in a Reuters special report.
     case 'date':
       return (
-        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-8 flex items-start gap-4 ml-4 sm:ml-8">
-          <div className="flex flex-col items-center shrink-0 pt-1">
-            <div className="size-2 rounded-full" style={{ backgroundColor: '#C8A44A' }} />
-            <div className="w-px flex-1 min-h-[24px] bg-t-edge" />
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-10 flex items-start gap-4 ml-4 sm:ml-8">
+          <div className="flex flex-col items-center shrink-0 pt-1.5">
+            <div className="size-2.5 rounded-full" style={{ backgroundColor: '#C8A44A' }} />
+            <div className="w-px flex-1 min-h-[28px]" style={{ backgroundColor: 'rgba(200,164,74,0.3)' }} />
           </div>
           <div className="pb-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-4 mb-1">Timeline</p>
-            <p className="text-sm leading-relaxed text-t-text-2">{callout.content}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-2" style={{ color: '#C8A44A' }}>Timeline</p>
+            <p className="text-base sm:text-lg leading-[1.7] text-t-text">{callout.content}</p>
           </div>
         </motion.div>
       )
 
     // ── ISSUE: Editorial note ──
-    // Full-width thin top/bottom rules with centered italic text.
-    // Feels like an editor's note in The New Yorker — flagging tension without shouting.
     case 'issue':
       return (
-        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-10 py-6">
-          <div className="h-px w-full bg-t-edge mb-5" />
+        <motion.div key={`co-${idx}`} {...calloutAnimation} className="my-12 py-7">
+          <div className="h-px w-full mb-6" style={{ backgroundColor: 'rgba(200,164,74,0.3)' }} />
           <div className="px-4 sm:px-8">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-4 mb-3">At Issue</p>
-            <p className="text-base leading-relaxed text-t-text italic" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-3" style={{ color: '#C8A44A' }}>At Issue</p>
+            <p className="text-lg sm:text-xl leading-[1.6] text-t-text italic" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
               {callout.content}
             </p>
           </div>
-          <div className="h-px w-full bg-t-edge mt-5" />
+          <div className="h-px w-full mt-6" style={{ backgroundColor: 'rgba(200,164,74,0.3)' }} />
         </motion.div>
       )
 
     // ── QUOTE: Classic editorial pull-quote ──
-    // Large opening quotation mark, serif italic, gold accent. The anchor of the piece.
     case 'quote':
       return (
-        <motion.blockquote key={`co-${idx}`} {...calloutAnimation} className="my-10 py-4 px-4 sm:px-8 relative">
-          <span className="absolute -top-2 left-2 sm:left-6 text-5xl sm:text-6xl leading-none font-bold select-none pointer-events-none" style={{ color: '#C8A44A', fontFamily: 'Georgia, "Times New Roman", serif', opacity: 0.25 }}>
+        <motion.blockquote key={`co-${idx}`} {...calloutAnimation} className="my-12 py-4 px-4 sm:px-8 relative">
+          <span className="absolute -top-3 left-2 sm:left-5 text-6xl sm:text-7xl leading-none font-bold select-none pointer-events-none" style={{ color: '#C8A44A', fontFamily: 'Georgia, "Times New Roman", serif', opacity: 0.3 }}>
             &ldquo;
           </span>
-          <p className="text-lg sm:text-xl italic leading-relaxed text-t-text relative z-10 pl-4 sm:pl-6" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+          <p className="text-xl sm:text-2xl italic leading-snug text-t-text relative z-10 pl-4 sm:pl-6" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
             {callout.content}
           </p>
         </motion.blockquote>
