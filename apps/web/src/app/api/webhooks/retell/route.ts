@@ -159,6 +159,33 @@ export async function POST(request: Request) {
     }
   }
 
+  // ── Refund credits if report failed ─────────────────────────────────────
+  if (!isPublished && userId) {
+    try {
+      const refundDb = createServerClient()
+      const { data: currentProfile } = await refundDb
+        .from('user_profiles')
+        .select('credits')
+        .eq('id', userId)
+        .single()
+      if (currentProfile) {
+        await refundDb
+          .from('user_profiles')
+          .update({ credits: (currentProfile.credits ?? 0) + 5, credits_updated_at: new Date().toISOString() })
+          .eq('id', userId)
+        await refundDb.from('credit_transactions').insert({
+          user_id: userId,
+          amount: 5,
+          reason: 'signup_bonus', // reusing closest reason — represents a refund
+          reference_id: `refund_${callId}`,
+        })
+        console.log('reporter webhook: refunded 5 credits to user', userId, 'for failed report')
+      }
+    } catch (err) {
+      console.error('reporter webhook: credit refund failed', err)
+    }
+  }
+
   // ── Write to DB ───────────────────────────────────────────────────────────
   try {
     const db = createServerClient()

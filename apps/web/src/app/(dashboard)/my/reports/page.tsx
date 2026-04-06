@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { FileText, Phone, Globe, Clock, ChevronRight, Sparkles, RefreshCw, Settings } from 'lucide-react'
+import { FileText, Phone, Globe, Clock, ChevronRight, Sparkles, RefreshCw, Settings, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { ReporterCall } from '@bipi/shared'
@@ -229,7 +229,39 @@ export default function MyReportsPage() {
       ) : (
         <div className="space-y-3">
           {reports.map((report) => {
+            const isFailed = report.report_delivered === false || (report.report_quality !== 'Complete' && report.report_quality !== null)
             const badge = WIRE_STATUS_BADGE[report.wire_status] ?? { label: 'Dashboard Only', className: 'bg-t-surface-el text-t-text-3 border-t-edge' }
+
+            if (isFailed) {
+              return (
+                <div key={report.id} className="rounded-xl border border-red-800/30 bg-red-950/10 p-4 min-w-0 overflow-hidden">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="size-5 text-red-400 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-t-text mb-1">Error processing your report</p>
+                      <p className="text-xs text-t-text-3 mb-1 break-words">
+                        {report.user_query ? `Query: "${report.user_query}"` : 'The Reporter ended the call before delivering a complete report.'}
+                      </p>
+                      <p className="text-xs text-green-400 mb-3">5 credits have been refunded to your account.</p>
+                      {report.user_query ? (
+                        <Link
+                          href={`/?query=${encodeURIComponent(report.user_query)}`}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-t-accent-text hover:underline"
+                        >
+                          <RefreshCw className="size-3" /> Try Again
+                        </Link>
+                      ) : (
+                        <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-t-accent-text hover:underline">
+                          <Phone className="size-3" /> Make a New Call
+                        </Link>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-t-text-4 shrink-0">{formatAge(report.created_at)}</span>
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <Link key={report.id} href={`/reports/${report.slug}`} className="block group">
                 <article className="rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg min-w-0 overflow-hidden">
