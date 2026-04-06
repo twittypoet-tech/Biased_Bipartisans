@@ -1,11 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Check, Zap, Globe, Clock, Sparkles, Phone, CreditCard, ChevronDown, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/utils'
+
+export default function SubscribePageWrapper() {
+  return (
+    <Suspense>
+      <SubscribePage />
+    </Suspense>
+  )
+}
 
 const proFeatures = [
   { icon: Sparkles, label: 'AI-Powered News reports tailored to your schedule, interests, and industry' },
@@ -21,7 +29,7 @@ const creditTiers = [
   { credits: 1000, price: 200, perCredit: 0.20, priceKey: 'credits_1000' as const, value: { reports: 200, callTime: '15 hours' } },
 ]
 
-export default function SubscribePage() {
+function SubscribePage() {
   const { user, profile, refreshProfile } = useAuth()
   const isPro = profile?.tier === 'pro'
   const [expandedTier, setExpandedTier] = useState<number | null>(null)
