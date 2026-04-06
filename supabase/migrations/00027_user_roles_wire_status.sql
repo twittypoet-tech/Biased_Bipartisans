@@ -3,9 +3,10 @@
 -- Adds role-based access (subscriber/journalist/admin), wire publishing
 -- controls, and a journalist application intake table.
 
--- 1. Add role column to user_profiles
-ALTER TABLE user_profiles ADD COLUMN role TEXT NOT NULL DEFAULT 'subscriber'
-  CHECK (role IN ('subscriber', 'journalist', 'admin'));
+-- 1. Add role enum + column to user_profiles
+CREATE TYPE user_role AS ENUM ('subscriber', 'journalist', 'admin');
+
+ALTER TABLE user_profiles ADD COLUMN role user_role NOT NULL DEFAULT 'subscriber';
 
 CREATE INDEX idx_user_profiles_role ON user_profiles (role);
 
