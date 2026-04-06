@@ -14,10 +14,10 @@ function SponsoredCard({ children, href }: { children: React.ReactNode; href?: s
       <div className="px-4 py-1.5 flex items-center justify-between" style={{ backgroundColor: 'rgba(0,0,0,0.12)' }}>
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bipi-mark.svg" alt="" className="size-4 brightness-0 invert" />
-          <span className="text-[10px] font-bold tracking-tight text-white/80">Biased Bipartisans</span>
+          <img src="/bipi-mark.svg" alt="" className="size-4" style={{ filter: 'brightness(0)' }} />
+          <span className="text-[10px] font-bold tracking-tight" style={{ color: 'rgba(0,0,0,0.7)' }}>Biased Bipartisans</span>
         </div>
-        <span className="text-[9px] font-semibold uppercase tracking-wider text-white/50">Sponsored</span>
+        <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(0,0,0,0.4)' }}>Sponsored</span>
       </div>
       {/* Content */}
       <div className="px-5 sm:px-8 py-6 sm:py-8">
@@ -82,7 +82,7 @@ export function SignUpCallout() {
           Real-Time, Evidence-Based News Reports
         </p>
         <p className="text-sm text-white/70 mb-5 max-w-sm mx-auto leading-relaxed">
-          Get AI-generated investigative reports on any topic, sourced and verified in real-time. Your personalized news feed starts here.
+          Unlimited access to your personalized investigative reporter agent, sourcing real-time and verified reports on any topic. Your personalized news feed starts here.
         </p>
         <span className="inline-flex items-center gap-2 text-sm font-semibold text-white group-hover:underline">
           Create Free Account <ArrowRight className="size-4" />
@@ -129,13 +129,13 @@ export function SponsoredCallout() {
   return (
     <SponsoredCard href="/about">
       <div className="text-center">
-        <p className="text-2xl sm:text-3xl font-bold text-white mb-1 tracking-tight" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+        <p className="text-2xl sm:text-3xl font-bold mb-1 tracking-tight" style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#000' }}>
           Think Further on BIPI.
         </p>
-        <p className="text-base sm:text-lg text-white/80 mb-5" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+        <p className="text-base sm:text-lg mb-5" style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: 'rgba(0,0,0,0.6)' }}>
           Where seeking the truth is a journey, not a destination.
         </p>
-        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white group-hover:underline">
+        <span className="inline-flex items-center gap-1.5 text-sm font-semibold group-hover:underline" style={{ color: '#000' }}>
           Learn more <ArrowRight className="size-3.5" />
         </span>
       </div>
@@ -153,10 +153,10 @@ export function HomeSignUpCTA() {
           <div className="px-4 py-1.5 flex items-center justify-between" style={{ backgroundColor: 'rgba(0,0,0,0.12)' }}>
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/bipi-mark.svg" alt="" className="size-4 brightness-0 invert" />
-              <span className="text-[10px] font-bold tracking-tight text-white/80">Biased Bipartisans</span>
+              <img src="/bipi-mark.svg" alt="" className="size-4" style={{ filter: 'brightness(0)' }} />
+              <span className="text-[10px] font-bold tracking-tight" style={{ color: 'rgba(0,0,0,0.7)' }}>Biased Bipartisans</span>
             </div>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-white/50">Sponsored</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(0,0,0,0.4)' }}>Sponsored</span>
           </div>
           <div className="px-6 sm:px-10 py-8 sm:py-12 text-center">
             <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-white/60 mb-4">

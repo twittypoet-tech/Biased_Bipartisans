@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { FileText, Phone, Globe, Clock, ChevronRight, Sparkles, RefreshCw, Settings, AlertCircle } from 'lucide-react'
+import { FileText, Phone, Globe, Clock, ChevronRight, Sparkles, RefreshCw, Settings, AlertCircle, Trash2 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { ReporterCall } from '@bipi/shared'
@@ -116,6 +116,21 @@ export default function MyReportsPage() {
       alert('Something went wrong')
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  async function handleDeleteReport(reportId: string) {
+    if (!confirm('Delete this report? This cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/reporter/${reportId}`, { method: 'DELETE' })
+      if (res.ok) {
+        setReports((prev) => prev.filter((r) => r.id !== reportId))
+      } else {
+        const d = await res.json().catch(() => ({}))
+        alert(d.error ?? 'Failed to delete')
+      }
+    } catch {
+      alert('Something went wrong')
     }
   }
 
@@ -255,6 +270,12 @@ export default function MyReportsPage() {
                           <Phone className="size-3" /> Make a New Call
                         </Link>
                       )}
+                      <button
+                        onClick={() => handleDeleteReport(report.id)}
+                        className="inline-flex items-center gap-1.5 text-xs text-t-text-4 hover:text-red-400 transition ml-3"
+                      >
+                        <Trash2 className="size-3" /> Delete
+                      </button>
                     </div>
                     <span className="text-[10px] text-t-text-4 shrink-0">{formatAge(report.created_at)}</span>
                   </div>
@@ -306,7 +327,16 @@ export default function MyReportsPage() {
                         </span>
                       )}
                     </div>
-                    <ChevronRight className="size-4 text-t-text-4 group-hover:text-t-accent-text transition" />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteReport(report.id) }}
+                        className="rounded p-1 text-t-text-4 hover:text-red-400 hover:bg-red-500/10 transition"
+                        aria-label="Delete report"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                      <ChevronRight className="size-4 text-t-text-4 group-hover:text-t-accent-text transition" />
+                    </div>
                   </div>
                 </article>
               </Link>
