@@ -135,58 +135,75 @@ export default function MyReportsPage() {
       <h1 className="text-2xl font-bold text-t-text mb-6">My Reports</h1>
 
       {/* ── Recommended Presets ── */}
-      {hasInterests && presets.length > 0 && (
+      {!loading && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Recommended for You</p>
-            <button
-              onClick={handleRefreshPresets}
-              disabled={refreshing}
-              className="flex items-center gap-1.5 text-xs text-t-text-3 hover:text-t-accent-text transition disabled:opacity-50"
-            >
-              <RefreshCw className={`size-3 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Generating...' : 'Refresh (1 credit)'}
-            </button>
-          </div>
-
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
-            {presets.map((preset) => (
-              <Link
-                key={preset.id}
-                href={`/?query=${encodeURIComponent(preset.query_template)}`}
-                className="snap-start shrink-0 w-[220px] sm:w-[240px] rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
+            {hasInterests && (
+              <button
+                onClick={handleRefreshPresets}
+                disabled={refreshing}
+                className="flex items-center gap-1.5 text-xs text-t-text-3 hover:text-t-accent-text transition disabled:opacity-50"
               >
-                {preset.interest && (
-                  <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${interestColor(preset.interest)}`}>
-                    {preset.interest}
-                  </div>
-                )}
-                <div className="p-3">
-                  <p className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-1">
-                    {preset.title}
-                  </p>
-                  <p className="text-xs text-t-text-3 line-clamp-2 leading-relaxed">
-                    {preset.query_template}
-                  </p>
-                </div>
-              </Link>
-            ))}
+                <RefreshCw className={`size-3 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Generating...' : 'Refresh (1 credit)'}
+              </button>
+            )}
           </div>
-        </div>
-      )}
 
-      {/* Set interests CTA */}
-      {!hasInterests && !loading && (
-        <div className="mb-8 rounded-xl border border-t-accent/30 bg-t-accent-soft p-4 flex items-center gap-3">
-          <Sparkles className="size-5 text-t-accent-text shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-t-text">Get personalized report suggestions</p>
-            <p className="text-xs text-t-text-3">Set your interests to unlock daily recommended topics.</p>
-          </div>
-          <Link href="/my/settings" className="shrink-0 rounded-lg bg-t-accent px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition">
-            <Settings className="inline size-3 mr-1" />
-            Set Interests
-          </Link>
+          {presets.length > 0 ? (
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+              {presets.map((preset) => (
+                <Link
+                  key={preset.id}
+                  href={`/?query=${encodeURIComponent(preset.query_template)}`}
+                  className="snap-start shrink-0 w-[220px] sm:w-[240px] rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
+                >
+                  {preset.interest && (
+                    <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${interestColor(preset.interest)}`}>
+                      {preset.interest}
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <p className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-1">
+                      {preset.title}
+                    </p>
+                    <p className="text-xs text-t-text-3 line-clamp-2 leading-relaxed">
+                      {preset.query_template}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : hasInterests ? (
+            /* Has interests but no presets generated yet */
+            <div className="rounded-xl border border-t-edge bg-t-surface p-5 text-center shadow-t">
+              <Sparkles className="size-6 text-t-accent-text mx-auto mb-2" />
+              <p className="text-sm font-medium text-t-text mb-1">Generate your first recommendations</p>
+              <p className="text-xs text-t-text-3 mb-4">AI-powered search suggestions based on your interests.</p>
+              <button
+                onClick={handleRefreshPresets}
+                disabled={refreshing}
+                className="inline-flex items-center gap-2 rounded-lg bg-t-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
+              >
+                {refreshing ? <RefreshCw className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                {refreshing ? 'Generating...' : 'Generate Suggestions (1 credit)'}
+              </button>
+            </div>
+          ) : (
+            /* No interests set */
+            <div className="rounded-xl border border-t-accent/30 bg-t-accent-soft p-4 flex items-center gap-3">
+              <Sparkles className="size-5 text-t-accent-text shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-t-text">Get personalized report suggestions</p>
+                <p className="text-xs text-t-text-3">Set your interests to unlock daily recommended topics.</p>
+              </div>
+              <Link href="/my/settings" className="shrink-0 rounded-lg bg-t-accent px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition">
+                <Settings className="inline size-3 mr-1" />
+                Set Interests
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
