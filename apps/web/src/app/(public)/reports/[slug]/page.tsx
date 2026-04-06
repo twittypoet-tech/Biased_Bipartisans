@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import { notFound } from 'next/navigation'
 import { createServerClient, createAuthServerClient } from '@/lib/supabase/server'
-import { getReporterCallBySlug, listReportCommentary } from '@bipi/db'
+import { getReporterCallBySlug, listReportCommentary, getRelatedReports } from '@bipi/db'
 import { listAgents } from '@bipi/db'
 import { ReportDetailClient } from '@/components/public/report-detail-client'
 
@@ -68,9 +68,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
 
   const isOwner = viewerUserId != null && report.user_id === viewerUserId
 
-  const [commentary, allAgents] = await Promise.all([
+  const [commentary, allAgents, relatedReports] = await Promise.all([
     listReportCommentary(db, report.id),
     listAgents(db),
+    getRelatedReports(db, report.id, report.key_entities, report.user_query, report.report_category),
   ])
 
   const agentsForCommentary = allAgents
@@ -118,6 +119,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         commentary={commentary}
         agents={agentsForCommentary}
         isOwner={isOwner}
+        relatedReports={relatedReports}
       />
     </>
   )

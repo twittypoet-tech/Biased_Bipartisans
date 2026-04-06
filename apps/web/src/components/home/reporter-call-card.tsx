@@ -4,15 +4,15 @@ import { useRef, useState } from 'react'
 import Link from 'next/link'
 import type { ReporterCall } from '@bipi/shared'
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'Environmental Science':    'bg-green-950/60 text-green-400 border-green-800/40',
-  'History & Politics':       'bg-red-950/60 text-red-400 border-red-800/40',
-  'Law & Jurisprudence':      'bg-blue-950/60 text-blue-400 border-blue-800/40',
-  'Medicine & Healthcare':    'bg-pink-950/60 text-pink-400 border-pink-800/40',
-  'Philosophy & Ethics':      'bg-purple-950/60 text-purple-400 border-purple-800/40',
-  'Rhetoric & Persuasion':    'bg-orange-950/60 text-orange-400 border-orange-800/40',
-  'Statistics & Data Science':'bg-cyan-950/60 text-cyan-400 border-cyan-800/40',
-  'Technology & Innovation':  'bg-amber-950/60 text-amber-400 border-amber-800/40',
+const CATEGORY_BANNER: Record<string, string> = {
+  'Environmental Science':    'bg-green-950/80 text-green-300',
+  'History & Politics':       'bg-red-950/80 text-red-300',
+  'Law & Jurisprudence':      'bg-blue-950/80 text-blue-300',
+  'Medicine & Healthcare':    'bg-pink-950/80 text-pink-300',
+  'Philosophy & Ethics':      'bg-purple-950/80 text-purple-300',
+  'Rhetoric & Persuasion':    'bg-orange-950/80 text-orange-300',
+  'Statistics & Data Science':'bg-cyan-950/80 text-cyan-300',
+  'Technology & Innovation':  'bg-amber-950/80 text-amber-300',
 }
 
 function formatAge(iso: string): string {
@@ -38,7 +38,16 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
 
   return (
     <Link href={`/reports/${call.slug}`} className="block">
-    <article className="flex gap-3 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
+    <article className="rounded-xl border border-t-edge bg-t-surface shadow-t overflow-hidden transition hover:border-t-edge-strong hover:shadow-t-lg">
+
+      {/* ── Category banner ── */}
+      {call.report_category && (
+        <div className={`px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide ${CATEGORY_BANNER[call.report_category] ?? 'bg-t-surface-el text-t-text-3'}`}>
+          {call.report_category}
+        </div>
+      )}
+
+      <div className="flex gap-3 p-4">
 
       {/* ── Vote column ── */}
       <div className="flex flex-col items-center gap-1 pt-0.5 min-w-[32px]">
@@ -63,25 +72,6 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
 
       {/* ── Content ── */}
       <div className="flex-1 min-w-0">
-
-        {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          {call.report_category && (
-            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${CATEGORY_COLORS[call.report_category] ?? 'bg-t-badge text-t-text-2 border-t-badge-border'}`}>
-              {call.report_category}
-            </span>
-          )}
-          {call.sources_cited === true && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-green-950/40 border border-green-800/40 px-2 py-0.5 text-[10px] font-medium text-green-400">
-              <ShieldCheckIcon /> Verified Sources
-            </span>
-          )}
-          {call.sources_cited === false && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-t-badge border border-t-badge-border px-2 py-0.5 text-[10px] font-medium text-t-text-3">
-              Unverified
-            </span>
-          )}
-        </div>
 
         {/* Headline */}
         <h3 className="text-sm font-semibold text-t-text leading-snug mb-1.5">
@@ -130,6 +120,7 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
             </span>
           )}
         </div>
+      </div>
       </div>
     </article>
     </Link>
@@ -220,14 +211,6 @@ function PauseIcon() {
   return (
     <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
       <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
-    </svg>
-  )
-}
-function ShieldCheckIcon() {
-  return (
-    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      <polyline points="9 12 11 14 15 10"/>
     </svg>
   )
 }

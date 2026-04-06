@@ -279,3 +279,70 @@ export async function downvoteCommentary(
       .eq('id', commentaryId)
   }
 }
+
+// ── Related Reports ─────────────────────────────────────────────────────────
+
+const STOP_WORDS = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'has', 'have', 'been', 'were', 'they', 'this', 'that', 'with', 'from', 'what', 'about', 'which', 'when', 'will', 'more', 'into', 'them', 'than', 'its', 'who', 'how', 'news', 'report'])
+
+export async function getRelatedReports(
+  db: SupabaseClient,
+  currentId: string,
+  keyEntities: string | null,
+  userQuery: string | null,
+  category: string | null,
+  limit = 5,
+): Promise<ReporterCall[]> {
+  const { data, error } = await db
+    .from('reporter_calls')
+    .select('*')
+    .eq('is_published', true)
+    .in('wire_status', ['auto', 'approved'])
+    .neq('id', currentId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+  if (error) throw error
+  if (!data?.length) return []
+
+  // Parse current report's entities and query words
+  const currentEntities = (keyEntities ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+
+  const currentWords = (userQuery ?? '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !STOP_WORDS.has(w))
+
+  // Score each candidate
+  const scored = (data as ReporterCall[]).map((r) => {
+    let score = 0
+
+    // Entity overlap (+10 per match)
+    if (currentEntities.length > 0 && r.key_entities) {
+      const candidateEntities = r.key_entities.toLowerCase()
+      for (const entity of currentEntities) {
+        if (candidateEntities.includes(entity)) score += 10
+      }
+    }
+
+    // Query word overlap (+3 per match)
+    if (currentWords.length > 0 && r.user_query) {
+      const candidateQuery = r.user_query.toLowerCase()
+      for (const word of currentWords) {
+        if (candidateQuery.includes(word)) score += 3
+      }
+    }
+
+    // Same category (+1)
+    if (category && r.report_category === category) score += 1
+
+    return { report: r, score }
+  })
+
+  return scored
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((s) => s.report)
+}

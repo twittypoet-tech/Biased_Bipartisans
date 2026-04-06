@@ -11,6 +11,7 @@ interface UserProfile {
   tier: 'free' | 'pro'
   credits: number
   interests: string[]
+  role: 'subscriber' | 'journalist' | 'admin'
 }
 
 interface AuthContextValue {
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function fetchProfile(userId: string) {
     const { data } = await supabase
       .from('user_profiles')
-      .select('id, display_name, avatar_url, tier, credits, interests')
+      .select('id, display_name, avatar_url, tier, credits, interests, role')
       .eq('id', userId)
       .single()
     if (data) setProfile(data as UserProfile)

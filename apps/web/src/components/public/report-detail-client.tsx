@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowUp, ArrowDown, MessageSquare, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ChevronRight, ExternalLink, AlignLeft } from 'lucide-react'
+import { ArrowUp, ArrowDown, MessageSquare, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ChevronRight, ExternalLink, AlignLeft, Trash2 } from 'lucide-react'
 import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { useAuth } from '@/components/auth-provider'
@@ -21,6 +21,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Rhetoric & Persuasion':     'bg-orange-950/60 text-orange-400 border-orange-800/40',
   'Statistics & Data Science': 'bg-cyan-950/60 text-cyan-400 border-cyan-800/40',
   'Technology & Innovation':   'bg-amber-950/60 text-amber-400 border-amber-800/40',
+}
+
+const CATEGORY_BANNER: Record<string, string> = {
+  'Environmental Science':     'bg-green-950/80 text-green-300',
+  'History & Politics':        'bg-red-950/80 text-red-300',
+  'Law & Jurisprudence':       'bg-blue-950/80 text-blue-300',
+  'Medicine & Healthcare':     'bg-pink-950/80 text-pink-300',
+  'Philosophy & Ethics':       'bg-purple-950/80 text-purple-300',
+  'Rhetoric & Persuasion':     'bg-orange-950/80 text-orange-300',
+  'Statistics & Data Science':  'bg-cyan-950/80 text-cyan-300',
+  'Technology & Innovation':   'bg-amber-950/80 text-amber-300',
 }
 
 function formatAge(iso: string): string {
@@ -56,6 +67,7 @@ interface ReportDetailClientProps {
   commentary: ReportCommentary[]
   agents: AgentForCommentary[]
   isOwner?: boolean
+  relatedReports?: ReporterCall[]
 }
 
 const WIRE_STATUS_BADGE: Record<string, { label: string; className: string }> = {
@@ -68,7 +80,8 @@ const WIRE_STATUS_BADGE: Record<string, { label: string; className: string }> = 
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function ReportDetailClient({ report, commentary: initialCommentary, agents, isOwner = false }: ReportDetailClientProps) {
+export function ReportDetailClient({ report, commentary: initialCommentary, agents, isOwner = false, relatedReports = [] }: ReportDetailClientProps) {
+  const { profile } = useAuth()
   const [commentary, setCommentary] = useState(initialCommentary)
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
   const [votes, setVotes] = useState({ up: report.upvotes, down: report.downvotes })
@@ -80,6 +93,15 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
   const [publishRequesting, setPublishRequesting] = useState(false)
 
   const netVotes = votes.up - votes.down
+  const canRequestCommentary = isOwner || profile?.role === 'journalist' || profile?.role === 'admin'
+
+  async function handleDeleteCommentary(commentaryId: string) {
+    if (!confirm('Remove this commentary?')) return
+    try {
+      const res = await fetch(`/api/commentary/${commentaryId}`, { method: 'DELETE' })
+      if (res.ok) setCommentary((prev) => prev.filter((c) => c.id !== commentaryId))
+    } catch {}
+  }
 
   function handleVote(dir: 'up' | 'down') {
     if (userVote === dir) return
@@ -152,21 +174,14 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
         </div>
       )}
 
-      <div className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
-
-        {/* ── Post Header ── */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          {report.report_category && (
-            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${CATEGORY_COLORS[report.report_category] ?? 'bg-t-badge text-t-text-2 border-t-badge-border'}`}>
-              {report.report_category}
-            </span>
-          )}
-          {report.sources_cited && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-green-950/40 border border-green-800/40 px-2 py-0.5 text-[10px] font-medium text-green-400">
-              <ShieldCheckIcon /> Verified Sources
-            </span>
-          )}
+      {/* ── Category Banner ── */}
+      {report.report_category && (
+        <div className={`px-4 sm:px-6 py-2 text-[11px] font-semibold uppercase tracking-wider ${CATEGORY_BANNER[report.report_category] ?? 'bg-t-surface-el text-t-text-3'}`}>
+          <div className="mx-auto max-w-3xl">{report.report_category}</div>
         </div>
+      )}
+
+      <div className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
 
         {/* ── Headline ── */}
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-t-text leading-snug mb-5" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
@@ -327,37 +342,47 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
 
             <div className="space-y-4">
               {commentary.map((c) => (
-                <CommentaryCard key={c.id} commentary={c} />
+                <CommentaryCard key={c.id} commentary={c} isOwner={isOwner} onDelete={() => handleDeleteCommentary(c.id)} />
               ))}
             </div>
           </div>
         )}
 
-        {/* ── Metadata Card (sources, entities) ── */}
-        <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            {report.source_count != null && (
-              <div>
-                <p className="text-lg font-bold text-t-text">{report.source_count}</p>
-                <p className="text-xs text-t-text-3">Sources</p>
-              </div>
-            )}
-            {report.duration_seconds != null && (
-              <div>
-                <p className="text-lg font-bold text-t-text">{formatDuration(report.duration_seconds)}</p>
-                <p className="text-xs text-t-text-3">Duration</p>
-              </div>
-            )}
-            {report.call_language && (
-              <div>
-                <p className="text-lg font-bold text-t-text">{report.call_language.split('-')[0]?.toUpperCase()}</p>
-                <p className="text-xs text-t-text-3">Language</p>
-              </div>
-            )}
-          </div>
+        {/* ── Related Reports Carousel ── */}
+        {relatedReports.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-t-edge" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Related Reports</span>
+              <div className="flex-1 h-px bg-t-edge" />
+            </div>
 
+            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+              {relatedReports.map((r) => (
+                <Link key={r.id} href={`/reports/${r.slug}`} className="snap-start shrink-0 w-[220px] sm:w-[260px] group">
+                  <div className="rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg h-full">
+                    {r.report_category && (
+                      <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${CATEGORY_BANNER[r.report_category] ?? 'bg-t-surface-el text-t-text-3'}`}>
+                        {r.report_category}
+                      </div>
+                    )}
+                    <div className="p-3.5">
+                      <h4 className="text-sm font-semibold text-t-text leading-snug line-clamp-2 group-hover:text-t-accent-text transition mb-2">
+                        {r.report_headline ?? 'Untitled'}
+                      </h4>
+                      <p className="text-[11px] text-t-text-3">{formatAge(r.created_at)}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Sources & Entities Card ── */}
+        <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
           {report.key_entities && (
-            <div className="mt-4 pt-4 border-t border-t-edge-muted">
+            <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Key Entities</p>
               <div className="flex flex-wrap gap-1.5">
                 {report.key_entities.split(',').map((entity, i) => (
@@ -370,7 +395,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
           )}
 
           {(report.sources_json?.length || report.sources_mentioned) && (
-            <div className="mt-4 pt-4 border-t border-t-edge-muted">
+            <div className={report.key_entities ? 'mt-4 pt-4 border-t border-t-edge-muted' : ''}>
               <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-3">Sources Cited</p>
               {report.sources_json && report.sources_json.length > 0 ? (
                 <ol className="space-y-2">
@@ -407,29 +432,31 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
           )}
         </div>
 
-        {/* ── Request Commentary CTA ── */}
-        <div className="mb-12 relative overflow-hidden rounded-xl border border-t-accent/30 bg-gradient-to-r from-t-accent-soft to-transparent p-5 sm:p-6">
-          <div className="relative z-10">
-            <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl bg-t-accent/20 flex items-center justify-center shrink-0">
-                <Sparkles className="size-5 text-t-accent-text" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-t-text mb-1">Want an agent&apos;s take on this report?</h3>
-                <p className="text-sm text-t-text-2 mb-4">
-                  Request commentary from any AI agent. They&apos;ll analyze this report and share their perspective as a pinned comment with audio.
-                </p>
-                <button
-                  onClick={() => setShowCommentaryRequest(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-t-accent px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition"
-                >
-                  <Sparkles className="size-4" />
-                  Request Commentary
-                </button>
+        {/* ── Request Commentary CTA (permission-gated) ── */}
+        {canRequestCommentary && (
+          <div className="mb-12 relative overflow-hidden rounded-xl border border-t-accent/30 bg-gradient-to-r from-t-accent-soft to-transparent p-5 sm:p-6">
+            <div className="relative z-10">
+              <div className="flex items-start gap-3">
+                <div className="size-10 rounded-xl bg-t-accent/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="size-5 text-t-accent-text" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-t-text mb-1">Want an agent&apos;s take on this report?</h3>
+                  <p className="text-sm text-t-text-2 mb-4">
+                    Request commentary from any AI agent. They&apos;ll analyze this report and share their perspective as a pinned comment with audio.
+                  </p>
+                  <button
+                    onClick={() => setShowCommentaryRequest(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-t-accent px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition"
+                  >
+                    <Sparkles className="size-4" />
+                    Request Commentary
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* ── Commentary Request Modal ── */}
         {showCommentaryRequest && (
@@ -458,7 +485,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
 
 const TRANSCRIPT_PREVIEW_LENGTH = 280
 
-function CommentaryCard({ commentary: c }: { commentary: ReportCommentary }) {
+function CommentaryCard({ commentary: c, isOwner = false, onDelete }: { commentary: ReportCommentary; isOwner?: boolean; onDelete?: () => void }) {
   const [expanded, setExpanded] = useState(false)
   const [votes, setVotes] = useState({ up: c.upvotes, down: c.downvotes })
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
@@ -530,6 +557,15 @@ function CommentaryCard({ commentary: c }: { commentary: ReportCommentary }) {
           >
             <ArrowDown className="size-3.5" strokeWidth={2.5} />
           </button>
+          {isOwner && onDelete && (
+            <button
+              onClick={onDelete}
+              aria-label="Delete commentary"
+              className="rounded p-1.5 transition text-t-text-4 hover:text-red-400 hover:bg-red-500/10 ml-1"
+            >
+              <Trash2 className="size-3.5" strokeWidth={2} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -1075,11 +1111,3 @@ function buildReportBody(blocks: ContentBlock[], callouts: Callout[]): React.Rea
   return nodes
 }
 
-function ShieldCheckIcon() {
-  return (
-    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      <polyline points="9 12 11 14 15 10"/>
-    </svg>
-  )
-}
