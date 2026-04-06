@@ -143,23 +143,23 @@ export default function MyReportsPage() {
 
           {presets.length > 0 ? (
             <>
-              <div className="space-y-3 mb-4">
+              <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
                 {presets.map((preset) => (
                   <Link
                     key={preset.id}
                     href={`/?query=${encodeURIComponent(preset.query_template)}`}
-                    className="block rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
+                    className="snap-start shrink-0 w-[75vw] sm:w-[280px] rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
                   >
                     {preset.interest && (
-                      <div className={`px-4 py-1 text-[10px] font-semibold uppercase tracking-wide ${interestColor(preset.interest)}`}>
+                      <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${interestColor(preset.interest)}`}>
                         {preset.interest}
                       </div>
                     )}
-                    <div className="p-4 min-w-0">
-                      <p className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-1.5">
+                    <div className="p-3 sm:p-3.5">
+                      <p className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-1">
                         {preset.title}
                       </p>
-                      <p className="text-xs text-t-text-2 leading-relaxed break-words">
+                      <p className="text-xs text-t-text-3 leading-relaxed line-clamp-3">
                         {preset.query_template}
                       </p>
                     </div>
@@ -171,7 +171,7 @@ export default function MyReportsPage() {
                 <button
                   onClick={handleRefreshPresets}
                   disabled={refreshing}
-                  className="w-full rounded-xl border border-t-edge bg-t-surface py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full mt-3 rounded-xl border border-t-edge bg-t-surface py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                   {refreshing ? 'Generating new suggestions...' : 'Refresh Suggestions (1 credit)'}
