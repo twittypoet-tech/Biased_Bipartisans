@@ -143,12 +143,13 @@ export default function MyReportsPage() {
 
           {presets.length > 0 ? (
             <>
-              <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+              <div className="-mx-4 px-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex gap-3 pb-2 snap-x snap-mandatory w-max">
                 {presets.map((preset) => (
                   <Link
                     key={preset.id}
                     href={`/?query=${encodeURIComponent(preset.query_template)}`}
-                    className="snap-start shrink-0 w-[75vw] sm:w-[280px] rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
+                    className="snap-start shrink-0 w-[72vw] sm:w-[280px] rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
                   >
                     {preset.interest && (
                       <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${interestColor(preset.interest)}`}>
@@ -165,6 +166,7 @@ export default function MyReportsPage() {
                     </div>
                   </Link>
                 ))}
+              </div>
               </div>
 
               {hasInterests && (
