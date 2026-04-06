@@ -2,10 +2,35 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { FileText, Phone, Globe, Clock, ChevronRight } from 'lucide-react'
+import { FileText, Phone, Globe, Clock, ChevronRight, Sparkles, RefreshCw, Settings } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { ReporterCall } from '@bipi/shared'
+
+interface UserPreset {
+  id: string
+  title: string
+  query_template: string
+  interest: string | null
+  sort_order: number
+}
+
+const INTEREST_COLORS = [
+  'bg-rose-950/80 text-rose-300',
+  'bg-sky-950/80 text-sky-300',
+  'bg-violet-950/80 text-violet-300',
+  'bg-teal-950/80 text-teal-300',
+  'bg-orange-950/80 text-orange-300',
+  'bg-emerald-950/80 text-emerald-300',
+  'bg-fuchsia-950/80 text-fuchsia-300',
+  'bg-lime-950/80 text-lime-300',
+]
+
+function interestColor(interest: string): string {
+  let hash = 0
+  for (let i = 0; i < interest.length; i++) hash = ((hash << 5) - hash + interest.charCodeAt(i)) | 0
+  return INTEREST_COLORS[Math.abs(hash) % INTEREST_COLORS.length]!
+}
 
 const WIRE_STATUS_BADGE: Record<string, { label: string; className: string }> = {
   none:     { label: 'Dashboard Only', className: 'bg-t-surface-el text-t-text-3 border-t-edge' },
@@ -38,23 +63,61 @@ function formatAge(iso: string): string {
 }
 
 export default function MyReportsPage() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [reports, setReports] = useState<ReporterCall[]>([])
+  const [presets, setPresets] = useState<UserPreset[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const hasInterests = (profile?.interests ?? []).length > 0
 
   useEffect(() => {
     if (!user) { setLoading(false); return }
 
     const db = getSupabaseBrowserClient()
-    db.from('reporter_calls')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setReports((data ?? []) as ReporterCall[])
-        setLoading(false)
-      })
+
+    // Fetch reports + presets in parallel
+    Promise.all([
+      db.from('reporter_calls')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+      db.from('user_presets')
+        .select('id, title, query_template, interest, sort_order')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
+    ]).then(([reportsRes, presetsRes]) => {
+      setReports((reportsRes.data ?? []) as ReporterCall[])
+      setPresets((presetsRes.data ?? []) as UserPreset[])
+      setLoading(false)
+    })
   }, [user])
+
+  async function handleRefreshPresets() {
+    setRefreshing(true)
+    try {
+      const res = await fetch('/api/presets/generate', { method: 'POST' })
+      if (res.ok) {
+        // Refetch presets
+        const db = getSupabaseBrowserClient()
+        const { data } = await db
+          .from('user_presets')
+          .select('id, title, query_template, interest, sort_order')
+          .eq('user_id', user!.id)
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true })
+        setPresets((data ?? []) as UserPreset[])
+      } else {
+        const d = await res.json().catch(() => ({}))
+        alert(d.error ?? 'Failed to refresh')
+      }
+    } catch {
+      alert('Something went wrong')
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -70,6 +133,62 @@ export default function MyReportsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
       <h1 className="text-2xl font-bold text-t-text mb-6">My Reports</h1>
+
+      {/* ── Recommended Presets ── */}
+      {hasInterests && presets.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Recommended for You</p>
+            <button
+              onClick={handleRefreshPresets}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 text-xs text-t-text-3 hover:text-t-accent-text transition disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Generating...' : 'Refresh (1 credit)'}
+            </button>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+            {presets.map((preset) => (
+              <Link
+                key={preset.id}
+                href={`/?query=${encodeURIComponent(preset.query_template)}`}
+                className="snap-start shrink-0 w-[220px] sm:w-[240px] rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg group"
+              >
+                {preset.interest && (
+                  <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${interestColor(preset.interest)}`}>
+                    {preset.interest}
+                  </div>
+                )}
+                <div className="p-3">
+                  <p className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-1">
+                    {preset.title}
+                  </p>
+                  <p className="text-xs text-t-text-3 line-clamp-2 leading-relaxed">
+                    {preset.query_template}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Set interests CTA */}
+      {!hasInterests && !loading && (
+        <div className="mb-8 rounded-xl border border-t-accent/30 bg-t-accent-soft p-4 flex items-center gap-3">
+          <Sparkles className="size-5 text-t-accent-text shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-t-text">Get personalized report suggestions</p>
+            <p className="text-xs text-t-text-3">Set your interests to unlock daily recommended topics.</p>
+          </div>
+          <Link href="/my/settings" className="shrink-0 rounded-lg bg-t-accent px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition">
+            <Settings className="inline size-3 mr-1" />
+            Set Interests
+          </Link>
+        </div>
+      )}
 
       {reports.length === 0 ? (
         <div className="rounded-2xl border border-t-edge bg-t-surface p-8 sm:p-12 shadow-t text-center">

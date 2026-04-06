@@ -73,6 +73,17 @@ export function CallHero({ presets, agents }: CallHeroProps) {
 
   useEffect(() => { preloadLiveKit() }, [])
 
+  // Auto-populate query from URL parameter (e.g. from dashboard preset click)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const q = params.get('query')
+    if (q) {
+      setQuery(q)
+      // Clean up URL without reload
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
   // Close desktop dropdown on outside click
   useEffect(() => {
     if (!desktopDropdown) return

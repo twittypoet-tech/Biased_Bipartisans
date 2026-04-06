@@ -7,6 +7,7 @@ import { runAiJudgeEvaluation } from './functions/ai-judge-evaluate.js'
 import { advanceTournamentRoundFn } from './functions/advance-tournament-round.js'
 import { awardTrophyFn } from './functions/award-trophy.js'
 import { weeklyFreeRefill, monthlyProRefill } from './functions/credit-refill.js'
+import { dailyPresetGeneration } from './functions/generate-user-presets.js'
 
 const log = createLogger('jobs')
 
@@ -27,7 +28,7 @@ const postDebatePipeline = inngest.createFunction(
 )
 
 // ── All registered functions ──
-export const functions = [postDebatePipeline, advanceTournamentRoundFn, awardTrophyFn, weeklyFreeRefill, monthlyProRefill]
+export const functions = [postDebatePipeline, advanceTournamentRoundFn, awardTrophyFn, weeklyFreeRefill, monthlyProRefill, dailyPresetGeneration]
 
 // ── Standalone server mode ──
 // When run directly, starts an Express server to receive Inngest events.
