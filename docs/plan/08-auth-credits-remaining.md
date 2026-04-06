@@ -36,22 +36,24 @@
 ## What Needs Building
 
 ### Phase 7 — Remaining Items (MEDIUM)
-- [ ] **Commentary requests API**: Require auth + pro tier, deduct 1 credit/agent. Currently UX-only gate.
+- [x] **Commentary requests API**: Require auth + pro tier, deduct 1 credit/agent. ✅ Built 2026-04-06
 - [ ] **Commenting API**: Require auth + pro tier for inserting comments. Currently empty state only.
 
-### Phase 8: Weekly Credit Refill (MEDIUM)
-- [ ] SQL function to add 5 credits to all free users weekly
-- [ ] SQL function to add 100 credits to all pro users monthly
-- [ ] Schedule via Supabase pg_cron or Inngest
-- [ ] Log transactions with reason `weekly_free` / `monthly_pro`
+### Phase 8: Weekly Credit Refill ✅ DONE
+- [x] `deduct_credits` RPC function created (migration 00030) — atomic deduction with balance check
+- [x] Inngest `weeklyFreeRefill` — adds 5 credits to free users every Monday, capped at 50
+- [x] Inngest `monthlyProRefill` — resets pro users to 100 credits on 1st of month
+- [x] Both log transactions with reason `weekly_free` / `monthly_pro`
 
-### Stripe Integration (BLOCKED — needs Stripe MCP)
-- [ ] Create Stripe products/prices for Pro subscription ($25/mo) + credit packs (100/500/1000)
-- [ ] Webhook handler for `checkout.session.completed`, `invoice.paid`, `customer.subscription.deleted`
-- [ ] Wire `/subscribe` page CTAs to Stripe Checkout sessions
-- [ ] Update `user_profiles.tier` on subscription change
-- [ ] Handle credit pack purchases (add credits + log transaction)
-- [ ] Wire "Manage" button to Stripe Customer Portal
+### Stripe Integration ✅ DONE
+- [x] Stripe products created: Pro Subscription ($25/mo), 100/500/1000 credit packs
+- [x] `/api/stripe/checkout` — creates Stripe Checkout sessions (subscription or one-time)
+- [x] `/api/stripe/portal` — Stripe Customer Portal for subscription management
+- [x] `/api/webhooks/stripe` — handles checkout.session.completed, invoice.paid, customer.subscription.deleted
+- [x] Subscribe page CTAs wired to live Stripe Checkout
+- [x] Pro users: "Manage" button opens Stripe Customer Portal
+- [x] Credit packs: purchase adds credits + logs transaction
+- [x] Subscription lifecycle: activate → monthly renewal → cancellation all handled
 
 ### Dashboard Population (MEDIUM)
 - [ ] `/my/reports`: Fetch user_reports + reporter_calls join, render report cards
@@ -65,8 +67,8 @@
 - [ ] Pro user daily digest: "Your daily report on {interests} is waiting"
 
 ### Admin Route Protection (LOW)
+- [x] `role` column on user_profiles — `user_role` enum (subscriber/journalist/admin). Done 2026-04-06.
 - [ ] Add admin role check to middleware for `/admin/*` and `/api/admin/*`
-- [ ] Either a `role` column on user_profiles or a separate admin table
 
 ## Important Notes for Next Session
 

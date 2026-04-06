@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Check, Zap, Globe, Clock, Sparkles, Phone, CreditCard, ChevronDown } from 'lucide-react'
+import { Check, Zap, Globe, Clock, Sparkles, Phone, CreditCard, ChevronDown, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/utils'
 
@@ -15,30 +16,60 @@ const proFeatures = [
 ]
 
 const creditTiers = [
-  {
-    credits: 100,
-    price: 25,
-    perCredit: 0.25,
-    value: { reports: 20, callTime: '1.5 hours' },
-  },
-  {
-    credits: 500,
-    price: 105,
-    perCredit: 0.21,
-    value: { reports: 100, callTime: '7.5 hours' },
-  },
-  {
-    credits: 1000,
-    price: 200,
-    perCredit: 0.20,
-    value: { reports: 200, callTime: '15 hours' },
-  },
+  { credits: 100, price: 25, perCredit: 0.25, priceKey: 'credits_100' as const, value: { reports: 20, callTime: '1.5 hours' } },
+  { credits: 500, price: 115, perCredit: 0.23, priceKey: 'credits_500' as const, value: { reports: 100, callTime: '7.5 hours' } },
+  { credits: 1000, price: 200, perCredit: 0.20, priceKey: 'credits_1000' as const, value: { reports: 200, callTime: '15 hours' } },
 ]
 
 export default function SubscribePage() {
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const isPro = profile?.tier === 'pro'
   const [expandedTier, setExpandedTier] = useState<number | null>(null)
+  const [loading, setLoading] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const isSuccess = searchParams.get('success') === 'true'
+
+  // Refresh profile after successful payment
+  useEffect(() => {
+    if (isSuccess) refreshProfile()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess])
+
+  async function handleCheckout(priceKey: string) {
+    if (!user) { window.location.href = '/auth'; return }
+    setLoading(priceKey)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceKey }),
+      })
+      const { url, error } = await res.json()
+      if (url) window.location.href = url
+      else alert(error ?? 'Failed to create checkout')
+    } catch {
+      alert('Something went wrong')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  async function handleManage() {
+    setLoading('manage')
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const { url, error } = await res.json()
+      if (url) window.location.href = url
+      else alert(error ?? 'Failed to open billing portal')
+    } catch {
+      alert('Something went wrong')
+    } finally {
+      setLoading(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-t-bg">
@@ -54,6 +85,17 @@ export default function SubscribePage() {
 
       <div className="mx-auto max-w-lg px-4 py-12 sm:py-20">
 
+        {/* ── Success banner ── */}
+        {isSuccess && (
+          <div className="rounded-2xl border border-green-800/40 bg-green-950/20 p-5 mb-6 flex items-center gap-3">
+            <CheckCircle className="size-6 text-green-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-t-text">Payment successful</p>
+              <p className="text-xs text-t-text-3">Your account has been updated. Credits are ready to use.</p>
+            </div>
+          </div>
+        )}
+
         {/* ── Pro member status (shown when already Pro) ── */}
         {isPro && (
           <div className="rounded-2xl border border-t-accent/30 bg-t-surface p-5 shadow-t mb-6">
@@ -65,8 +107,12 @@ export default function SubscribePage() {
                 <p className="text-sm font-semibold text-t-text">You&apos;re on Pro</p>
                 <p className="text-xs text-t-text-3">{profile?.credits ?? 0} credits remaining · 100 credits/month</p>
               </div>
-              <button className="rounded-lg border border-t-edge-strong bg-t-surface-el px-3 py-1.5 text-xs font-medium text-t-text-2 hover:bg-t-hover transition">
-                Manage
+              <button
+                onClick={handleManage}
+                disabled={loading === 'manage'}
+                className="rounded-lg border border-t-edge-strong bg-t-surface-el px-3 py-1.5 text-xs font-medium text-t-text-2 hover:bg-t-hover transition disabled:opacity-50"
+              >
+                {loading === 'manage' ? 'Loading...' : 'Manage'}
               </button>
             </div>
           </div>
@@ -98,10 +144,13 @@ export default function SubscribePage() {
               ))}
             </ul>
 
-            <button className="w-full rounded-xl bg-t-accent py-3.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition">
-              Subscribe to Pro
+            <button
+              onClick={() => handleCheckout('pro_monthly')}
+              disabled={loading === 'pro_monthly'}
+              className="w-full rounded-xl bg-t-accent py-3.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50"
+            >
+              {loading === 'pro_monthly' ? 'Redirecting to Stripe...' : 'Subscribe to Pro'}
             </button>
-            <p className="mt-3 text-center text-xs text-t-text-4">Stripe checkout coming soon</p>
           </div>
         )}
 
@@ -158,8 +207,12 @@ export default function SubscribePage() {
                         <p className="text-xs text-t-text-3">Agent Call Time</p>
                       </div>
                     </div>
-                    <button className="w-full mt-3 rounded-lg border border-t-edge-strong bg-t-surface-el py-2.5 text-sm font-semibold text-t-text-2 hover:bg-t-hover transition">
-                      Buy {tier.credits.toLocaleString()} Credits — Coming Soon
+                    <button
+                      onClick={() => handleCheckout(tier.priceKey)}
+                      disabled={loading === tier.priceKey}
+                      className="w-full mt-3 rounded-lg bg-t-accent py-2.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50"
+                    >
+                      {loading === tier.priceKey ? 'Redirecting to Stripe...' : `Buy ${tier.credits.toLocaleString()} Credits — $${tier.price}`}
                     </button>
                   </div>
                 )}
