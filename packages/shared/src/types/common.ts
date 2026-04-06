@@ -40,7 +40,9 @@ export interface Agent {
   voice_id: string | null
   avatar_url: string | null
   short_bio: string
-  retell_agent_id: string | null  // Retell AI agent ID (migration 006)
+  retell_agent_id: string | null  // Retell AI agent ID — debates (migration 006)
+  retell_commentary_agent_id: string | null  // Retell AI agent ID — commentary (migration 028)
+  retell_call_agent_id: string | null  // Retell AI agent ID — 1-on-1 calls (migration 028)
   intro_audio_url: string | null  // Cached intro recording (migration 009)
   expertise: string[]  // Knowledge domain expertise (migration 015)
   created_at: Timestamp
