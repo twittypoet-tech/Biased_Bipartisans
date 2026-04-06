@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createAuthServerClient, createServerClient } from '@/lib/supabase/server'
 
-// POST /api/commentary/vote  { commentaryId, direction: 'up' | 'down' }
+// POST /api/reporter/vote  { callId, direction: 'up' | 'down' }
+// Upserts the user's vote and recalculates denormalized counts
 export async function POST(request: Request) {
   const authClient = await createAuthServerClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -10,37 +11,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Sign in to vote' }, { status: 401 })
   }
 
-  let body: { commentaryId?: string; direction?: 'up' | 'down' }
+  let body: { callId?: string; direction?: 'up' | 'down' }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { commentaryId, direction } = body
-  if (!commentaryId || !direction || (direction !== 'up' && direction !== 'down')) {
-    return NextResponse.json({ error: 'Missing commentaryId or direction' }, { status: 400 })
+  const { callId, direction } = body
+  if (!callId || !direction || (direction !== 'up' && direction !== 'down')) {
+    return NextResponse.json({ error: 'Missing callId or direction' }, { status: 400 })
   }
 
   const db = createServerClient()
 
-  // Check existing vote
+  // Check if user already voted on this report
   const { data: existing } = await db
-    .from('commentary_votes')
+    .from('reporter_call_votes')
     .select('id, direction')
-    .eq('commentary_id', commentaryId)
+    .eq('reporter_call_id', callId)
     .eq('user_id', user.id)
     .single()
 
   if (existing) {
     if (existing.direction === direction) {
-      await db.from('commentary_votes').delete().eq('id', existing.id)
+      // Same vote — remove it (toggle off)
+      await db.from('reporter_call_votes').delete().eq('id', existing.id)
     } else {
-      await db.from('commentary_votes').update({ direction }).eq('id', existing.id)
+      // Different direction — update
+      await db.from('reporter_call_votes').update({ direction }).eq('id', existing.id)
     }
   } else {
-    await db.from('commentary_votes').insert({
-      commentary_id: commentaryId,
+    // New vote
+    await db.from('reporter_call_votes').insert({
+      reporter_call_id: callId,
       user_id: user.id,
       direction,
     })
@@ -48,26 +52,27 @@ export async function POST(request: Request) {
 
   // Recalculate denormalized counts
   const { count: upCount } = await db
-    .from('commentary_votes')
+    .from('reporter_call_votes')
     .select('*', { count: 'exact', head: true })
-    .eq('commentary_id', commentaryId)
+    .eq('reporter_call_id', callId)
     .eq('direction', 'up')
 
   const { count: downCount } = await db
-    .from('commentary_votes')
+    .from('reporter_call_votes')
     .select('*', { count: 'exact', head: true })
-    .eq('commentary_id', commentaryId)
+    .eq('reporter_call_id', callId)
     .eq('direction', 'down')
 
-  await db.from('report_commentary').update({
+  await db.from('reporter_calls').update({
     upvotes: upCount ?? 0,
     downvotes: downCount ?? 0,
-  }).eq('id', commentaryId)
+  }).eq('id', callId)
 
+  // Get user's current vote direction
   const { data: userVote } = await db
-    .from('commentary_votes')
+    .from('reporter_call_votes')
     .select('direction')
-    .eq('commentary_id', commentaryId)
+    .eq('reporter_call_id', callId)
     .eq('user_id', user.id)
     .single()
 

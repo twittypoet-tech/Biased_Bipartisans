@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { ReporterCall } from '@bipi/shared'
 import { ReporterCallCard } from './reporter-call-card'
+import { useAuth } from '@/components/auth-provider'
 
 // Base categories — new ones from post-call analysis are appended dynamically
 const BASE_CATEGORIES = [
@@ -23,11 +24,22 @@ interface ReporterForumProps {
 }
 
 export function ReporterForum({ initialCalls }: ReporterForumProps) {
+  const { user } = useAuth()
   const [calls, setCalls]           = useState<ReporterCall[]>(initialCalls)
   const [search, setSearch]         = useState('')
   const [category, setCategory]     = useState<string>('All')
   const [sort, setSort]             = useState<SortMode>('hot')
   const [userVotes, setUserVotes]   = useState<Record<string, 'up' | 'down' | null>>({})
+
+  // Load user's existing votes on mount
+  useEffect(() => {
+    if (!user || initialCalls.length === 0) return
+    const callIds = initialCalls.map((c) => c.id).join(',')
+    fetch(`/api/reporter/votes?callIds=${callIds}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.votes) setUserVotes(d.votes) })
+      .catch(() => {})
+  }, [user, initialCalls])
 
   const categories = useMemo(() => {
     const dataCategories = new Set(
@@ -60,28 +72,40 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
     })
   }, [calls, category, search, sort])
 
-  function handleUpvote(id: string) {
-    const prev = userVotes[id] ?? null
-    if (prev === 'up') return
-    setCalls((cs) =>
-      cs.map((c) => {
-        if (c.id !== id) return c
-        return { ...c, upvotes: c.upvotes + 1, downvotes: prev === 'down' ? c.downvotes - 1 : c.downvotes }
-      }),
-    )
-    setUserVotes((v) => ({ ...v, [id]: 'up' }))
-  }
+  function handleVote(id: string, direction: 'up' | 'down') {
+    if (!user) return // Must be logged in
 
-  function handleDownvote(id: string) {
+    // Optimistic update
     const prev = userVotes[id] ?? null
-    if (prev === 'down') return
+    const toggling = prev === direction
+    setUserVotes((v) => ({ ...v, [id]: toggling ? null : direction }))
     setCalls((cs) =>
       cs.map((c) => {
         if (c.id !== id) return c
-        return { ...c, downvotes: c.downvotes + 1, upvotes: prev === 'up' ? c.upvotes - 1 : c.upvotes }
+        let up = c.upvotes
+        let down = c.downvotes
+        if (toggling) {
+          if (direction === 'up') up--; else down--
+        } else {
+          if (direction === 'up') { up++; if (prev === 'down') down-- }
+          else { down++; if (prev === 'up') up-- }
+        }
+        return { ...c, upvotes: Math.max(0, up), downvotes: Math.max(0, down) }
       }),
     )
-    setUserVotes((v) => ({ ...v, [id]: 'down' }))
+
+    // Persist to DB
+    fetch('/api/reporter/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callId: id, direction }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        setCalls((cs) => cs.map((c) => c.id === id ? { ...c, upvotes: d.upvotes, downvotes: d.downvotes } : c))
+        setUserVotes((v) => ({ ...v, [id]: d.userVote }))
+      })
+      .catch(() => {})
   }
 
   return (
@@ -152,8 +176,8 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
             <ReporterCallCard
               key={call.id}
               call={call}
-              onUpvote={handleUpvote}
-              onDownvote={handleDownvote}
+              onUpvote={(id) => handleVote(id, 'up')}
+              onDownvote={(id) => handleVote(id, 'down')}
               userVote={userVotes[call.id] ?? null}
             />
           ))}

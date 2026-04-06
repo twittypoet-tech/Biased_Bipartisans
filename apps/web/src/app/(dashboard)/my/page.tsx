@@ -4,6 +4,21 @@ import Link from 'next/link'
 import { Phone, Sparkles, FileText, ArrowRight, Crown } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 
+function getNextMonday(): string {
+  const now = new Date()
+  const day = now.getDay()
+  const diff = day === 0 ? 1 : 8 - day // Days until next Monday
+  const next = new Date(now)
+  next.setDate(now.getDate() + diff)
+  return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+function getNextMonthFirst(): string {
+  const now = new Date()
+  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  return next.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 export default function DashboardHome() {
   const { profile } = useAuth()
   const isPro = profile?.tier === 'pro'
@@ -24,7 +39,7 @@ export default function DashboardHome() {
 
       {/* Credits card */}
       <div className="rounded-2xl border border-t-edge bg-t-surface p-5 shadow-t mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-sm text-t-text-3">Available Credits</p>
             <p className="text-3xl font-bold text-t-text">{profile?.credits ?? 0}</p>
@@ -35,6 +50,14 @@ export default function DashboardHome() {
             {isPro ? 'Pro' : 'Free'}
           </span>
         </div>
+        <p className="text-xs text-t-text-3 mb-4">
+          Next top-up: <span className="font-medium text-t-text-2">
+            {isPro
+              ? `${getNextMonthFirst()} (100 credits)`
+              : `${getNextMonday()} (+5 credits)`
+            }
+          </span>
+        </p>
         <div className="flex gap-2">
           <Link href="/subscribe" className="flex-1 rounded-xl border border-t-edge-strong bg-t-surface-el py-2.5 text-sm font-medium text-t-text-2 text-center hover:bg-t-hover transition">
             {isPro ? 'Buy More' : 'Upgrade to Pro'}

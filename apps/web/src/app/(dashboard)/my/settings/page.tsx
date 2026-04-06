@@ -152,13 +152,16 @@ export default function SettingsPage() {
 
         {/* Call states */}
         {callStep === 'idle' && (
-          <button
-            onClick={startOnboardingCall}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-t-accent py-3.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition"
-          >
-            {hasInterests ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}
-            {hasInterests ? 'Update Interests with Bipi' : 'Personalize with Bipi'}
-          </button>
+          <>
+            <button
+              onClick={startOnboardingCall}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-t-accent py-3.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition"
+            >
+              {hasInterests ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}
+              {hasInterests ? 'Update Interests with Bipi' : 'Personalize with Bipi'}
+            </button>
+            <p className="mt-2 text-center text-xs text-t-text-4">1 credit per call</p>
+          </>
         )}
 
         {callStep === 'connecting' && (

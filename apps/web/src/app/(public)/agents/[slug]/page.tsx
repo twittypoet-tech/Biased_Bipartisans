@@ -12,6 +12,7 @@ import {
   getEvalRunsForAgent,
   getAgentCommentaryVotes,
   listAgentReportCommentary,
+  getReporterAggregateVotes,
 } from '@bipi/db'
 import { getArchetypeColor } from '@/lib/agent-colors'
 import { AgentProfileClient, type AgentProfileData } from '@/components/public/agent-profile-client'
@@ -77,6 +78,10 @@ export default async function AgentProfilePage({ params }: Props) {
     scoredRuns.length > 0
       ? scoredRuns.reduce((sum, r) => sum + (r.composite_score ?? 0), 0) / scoredRuns.length
       : null
+
+  // For The Reporter: aggregate report votes across all published reports
+  const isReporter = agent.slug === 'the-reporter'
+  const reporterVotes = isReporter ? await getReporterAggregateVotes(db) : null
 
   const colors = getArchetypeColor(agent.archetype)
 
@@ -155,8 +160,8 @@ export default async function AgentProfilePage({ params }: Props) {
     stats: {
       totalDebates: evalRuns.length,
       avgScore: avgComposite,
-      commentaryUpvotes: commentaryVotes.upvotes,
-      commentaryDownvotes: commentaryVotes.downvotes,
+      commentaryUpvotes: (reporterVotes?.upvotes ?? 0) + commentaryVotes.upvotes,
+      commentaryDownvotes: (reporterVotes?.downvotes ?? 0) + commentaryVotes.downvotes,
     },
     colors,
   }

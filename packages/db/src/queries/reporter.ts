@@ -257,6 +257,22 @@ export async function listAllCommentary(
   })
 }
 
+// ── Reporter Aggregate Votes ─────────────────────────────────────────────────
+
+export async function getReporterAggregateVotes(
+  db: SupabaseClient,
+): Promise<{ upvotes: number; downvotes: number }> {
+  const { data, error } = await db
+    .from('reporter_calls')
+    .select('upvotes, downvotes')
+    .eq('is_published', true)
+  if (error) throw error
+  return (data ?? []).reduce(
+    (acc, r) => ({ upvotes: acc.upvotes + (r.upvotes ?? 0), downvotes: acc.downvotes + (r.downvotes ?? 0) }),
+    { upvotes: 0, downvotes: 0 },
+  )
+}
+
 // ── Agent Commentary List ────────────────────────────────────────────────────
 
 export async function listAgentReportCommentary(

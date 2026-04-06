@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createAuthServerClient } from '@/lib/supabase/server'
+import { createAuthServerClient, createServerClient } from '@/lib/supabase/server'
 
 const ONBOARDING_AGENT_ID = 'agent_dc30d418ef88204e5452f1eed5'
 const RETELL_API_BASE = 'https://api.retellai.com'
+const ONBOARDING_CREDIT_COST = 1
 
 export async function POST(request: Request) {
   const retellApiKey = process.env.RETELL_API_KEY
@@ -17,12 +18,37 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  // Get user profile for context
-  const { data: profile } = await supabase
+  const serviceDb = createServerClient()
+
+  // Get user profile for context + credit check
+  const { data: profile } = await serviceDb
     .from('user_profiles')
-    .select('display_name, interests')
+    .select('display_name, interests, credits')
     .eq('id', user.id)
     .single()
+
+  // Credit check
+  if (!profile || profile.credits < ONBOARDING_CREDIT_COST) {
+    return NextResponse.json({
+      error: `Not enough credits. You need ${ONBOARDING_CREDIT_COST} credit (you have ${profile?.credits ?? 0}).`,
+    }, { status: 402 })
+  }
+
+  // Deduct credit
+  try {
+    await serviceDb.rpc('deduct_credits', { p_user_id: user.id, p_amount: ONBOARDING_CREDIT_COST })
+  } catch {
+    await serviceDb
+      .from('user_profiles')
+      .update({ credits: (profile.credits ?? 0) - ONBOARDING_CREDIT_COST })
+      .eq('id', user.id)
+  }
+
+  await serviceDb.from('credit_transactions').insert({
+    user_id: user.id,
+    amount: -ONBOARDING_CREDIT_COST,
+    reason: 'agent_call',
+  })
 
   // Build dynamic variables for the agent
   const now = new Date()
