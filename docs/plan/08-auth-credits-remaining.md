@@ -1,6 +1,6 @@
 # Auth, Credits & Dashboard — Remaining Work
 
-> Last updated: 2026-04-04
+> Last updated: 2026-04-06
 
 ## What's Built
 
@@ -33,6 +33,18 @@
 - [x] Google AdSense on /reports/[slug] pages only (2 ad slots)
 - [x] Vercel Web Analytics installed
 
+### Phase 8 & Stripe (completed 2026-04-06)
+- [x] `deduct_credits` RPC function (migration 00030) — atomic deduction with balance check
+- [x] Stripe products: Pro ($25/mo), 100cr ($25), 500cr ($115), 1000cr ($200)
+- [x] `/api/stripe/checkout` — Stripe Checkout sessions (subscription + one-time)
+- [x] `/api/stripe/portal` — Stripe Customer Portal (manage subscription, billing history)
+- [x] `/api/webhooks/stripe` — full lifecycle: checkout.session.completed, invoice.paid, invoice.payment_failed, customer.subscription.updated/deleted/paused/resumed
+- [x] Subscribe page: live Stripe CTAs, success banner, loading states, "Manage" for pro
+- [x] TopUpModal links to /subscribe (Stripe checkout)
+- [x] Inngest `weeklyFreeRefill` — 5 credits every Monday for free users (cap 50)
+- [x] Inngest `monthlyProRefill` — reset to 100 credits on 1st for pro users
+- [x] Webhook endpoint: `https://biasedbipartisans.com/api/webhooks/stripe`
+
 ## What Needs Building
 
 ### Phase 7 — Remaining Items (MEDIUM)
@@ -56,7 +68,7 @@
 - [x] Subscription lifecycle: activate → monthly renewal → cancellation all handled
 
 ### Dashboard Population (MEDIUM)
-- [ ] `/my/reports`: Fetch user_reports + reporter_calls join, render report cards
+- [x] `/my/reports`: Functional page — fetches reporter_calls by user_id, shows wire status badges. Done 2026-04-06.
 - [ ] Favorite/unfavorite toggle on reports
 - [ ] Save report to user_reports when a call completes (via webhook, using user_id on reporter_calls)
 - [ ] Show credit usage history on dashboard
@@ -84,7 +96,7 @@
    - Pro tier: 100/month ($25/mo)
    - À la carte: $0.25/credit (down to $0.20 at 1000)
 
-4. **Hamburger menu pages** (About, Mission, Work With Us, Contact) are linked but pages don't exist yet. Low priority.
+4. **Hamburger menu pages**: About and Mission pages exist. Work With Us: Investigative Journalists page built (2026-04-06) with application form. Contact page still needed.
 
 5. **Bipi onboarding agent** prompt is at `docs/prompts/bipi-onboarding-agent.md`. Post-call analysis fields: `user_interests`, `interest_entities`, `onboarding_successful`, `interest_summary`.
 

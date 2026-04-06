@@ -4,6 +4,148 @@
 
 ---
 
+## 2026-04-06
+
+### feat: Stripe Integration, Credit System & Weekly Refill
+
+#### Stripe Products (live)
+- **BIPI Pro Subscription** — $25/month recurring (`price_1TJI9NECA3vMoocVMb6cSyTx`)
+- **100 Credits** — $25 one-time (`price_1TJI9aECA3vMoocVPRjFnXBD`)
+- **500 Credits** — $115 one-time (`price_1TJI9bECA3vMoocVVAdBLGJS`)
+- **1000 Credits** — $200 one-time (`price_1TJI9cECA3vMoocVKGYBa0PT`)
+
+#### API Routes
+- `POST /api/stripe/checkout` — creates Stripe Checkout session (subscription or payment), creates/reuses Stripe customer, stores `stripe_customer_id` on user_profiles
+- `POST /api/stripe/portal` — Stripe Customer Portal for subscription management and billing history
+- `POST /api/webhooks/stripe` — handles 7 events: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`
+
+#### Subscribe Page
+- All CTAs wired to live Stripe Checkout (was "Coming soon" stubs)
+- Success banner on `?success=true` redirect
+- Pro users: "Manage" button opens Stripe Customer Portal
+- Loading states on all checkout buttons
+
+#### Credit System Fix
+- `deduct_credits` RPC function (migration 00030) — atomic deduction with balance check, replaces fragile try/catch fallback in reporter call + commentary APIs
+
+#### Weekly/Monthly Credit Refill (Inngest)
+- `weeklyFreeRefill` — every Monday, free users get 5 credits (capped at 50)
+- `monthlyProRefill` — 1st of month, pro users reset to 100 credits
+- Both log `credit_transactions` with reason `weekly_free` / `monthly_pro`
+
+---
+
+### feat: User Roles, Wire Filtering & Investigative Journalist Program
+
+#### Database (migration 00027)
+- `user_role` enum on `user_profiles`: subscriber, journalist, admin
+- `wire_status` enum on `reporter_calls`: none, auto, pending, approved, rejected
+- `journalist_applications` table for program intake
+- RLS policy prevents users from self-promoting their role
+
+#### Wire Feed Filtering
+- Only journalist/admin reports auto-publish to The Wire (`wire_status = 'auto'`)
+- Subscriber reports stay in dashboard (`wire_status = 'none'`) unless admin-approved
+- Existing published reports backfilled to `wire_status = 'auto'`
+
+#### Dashboard & Report Ownership
+- `/my/reports` — functional page showing user's reports with wire status badges
+- Post-call UX: "View My Reports" replaces "will appear on The Wire"
+- Report owners can view their own reports even if not on wire
+- "Request Publish to Wire" button for subscriber-owned reports
+
+#### Investigative Journalists Page
+- `/work-with-us/journalists` — program description + dedicated application form
+- Fields: name, email, portfolio URL, expertise multi-select, statement
+- `POST /api/journalist-apply` — public endpoint, inserts to `journalist_applications`
+- Renamed "Independent Journalists" → "Investigative Journalists" in hamburger menu
+
+---
+
+### feat: Commentary System — Full Flow
+
+#### Commentary Agents (29 agents)
+- 29 global prompts in `docs/prompts/commentary/`
+- 29 KB documents in `docs/kb/`
+- 812-pair relationship matrix in `docs/agent-relationships/`
+- Commentary Host transfer agent (DB + prompt) — introduces commentating agent
+- Multi-agent Retell ID support: `retell_commentary_agent_id`, `retell_call_agent_id` columns (migration 00028)
+
+#### Commentary Request → Live Listening → Playback
+- API creates two Retell calls (Commentary Host + Commentary Agent) with agents service relay
+- Browser subscribes to shared LiveKit room for live audio
+- Full UX flow: select agent → confirm with bio → connecting → live waveform → done
+- Webhook auto-publishes transcript + audio to `report_commentary`
+- Commentary list auto-refreshes after publish
+
+#### Commentary Permissions
+- Subscribers: only see commentary CTA on own reports
+- Journalists/Admins: see CTA on all wire reports
+- User `role` available client-side via `useAuth().profile.role`
+
+#### Commentary Cards
+- Upvote/downvote with net vote count (migration 00029)
+- Transcript truncated to 280 chars with "View All" toggle
+- Agent avatar + name linked to profile page
+- Delete button for report owners (soft-delete via `is_published = false`)
+- Running vote count displayed on agent profile Votes stat card
+
+#### Commentary Feed (`/commentary`)
+- New tab between Home and Debates in desktop + mobile nav
+- Twitter-style feed of all commentary across reports
+- Category banner with full report headline, links to report
+- Per-post: agent avatar/name, timestamp, transcript, audio player, votes
+
+---
+
+### feat: Article Page Redesign
+
+#### Category Banners
+- Full-width category banner at top of report cards (replaces pills)
+- Same banner on report detail page (replaces pill badges)
+- Removed "Verified Sources" pill
+
+#### Editorial Callout Redesign
+- **Fact**: Centered pull-stat with gold rules, serif text, "Verified" label
+- **Person**: Indented aside with gold vertical rule, small-caps "Who"
+- **Date**: Timeline marker with gold dot + connecting line
+- **Issue**: Full-width horizontal rules framing italic editorial note
+- **Quote**: Large faded gold quotation mark, serif italic pull-quote
+- All text sizes bumped, labels in gold (#C8A44A), improved spacing
+
+#### Article Readability
+- Paragraph text: 17px, 1.8 line height
+- Headline: Georgia serif, 2xl/3xl/4xl
+- Section headings: larger with more top margin
+- 5-unit paragraph spacing
+
+#### Layout Reorder
+- Agent commentary immediately after article body
+- Related Reports horizontal carousel (ranked by entity/query/category overlap)
+- Sources & entities card below commentary
+- Request Commentary CTA at bottom
+- Discussion (Reporter Chat) archived
+
+#### Related Reports
+- `getRelatedReports` query: scores by entity overlap (+10), query word overlap (+3), same category (+1)
+- Horizontal scroll carousel with snap, up to 5 reports
+- Each card: category banner, full headline, age
+
+---
+
+### feat: Agent Profile Updates
+
+#### Rivals & Alliances Card
+- Agent avatar + name (clickable to profile) via foreign key join
+- Relationship type tag (natural_enemy, ally, etc.) as pill in top-right
+- Removed respect/rivalry percentages and color-coded backgrounds
+
+#### Commentary Tab
+- New tab between Overview and Recent Debates
+- Shows agent's commentary with report reference banners, transcript, audio, votes
+
+---
+
 ## 2026-04-04
 
 ### feat: Phase 7 — Credit Gating & Top-Up Flow
