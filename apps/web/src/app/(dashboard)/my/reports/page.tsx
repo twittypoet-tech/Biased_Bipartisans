@@ -131,7 +131,7 @@ export default function MyReportsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
+    <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10 overflow-x-hidden">
       <h1 className="text-2xl font-bold text-t-text mb-6">My Reports</h1>
 
       {/* ── Recommended Presets ── */}
@@ -155,11 +155,11 @@ export default function MyReportsPage() {
                         {preset.interest}
                       </div>
                     )}
-                    <div className="p-4">
+                    <div className="p-4 min-w-0">
                       <p className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-1.5">
                         {preset.title}
                       </p>
-                      <p className="text-xs text-t-text-2 leading-relaxed">
+                      <p className="text-xs text-t-text-2 leading-relaxed break-words">
                         {preset.query_template}
                       </p>
                     </div>
@@ -230,7 +230,7 @@ export default function MyReportsPage() {
             const badge = WIRE_STATUS_BADGE[report.wire_status] ?? { label: 'Dashboard Only', className: 'bg-t-surface-el text-t-text-3 border-t-edge' }
             return (
               <Link key={report.id} href={`/reports/${report.slug}`} className="block group">
-                <article className="rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg">
+                <article className="rounded-xl border border-t-edge bg-t-surface p-4 shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg min-w-0 overflow-hidden">
                   {/* Top row: category + wire status */}
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     {report.report_category && (
