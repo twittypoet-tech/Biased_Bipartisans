@@ -50,8 +50,11 @@ export async function POST(request: Request) {
     return handleOnboardingCall(call, callId)
   }
 
-  // Only handle calls from The Reporter agent below
+  // Check if this is a commentary call (any agent not reporter/onboarding)
   if (call.agent_id !== REPORTER_AGENT_ID) {
+    // Look up by call_id in commentary requests table
+    const commentaryResult = await handleCommentaryCall(call, callId)
+    if (commentaryResult) return commentaryResult
     return NextResponse.json({ ok: true, skipped: true })
   }
 
@@ -354,4 +357,60 @@ async function handleOnboardingCall(call: Record<string, unknown>, callId: strin
   }
 
   return NextResponse.json({ ok: true, onboarding: true, interestCount: allInterests.length })
+}
+
+// ── Commentary call handler ──────────────────────────────────────────────────
+
+async function handleCommentaryCall(
+  call: Record<string, unknown>,
+  callId: string,
+): Promise<Response | null> {
+  const db = createServerClient()
+
+  // Look up by retell_call_id in commentary requests table
+  const { data: commentaryRequest } = await db
+    .from('report_commentary_requests')
+    .select('*')
+    .eq('retell_call_id', callId)
+    .single()
+
+  if (!commentaryRequest) return null // Not a commentary call
+
+  console.log('commentary webhook: processing call', callId, 'for request', commentaryRequest.id)
+
+  // Extract agent-only transcript
+  const transcriptObject = (call.transcript_object as Array<{ role: string; content: string }> | undefined) ?? []
+  const transcript = transcriptObject
+    .filter((t) => t.role === 'agent')
+    .map((t) => t.content)
+    .join(' ')
+
+  const recordingUrl = (call.recording_url as string | undefined) ?? null
+  const startTs = call.start_timestamp as number | undefined
+  const endTs = call.end_timestamp as number | undefined
+  const durationSeconds = startTs && endTs ? Math.round((endTs - startTs) / 1000) : null
+
+  // Insert into report_commentary (auto-publish)
+  try {
+    await db.from('report_commentary').insert({
+      report_call_id: commentaryRequest.report_call_id,
+      agent_id: commentaryRequest.agent_id,
+      audio_url: recordingUrl,
+      transcript: transcript || null,
+      duration_seconds: durationSeconds,
+      is_published: true,
+    })
+
+    // Update request status to fulfilled
+    await db
+      .from('report_commentary_requests')
+      .update({ status: 'fulfilled' })
+      .eq('id', commentaryRequest.id)
+
+    console.log('commentary webhook: published commentary for request', commentaryRequest.id)
+  } catch (err) {
+    console.error('commentary webhook: DB write failed', err)
+  }
+
+  return NextResponse.json({ ok: true, commentary: true })
 }

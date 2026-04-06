@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server'
 import { createAuthServerClient, createServerClient } from '@/lib/supabase/server'
 
 const COMMENTARY_CREDIT_COST = 1
+const RETELL_API_BASE = 'https://api.retellai.com'
 
 // POST /api/commentary-requests  { reportId, agentId }
 export async function POST(request: Request) {
+  const retellApiKey = process.env.RETELL_API_KEY
+
   // ── Auth ────────────────────────────────────────────────────────────────
   const authClient = await createAuthServerClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -56,22 +59,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Report not found' }, { status: 404 })
   }
 
-  // ── Fetch existing commentaries on this report ──────────────────────────
+  // ── Fetch existing commentaries on this report (with agent names) ──────
   const { data: existingCommentary } = await serviceDb
     .from('report_commentary')
-    .select('agent_id, transcript, is_published')
+    .select('agent_id, transcript, is_published, agents(name)')
     .eq('report_call_id', reportId)
     .eq('is_published', true)
 
   // ── Fetch the agent ─────────────────────────────────────────────────────
   const { data: agent } = await serviceDb
     .from('agents')
-    .select('id, name, retell_agent_id')
+    .select('id, name, retell_agent_id, retell_commentary_agent_id')
     .eq('id', agentId)
     .single()
 
   if (!agent) {
     return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
+  }
+
+  if (!agent.retell_commentary_agent_id) {
+    return NextResponse.json({ error: 'Commentary not available for this agent yet' }, { status: 400 })
   }
 
   // ── Deduct credits ──────────────────────────────────────────────────────
@@ -91,6 +98,27 @@ export async function POST(request: Request) {
     reference_id: reportId,
   })
 
+  // ── Format existing commentaries for the agent ──────────────────────────
+  const existingCommentariesText = formatExistingCommentaries(existingCommentary)
+
+  // ── Build report body text (truncate to avoid exceeding dynamic var limits)
+  const reportBodyText = report.body
+    ? JSON.stringify(report.body).slice(0, 8000)
+    : report.transcript?.slice(0, 8000) ?? ''
+
+  // ── Build dynamic variables for Retell ──────────────────────────────────
+  const dynamicVars = {
+    report_headline: report.report_headline ?? 'Untitled Report',
+    report_summary: report.call_summary ?? '',
+    report_body: reportBodyText,
+    report_sources: report.sources_json ? JSON.stringify(report.sources_json) : '',
+    report_entities: report.key_entities ?? '',
+    existing_commentaries: existingCommentariesText,
+    current_date: new Date().toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric',
+    }),
+  }
+
   // ── Create the commentary request ───────────────────────────────────────
   const { data: commentaryRequest, error: insertError } = await serviceDb
     .from('report_commentary_requests')
@@ -108,10 +136,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create request' }, { status: 500 })
   }
 
+  // ── Create Retell web call ──────────────────────────────────────────────
+  let callData: { access_token: string; call_id: string } | null = null
+
+  if (retellApiKey) {
+    try {
+      const res = await fetch(`${RETELL_API_BASE}/v2/create-web-call`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${retellApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agent_id: agent.retell_commentary_agent_id,
+          retell_llm_dynamic_variables: dynamicVars,
+        }),
+      })
+
+      if (!res.ok) {
+        console.error('Retell create-web-call error (Commentary):', await res.text())
+      } else {
+        callData = await res.json()
+      }
+    } catch (err) {
+      console.error('Retell create-web-call failed (Commentary):', err)
+    }
+  }
+
+  // ── Update commentary request with Retell call ID ───────────────────────
+  if (callData) {
+    await serviceDb
+      .from('report_commentary_requests')
+      .update({ retell_call_id: callData.call_id, status: 'in_progress' })
+      .eq('id', commentaryRequest.id)
+  }
+
   return NextResponse.json({
     ok: true,
     requestId: commentaryRequest.id,
     agent: { id: agent.id, name: agent.name },
+    callId: callData?.call_id ?? null,
+    accessToken: callData?.access_token ?? null,
     report: {
       id: report.id,
       headline: report.report_headline,
@@ -120,4 +185,23 @@ export async function POST(request: Request) {
     existingCommentaryCount: existingCommentary?.length ?? 0,
     creditsRemaining: profile.credits - COMMENTARY_CREDIT_COST,
   }, { status: 201 })
+}
+
+// ── Format existing commentaries for dynamic variable ─────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function formatExistingCommentaries(commentaries: any[] | null): string {
+  if (!commentaries?.length) {
+    return 'No other agents have commented on this report yet. You are setting the frame.'
+  }
+
+  return commentaries
+    .filter((c) => c.transcript)
+    .map((c) => {
+      // Supabase join returns agents as object (single) or array
+      const agentData = Array.isArray(c.agents) ? c.agents[0] : c.agents
+      const name = agentData?.name ?? 'Unknown Agent'
+      return `${name}:\n${c.transcript}`
+    })
+    .join('\n\n---\n\n')
 }
