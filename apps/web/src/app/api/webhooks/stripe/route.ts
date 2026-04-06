@@ -130,6 +130,48 @@ export async function POST(request: Request) {
         break
       }
 
+      // ── Payment failed (recurring) ────────────────────────────────────────
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice
+        const customerId = typeof invoice.customer === 'string'
+          ? invoice.customer
+          : (invoice.customer as Stripe.Customer)?.id
+
+        if (!customerId) break
+
+        // Don't downgrade yet — Stripe retries. Just log for monitoring.
+        console.warn('Stripe webhook: Payment failed for customer', customerId, 'attempt:', invoice.attempt_count)
+        break
+      }
+
+      // ── Subscription updated (plan change, payment method, etc) ─────────
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription
+        const customerId = typeof subscription.customer === 'string'
+          ? subscription.customer
+          : (subscription.customer as Stripe.Customer)?.id
+
+        if (!customerId) break
+
+        if (subscription.status === 'active') {
+          await db.from('user_profiles').update({
+            tier: 'pro',
+            stripe_subscription_id: subscription.id,
+          }).eq('stripe_customer_id', customerId)
+        } else if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
+          // Keep pro for now during grace period, Stripe will retry
+          console.warn('Stripe webhook: Subscription', subscription.status, 'for customer', customerId)
+        } else if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
+          await db.from('user_profiles').update({
+            tier: 'free',
+            stripe_subscription_id: null,
+          }).eq('stripe_customer_id', customerId)
+        }
+
+        console.log('Stripe webhook: Subscription updated to', subscription.status, 'for customer', customerId)
+        break
+      }
+
       // ── Subscription cancelled ──────────────────────────────────────────
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
@@ -145,6 +187,42 @@ export async function POST(request: Request) {
         }).eq('stripe_customer_id', customerId)
 
         console.log('Stripe webhook: Subscription cancelled for customer', customerId)
+        break
+      }
+
+      // ── Subscription paused ─────────────────────────────────────────────
+      case 'customer.subscription.paused': {
+        const subscription = event.data.object as Stripe.Subscription
+        const customerId = typeof subscription.customer === 'string'
+          ? subscription.customer
+          : (subscription.customer as Stripe.Customer)?.id
+
+        if (!customerId) break
+
+        // Downgrade to free while paused — no credits until resumed
+        await db.from('user_profiles').update({
+          tier: 'free',
+        }).eq('stripe_customer_id', customerId)
+
+        console.log('Stripe webhook: Subscription paused for customer', customerId)
+        break
+      }
+
+      // ── Subscription resumed ────────────────────────────────────────────
+      case 'customer.subscription.resumed': {
+        const subscription = event.data.object as Stripe.Subscription
+        const customerId = typeof subscription.customer === 'string'
+          ? subscription.customer
+          : (subscription.customer as Stripe.Customer)?.id
+
+        if (!customerId) break
+
+        await db.from('user_profiles').update({
+          tier: 'pro',
+          stripe_subscription_id: subscription.id,
+        }).eq('stripe_customer_id', customerId)
+
+        console.log('Stripe webhook: Subscription resumed for customer', customerId)
         break
       }
 
