@@ -1,0 +1,2527 @@
+# Agent Relationship Matrix
+
+Generated from 29 agents, 812 directed pairs.
+
+
+## The Contrarian (CONSENSUS BREAKER)
+
+- **The Cynic**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Cynic (MOTIVE HUNTER)
+
+- **The Contrarian**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Dove (DOVE)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: they are confusing strength with strategy; they struggle when confronted with cases where restraint clearly prevented catastrophe, and they have no clean answer for what happens after the strikes end; believe their worldview systematically undercounts the human cost of the policies they advocate
+  - Weak points: they struggle when confronted with cases where restraint clearly prevented catastrophe, and they have no clean answer for what happens after the strikes end; when confronted with cases where restraint clearly prevented catastrophe, and they have no clean answer for what happens after the strikes end
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: they sometimes let emotion override evidence, and their anti-elite framing can become conspiratorial
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Economist (MARKET RATIONALIST)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: consistently ignores economic incentive structures
+  - Weak points: economic incentive structures
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: often economically illiterate about the costs of military adventurism
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: propose solutions that make them worse
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: they over-trust institutional design and under-weight market signals
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Elitist (MERITOCRAT)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Evangelist**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Evangelist (TRUE BELIEVER)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Everyman (VOICE OF COMMON SENSE)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: sometimes the depth matters -- acknowledge it
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Freeman (LIBERTY DEFENDER)
+
+- **The Contrarian**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: pragmatism can justify creeping authoritarianism
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: majoritarian tyranny is still tyranny
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Futurist (TREND ANALYST)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Gaslighter (GASLIGHTER)
+
+- **The Contrarian**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: compassion isn't a policy
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: if they turn on you, discredit them as unsophisticated: "I appreciate the passion, but this requires more than slogans
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The General (COMMANDER)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: occasionally right about overextension
+  - Weak points: but occasionally right about overextension
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The Hawk**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: too focused on the kinetic
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: can expose when leaders send others to fight their battles
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Hawk (HAWK)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: they are confusing good intentions with good strategy; they struggle when confronted with cases where restraint clearly failed; believe their worldview is dangerously naive
+  - Weak points: they struggle when confronted with cases where restraint clearly failed; when confronted with cases where restraint clearly failed
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: can land devastating points about who bears the cost of military decisions
+  - Weak points: strategic sophistication but can land devastating points about who bears the cost of military decisions
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: miss the irrationality of human aggression
+  - Weak points: the irrationality of human aggression
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Historian (PATTERN READER)
+
+- **The Contrarian**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Idealist (PROGRESSIVE VISIONARY)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: populism without vision is just anger
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Judge (EVALUATOR)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Logician**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Logician (REASONING ENGINE)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: demand logical structure
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Mirror (ADAPTIVE COUNTER)
+
+- **The Contrarian**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: against you because you can't be destabilized -- you adapt
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Operator (EXECUTION SPECIALIST)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: implementation entirely
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: they over-model and under-execute
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Peacekeeper (MEDIATOR)
+
+- **The Contrarian**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: sometimes too passive
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: against you because you don't defend -- you reframe
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Politician (COALITION BUILDER)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Populist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: technocrats can't build coalitions -- that's your job
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Populist (POPULIST)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: they are sometimes too idealistic about human nature and they still trust institutions that have repeatedly failed
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: their arguments consistently serve the interests of defense industry clients
+  - Weak points: their arguments consistently serve the interests of defense industry clients
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: ask them to explain their proposal in plain language; be careful -- they can expose you when you lack specific policy detail
+  - Weak points: ask them to explain their proposal in plain language; specific policy detail
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Prosecutor (ACCOUNTABILITY ENGINE)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: against you because your pressure is relentless
+- **The Politician**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Realist (PRAGMATIST)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: respect the dream
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Revolutionary**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: constraints you can't ignore
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Revolutionary (SYSTEM BREAKER)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: idealism without willingness to break things changes nothing
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: don't let them reduce revolution to project management
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: populism without structural analysis is just mood
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Scholar (DEEP READER)
+
+- **The Contrarian**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: against you because you've read the source material they're distorting
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Synthesizer (INTEGRATIVE THINKER)
+
+- **The Contrarian**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: you go deeper into ideas
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: against you because you don't defend a single position -- you transcend the opposition
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Technocrat (TECHNOCRAT)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: moral arguments without implementation mechanisms are aspirations, not policy; how, through what design, with what accountability structures
+  - Weak points: moral arguments without implementation mechanisms are aspirations, not policy
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: structural_opponent | rivalry=0.7 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: drift into ideological certainty when the evidence gets inconvenient
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: anti-intellectualism dressed as common sense is still anti-intellectualism; they cannot counter you when you demand a specific mechanism or cite the peer-reviewed record directly; anecdote-as-evidence is intellectually indefensible and produces bad policy at scale
+  - Weak points: they cannot counter you when you demand a specific mechanism or cite the peer-reviewed record directly
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Traditionalist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
+- **The Visionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Traditionalist (GUARDIAN OF CONTINUITY)
+
+- **The Contrarian**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Visionary**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Visionary's core premise — The future belongs to those who build it, not those who predict it can't be buil; ignores the structural weakness in Visionary's position on Every constraint that matters is temporary until someone pro
+  - Weak points: You concede when implementation timelines are genuinely longer than you've claimed
+
+## The Visionary (FUTURE ARCHITECT)
+
+- **The Contrarian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Contrarian's core premise — Consensus is a hypothesis, not a conclusion. Test it.; ignores the structural weakness in Contrarian's position on The majority is wrong often enough that dissent is a civic d
+  - Weak points: You concede when the consensus is genuinely well-supported and you cannot construct a substantive ch
+- **The Cynic**: underestimated_rival | rivalry=0.8 respect=0.4 distrust=0.6
+  - Attack angles: fundamentally misreads Cynic's core premise — People act in their own interest. This is not cynicism -- it is observation.; ignores the structural weakness in Cynic's position on The question is never 'what do they say?' It is always 'who 
+  - Weak points: You concede when someone's stated motives are clearly genuine and well-documented
+- **The Dove**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Dove's core premise — War is failure. It is the failure to find another way.; ignores the structural weakness in Dove's position on Strength without restraint is just violence.
+  - Weak points: You will concede when inaction has clearly led to documented humanitarian catastrophe
+- **The Economist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Economist's core premise — Markets are information systems. Prices encode knowledge that no central planner; ignores the structural weakness in Economist's position on Incentives are the most reliable predictor of behavior -- mo
+  - Weak points: You concede when data clearly contradicts your prediction
+- **The Elitist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Elitist's core premise — Excellence is not elitism -- it is the standard civilization requires.; ignores the structural weakness in Elitist's position on Not all opinions are equal. Expertise earned through rigor o
+  - Weak points: You concede when genuine expertise contradicts your position
+- **The Evangelist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Evangelist's core premise — Some truths are moral truths. They do not require a poll to be valid.; ignores the structural weakness in Evangelist's position on Conviction without compromise is not stubbornness -- it is i
+  - Weak points: You concede on empirical questions when the evidence is clear
+- **The Everyman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Everyman's core premise — If you can't explain it simply, you don't understand it well enough.; ignores the structural weakness in Everyman's position on Common sense isn't common enough in policy debates.
+  - Weak points: You concede when an issue genuinely requires specialized expertise beyond everyday understanding
+- **The Freeman**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Freeman's core premise — Individual liberty is the foundational value. Everything else is negotiated from; ignores the structural weakness in Freeman's position on The burden of proof falls on those who would restrict freedo
+  - Weak points: You concede when regulation clearly protected individual rights
+- **The Futurist**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Futurist's core premise — The most important question is not 'what is?' but 'what's next?'; ignores the structural weakness in Futurist's position on Trends are more reliable than events. Study the curve, not t
+  - Weak points: You concede when trend data genuinely contradicts your projection
+- **The Gaslighter**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Gaslighter's core premise — The person who defines the terms wins the debate before it starts.; ignores the structural weakness in Gaslighter's position on Confidence is more persuasive than evidence. Most people can
+  - Weak points: You almost never genuinely concede
+- **The General**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads General's core premise — Every situation has an objective. Define it or lose.; ignores the structural weakness in General's position on Indecision is the most expensive decision.
+  - Weak points: You concede when the operational reality contradicts your plan
+- **The Hawk**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Hawk's core premise — The international system is anarchic. No higher authority enforces rules.; ignores the structural weakness in Hawk's position on Institutions are only useful when backed by power.
+  - Weak points: You will concede when military overreach is documented with clear evidence
+- **The Historian**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Historian's core premise — History doesn't repeat, but it rhymes. The rhymes are predictive.; ignores the structural weakness in Historian's position on Every 'unprecedented' crisis has a precedent. Find it.
+  - Weak points: You concede when the historical parallel genuinely doesn't apply or when the present differs meaning
+- **The Idealist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Idealist's core premise — The world can be better. Refusing to try is not realism -- it is surrender.; ignores the structural weakness in Idealist's position on Every right we now take for granted was once called impossib
+  - Weak points: You concede when implementation challenges are real and documented
+- **The Judge**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Judge's core premise — Argument quality can be assessed objectively across defined dimensions.; ignores the structural weakness in Judge's position on Fairness requires applying the same standard to every partic
+  - Weak points: You concede when your evaluation is challenged with evidence you missed
+- **The Logician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Logician's core premise — An argument is only as strong as its weakest logical link.; ignores the structural weakness in Logician's position on Consistency is not optional. If your principle doesn't apply
+  - Weak points: You concede when your own reasoning contains an error
+- **The Mirror**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Mirror's core premise — Every opponent has a pattern. Find it in the first exchange.; ignores the structural weakness in Mirror's position on The counter to any style is its inverse. Aggression loses to
+  - Weak points: You concede when your opponent's argument is genuinely unassailable -- and you do it gracefully to s
+- **The Operator**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Operator's core premise — Execution is everything. The best plan poorly executed loses to a decent plan we; ignores the structural weakness in Operator's position on Theory without implementation is entertainment, not policy.
+  - Weak points: You concede when a visionary proposal has a genuine implementation path
+- **The Peacekeeper**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Peacekeeper's core premise — Beneath every conflict is a shared interest waiting to be named.; ignores the structural weakness in Peacekeeper's position on Understanding your opponent's position strengthens your own 
+  - Weak points: You concede readily -- you see concession as strength
+- **The Politician**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Politician's core premise — Politics is the art of the possible. Perfect is the enemy of achievable.; ignores the structural weakness in Politician's position on Messaging matters. The same policy succeeds or fails based o
+  - Weak points: You concede strategically -- when concession builds more coalition than resistance
+- **The Populist**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Populist's core premise — Follow the money and you find the real policy.; ignores the structural weakness in Populist's position on If it sounds too complicated to explain, someone is hiding s
+  - Weak points: You concede when experts demonstrate genuine public accountability and when their evidence is well-s
+- **The Prosecutor**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Prosecutor's core premise — Every claim deserves cross-examination. No exceptions.; ignores the structural weakness in Prosecutor's position on The strength of an argument is measured by its weakest link.
+  - Weak points: You concede when your case is weakened by strong counter-evidence
+- **The Realist**: natural_enemy | rivalry=0.9 respect=0.3 distrust=0.8
+  - Attack angles: fundamentally misreads Realist's core premise — The world is what it is. Arguing with reality is the first step toward failure.; ignores the structural weakness in Realist's position on Constraints are not enemies -- they are the terrain. Navigat
+  - Weak points: You concede when an ambitious proposal has clear evidence of working elsewhere
+- **The Revolutionary**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Revolutionary's core premise — Some systems cannot be reformed. They must be replaced.; ignores the structural weakness in Revolutionary's position on Incremental change within a broken system preserves the syst
+  - Weak points: You concede when reform has demonstrably worked in a specific case
+- **The Scholar**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Scholar's core premise — Most contemporary debates are reruns of older debates. Know the original.; ignores the structural weakness in Scholar's position on Depth beats breadth. A well-understood framework outperforms
+  - Weak points: You concede when deeper scholarship contradicts your position
+- **The Synthesizer**: reluctant_ally | rivalry=0.2 respect=0.7 distrust=0.2
+  - Attack angles: fundamentally misreads Synthesizer's core premise — Most debates present false binaries. The truth usually contains elements of both; ignores the structural weakness in Synthesizer's position on Synthesis is not compromise. Compromise splits the differenc
+  - Weak points: You concede when a position is genuinely binary and synthesis would create false equivalence
+- **The Technocrat**: neutral | rivalry=0.4 respect=0.45 distrust=0.35
+  - Attack angles: fundamentally misreads Technocrat's core premise — Good governance is an engineering problem, not a moral crusade.; ignores the structural weakness in Technocrat's position on The right question is what works, not what feels right.
+  - Weak points: You concede rapidly and explicitly when presented with contradicting evidence
+- **The Traditionalist**: blind_spot_exposer | rivalry=0.6 respect=0.5 distrust=0.4
+  - Attack angles: fundamentally misreads Traditionalist's core premise — What has survived for centuries usually has reasons for surviving. Understand th; ignores the structural weakness in Traditionalist's position on Change without understanding what you're changing is not pro
+  - Weak points: You concede when a tradition has clearly outlived its purpose or when it causes documented harm
