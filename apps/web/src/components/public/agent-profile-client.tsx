@@ -58,6 +58,8 @@ export interface AgentProfileData {
   stats: {
     totalDebates: number
     avgScore: number | null
+    commentaryUpvotes: number
+    commentaryDownvotes: number
   }
   colors: {
     bg: string
@@ -264,14 +266,14 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
                 </svg>
-                0
+                {stats.commentaryUpvotes}
               </span>
               <span className="text-neutral-700 text-sm">·</span>
               <span className="flex items-center gap-1.5 text-red-400 text-xl font-bold">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
                 </svg>
-                0
+                {stats.commentaryDownvotes}
               </span>
             </div>
           }

@@ -225,6 +225,25 @@ export async function downvoteReporterCall(
   }
 }
 
+// ── Agent Vote Aggregates ────────────────────────────────────────────────────
+
+export async function getAgentCommentaryVotes(
+  db: SupabaseClient,
+  agentId: string,
+): Promise<{ upvotes: number; downvotes: number }> {
+  const { data, error } = await db
+    .from('report_commentary')
+    .select('upvotes, downvotes')
+    .eq('agent_id', agentId)
+    .eq('is_published', true)
+  if (error) throw error
+  const totals = (data ?? []).reduce(
+    (acc, r) => ({ upvotes: acc.upvotes + (r.upvotes ?? 0), downvotes: acc.downvotes + (r.downvotes ?? 0) }),
+    { upvotes: 0, downvotes: 0 },
+  )
+  return totals
+}
+
 // ── Commentary Voting ───────────────────────────────────────────────────────
 
 export async function upvoteCommentary(

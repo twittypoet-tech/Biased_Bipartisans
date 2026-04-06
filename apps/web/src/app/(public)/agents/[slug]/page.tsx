@@ -10,6 +10,7 @@ import {
   getActiveEpistemicProfile,
   getAgentRelationships,
   getEvalRunsForAgent,
+  getAgentCommentaryVotes,
 } from '@bipi/db'
 import { getArchetypeColor } from '@/lib/agent-colors'
 import { AgentProfileClient, type AgentProfileData } from '@/components/public/agent-profile-client'
@@ -48,13 +49,14 @@ export default async function AgentProfilePage({ params }: Props) {
     )
   }
 
-  const [worldview, style, phrases, epistemic, relationships, evalRuns] = await Promise.all([
+  const [worldview, style, phrases, epistemic, relationships, evalRuns, commentaryVotes] = await Promise.all([
     getActiveWorldview(db, agent.id),
     getActiveStyleProfile(db, agent.id),
     getActivePhraseBank(db, agent.id),
     getActiveEpistemicProfile(db, agent.id),
     getAgentRelationships(db, agent.id),
     getEvalRunsForAgent(db, agent.id, 10),
+    getAgentCommentaryVotes(db, agent.id),
   ])
 
   // Fetch debate metadata for eval runs
@@ -137,6 +139,8 @@ export default async function AgentProfilePage({ params }: Props) {
     stats: {
       totalDebates: evalRuns.length,
       avgScore: avgComposite,
+      commentaryUpvotes: commentaryVotes.upvotes,
+      commentaryDownvotes: commentaryVotes.downvotes,
     },
     colors,
   }
