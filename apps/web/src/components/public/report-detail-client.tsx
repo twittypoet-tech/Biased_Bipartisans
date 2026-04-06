@@ -832,8 +832,8 @@ function CommentaryRequestSheet({
         }
       }, 2000)
 
-      // Safety timeout: 3 min max
-      setTimeout(() => { clearInterval(retryInterval); room.disconnect() }, 3 * 60 * 1000)
+      // Safety timeout: 10 min max
+      setTimeout(() => { clearInterval(retryInterval); room.disconnect() }, 10 * 60 * 1000)
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
