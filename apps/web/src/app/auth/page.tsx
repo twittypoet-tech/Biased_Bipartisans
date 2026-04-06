@@ -22,7 +22,6 @@ function AuthPageInner() {
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(false)
   const codeRefs = useRef<(HTMLInputElement | null)[]>([])
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -130,12 +129,10 @@ function AuthPageInner() {
             <>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-t-text mb-2">
-                  {isSignUp ? 'Create your account' : 'Welcome back'}
+                  Sign in to Biased Bipartisans
                 </h1>
                 <p className="text-sm text-t-text-2">
-                  {isSignUp
-                    ? 'Get 10 free Bipi Credits to start generating reports.'
-                    : 'Enter your email to receive a sign-in code.'}
+                  Enter your email. We&apos;ll send a 6-digit code. New accounts are created automatically.
                 </p>
               </div>
 
@@ -171,14 +168,8 @@ function AuthPageInner() {
                 </button>
               </form>
 
-              <p className="mt-6 text-center text-xs text-t-text-3">
-                {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-                <button
-                  onClick={() => { setIsSignUp(!isSignUp); setError('') }}
-                  className="text-t-accent-text hover:underline font-medium"
-                >
-                  {isSignUp ? 'Sign in' : 'Create one'}
-                </button>
+              <p className="mt-6 text-center text-xs text-t-text-4">
+                10 free credits on your first sign-in. No credit card required.
               </p>
             </>
           )}
