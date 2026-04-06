@@ -124,7 +124,9 @@ export default async function AgentProfilePage({ params }: Props) {
       respectScore: rel.respect_score,
       rivalryScore: rel.rivalry_score,
       attackAngles: (rel.attack_angles as string[]) ?? [],
-      targetArchetype: (rel as unknown as Record<string, string>).target_archetype ?? '',
+      targetName: rel.target_name ?? null,
+      targetSlug: rel.target_slug ?? null,
+      targetAvatarUrl: rel.target_avatar_url ?? null,
     })),
     recentDebates: evalRuns.map((run) => {
       const debate = debateMap.get(run.debate_id)

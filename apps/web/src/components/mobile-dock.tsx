@@ -2,14 +2,14 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Swords, Trophy, Users, Sun, Moon } from 'lucide-react'
+import { Home, MessageSquare, Swords, Trophy, Users, Sun, Moon } from 'lucide-react'
 import { useTheme } from './theme-provider'
 import { cn } from '@/lib/utils'
 
 const dockItems = [
   { href: '/', icon: Home, label: 'Home' },
+  { href: '/commentary', icon: MessageSquare, label: 'Commentary' },
   { href: '/debates', icon: Swords, label: 'Debates' },
-  { href: '/tournaments', icon: Trophy, label: 'Tourneys' },
   { href: '/agents', icon: Users, label: 'Agents' },
 ]
 

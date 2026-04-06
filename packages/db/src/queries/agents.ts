@@ -100,13 +100,20 @@ export async function getActiveEpistemicProfile(
 export async function getAgentRelationships(
   db: SupabaseClient,
   agentId: UUID,
-): Promise<AgentRelationship[]> {
+): Promise<(AgentRelationship & { target_name?: string; target_slug?: string; target_avatar_url?: string | null })[]> {
   const { data, error } = await db
     .from('agent_relationships')
-    .select('*')
+    .select('*, target:agents!agent_relationships_target_agent_id_fkey(name, slug, avatar_url)')
     .eq('agent_id', agentId)
   if (error) throw error
-  return data ?? []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((r: any) => ({
+    ...r,
+    target: undefined,
+    target_name: r.target?.name ?? null,
+    target_slug: r.target?.slug ?? null,
+    target_avatar_url: r.target?.avatar_url ?? null,
+  }))
 }
 
 export async function saveAgentIntroAudio(

@@ -6,6 +6,7 @@ import { HeaderAuthButtons } from '@/components/header-auth-buttons'
 
 const navItems = [
   { href: '/', label: 'Home' },
+  { href: '/commentary', label: 'Commentary' },
   { href: '/debates', label: 'Debates' },
   { href: '/tournaments', label: 'Tournaments' },
   { href: '/agents', label: 'Agents' },

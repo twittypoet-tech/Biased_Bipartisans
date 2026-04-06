@@ -225,6 +225,38 @@ export async function downvoteReporterCall(
   }
 }
 
+// ── All Commentary Feed ─────────────────────────────────────────────────────
+
+export async function listAllCommentary(
+  db: SupabaseClient,
+  limit = 30,
+): Promise<(ReportCommentary & { report_headline?: string; report_slug?: string; report_category?: string })[]> {
+  const { data, error } = await db
+    .from('report_commentary')
+    .select('*, agents(name, slug, avatar_url, archetype), reporter_calls!report_commentary_report_call_id_fkey(report_headline, slug, report_category)')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((r: any) => {
+    const agent = r.agents
+    const report = r.reporter_calls
+    return {
+      ...r,
+      agents: undefined,
+      reporter_calls: undefined,
+      agent_name: agent?.name,
+      agent_slug: agent?.slug,
+      agent_avatar_url: agent?.avatar_url,
+      agent_archetype: agent?.archetype,
+      report_headline: report?.report_headline ?? null,
+      report_slug: report?.slug ?? null,
+      report_category: report?.report_category ?? null,
+    }
+  })
+}
+
 // ── Agent Vote Aggregates ────────────────────────────────────────────────────
 
 export async function getAgentCommentaryVotes(

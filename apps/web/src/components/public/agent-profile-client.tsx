@@ -46,7 +46,9 @@ export interface AgentProfileData {
     respectScore: number
     rivalryScore: number
     attackAngles: string[]
-    targetArchetype: string
+    targetName: string | null
+    targetSlug: string | null
+    targetAvatarUrl: string | null
   }>
   recentDebates: Array<{
     id: string
@@ -396,20 +398,45 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
                 <ProfileCard title="Rivals & Alliances" icon={<RelationshipsIcon />}>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {relationships.map((rel) => {
-                      const relColors = archetypeColorMap[rel.targetArchetype] ?? defaultColorMap
+                      const isRival = rel.rivalryScore >= 0.6
+                      const borderColor = isRival ? 'border-red-800/30' : 'border-emerald-800/30'
+                      const bgColor = isRival ? 'bg-red-950/20' : 'bg-emerald-950/20'
+                      const typeColor = isRival ? 'text-red-400' : 'text-emerald-400'
                       return (
-                        <div key={rel.id} className={`rounded-xl border ${relColors.border} ${relColors.bg} p-4`}>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className={`text-sm font-semibold capitalize ${relColors.text}`}>
-                              {rel.relationshipType.replace(/_/g, ' ')}
-                            </span>
-                            <div className="flex gap-3 text-[10px] text-neutral-500 shrink-0">
-                              <span>R {Math.round(rel.respectScore * 100)}%</span>
-                              <span>Rival {Math.round(rel.rivalryScore * 100)}%</span>
+                        <div key={rel.id} className={`rounded-xl border ${borderColor} ${bgColor} p-4`}>
+                          <div className="flex items-center gap-3 mb-2">
+                            {rel.targetSlug ? (
+                              <Link href={`/agents/${rel.targetSlug}`} className="shrink-0 hover:opacity-80 transition">
+                                {rel.targetAvatarUrl ? (
+                                  <img src={rel.targetAvatarUrl} alt={rel.targetName ?? ''} className="size-9 rounded-full object-cover" />
+                                ) : (
+                                  <div className="size-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-400">
+                                    {(rel.targetName ?? '?')[0]}
+                                  </div>
+                                )}
+                              </Link>
+                            ) : (
+                              <div className="size-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-400">?</div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              {rel.targetSlug ? (
+                                <Link href={`/agents/${rel.targetSlug}`} className="text-sm font-semibold text-white hover:underline">
+                                  {rel.targetName ?? 'Unknown'}
+                                </Link>
+                              ) : (
+                                <p className="text-sm font-semibold text-white">{rel.targetName ?? 'Unknown'}</p>
+                              )}
+                              <span className={`text-[11px] font-medium capitalize ${typeColor}`}>
+                                {rel.relationshipType.replace(/_/g, ' ')}
+                              </span>
+                            </div>
+                            <div className="flex flex-col items-end gap-0.5 text-[10px] text-neutral-500 shrink-0">
+                              <span>Respect {Math.round(rel.respectScore * 100)}%</span>
+                              <span>Rivalry {Math.round(rel.rivalryScore * 100)}%</span>
                             </div>
                           </div>
                           {rel.attackAngles.length > 0 && (
-                            <p className="mt-2 text-xs text-neutral-500 leading-relaxed">
+                            <p className="text-xs text-neutral-500 leading-relaxed">
                               {rel.attackAngles.join(' · ')}
                             </p>
                           )}
