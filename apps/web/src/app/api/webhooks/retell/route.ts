@@ -176,7 +176,7 @@ export async function POST(request: Request) {
         await refundDb.from('credit_transactions').insert({
           user_id: userId,
           amount: 5,
-          reason: 'signup_bonus', // reusing closest reason — represents a refund
+          reason: 'refund',
           reference_id: `refund_${callId}`,
         })
         console.log('reporter webhook: refunded 5 credits to user', userId, 'for failed report')
