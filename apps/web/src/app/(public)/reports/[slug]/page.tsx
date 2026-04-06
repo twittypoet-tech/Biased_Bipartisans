@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { notFound } from 'next/navigation'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createAuthServerClient } from '@/lib/supabase/server'
 import { getReporterCallBySlug, listReportCommentary } from '@bipi/db'
 import { listAgents } from '@bipi/db'
 import { ReportDetailClient } from '@/components/public/report-detail-client'
@@ -53,8 +53,20 @@ export default async function ReportDetailPage({ params }: PageProps) {
   const { slug } = await params
   const db = createServerClient()
 
-  const report = await getReporterCallBySlug(db, slug)
+  // Get authenticated user (if any) for owner access
+  let viewerUserId: string | null = null
+  try {
+    const authClient = await createAuthServerClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    viewerUserId = user?.id ?? null
+  } catch {
+    // Not authenticated — fine, continue as public viewer
+  }
+
+  const report = await getReporterCallBySlug(db, slug, viewerUserId)
   if (!report) notFound()
+
+  const isOwner = viewerUserId != null && report.user_id === viewerUserId
 
   const [commentary, allAgents] = await Promise.all([
     listReportCommentary(db, report.id),
@@ -104,6 +116,7 @@ export default async function ReportDetailPage({ params }: PageProps) {
         report={report}
         commentary={commentary}
         agents={agentsForCommentary}
+        isOwner={isOwner}
       />
     </>
   )

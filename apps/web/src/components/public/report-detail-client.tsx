@@ -54,17 +54,28 @@ interface ReportDetailClientProps {
   report: ReporterCall
   commentary: ReportCommentary[]
   agents: AgentForCommentary[]
+  isOwner?: boolean
+}
+
+const WIRE_STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  none:     { label: 'Dashboard Only', className: 'bg-t-surface-el text-t-text-3 border-t-edge' },
+  pending:  { label: 'Pending Wire Review', className: 'bg-amber-950/40 text-amber-400 border-amber-800/40' },
+  approved: { label: 'Published to Wire', className: 'bg-green-950/40 text-green-400 border-green-800/40' },
+  rejected: { label: 'Wire Request Declined', className: 'bg-red-950/40 text-red-400 border-red-800/40' },
+  auto:     { label: 'Published to Wire', className: 'bg-green-950/40 text-green-400 border-green-800/40' },
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function ReportDetailClient({ report, commentary, agents }: ReportDetailClientProps) {
+export function ReportDetailClient({ report, commentary, agents, isOwner = false }: ReportDetailClientProps) {
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
   const [votes, setVotes] = useState({ up: report.upvotes, down: report.downvotes })
   const [copied, setCopied] = useState(false)
   const [showFullTranscript, setShowFullTranscript] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const [showCommentaryRequest, setShowCommentaryRequest] = useState(false)
+  const [wireStatus, setWireStatus] = useState(report.wire_status)
+  const [publishRequesting, setPublishRequesting] = useState(false)
 
   const netVotes = votes.up - votes.down
 
@@ -90,6 +101,25 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
       navigator.clipboard.writeText(window.location.href)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  async function handleRequestPublish() {
+    if (publishRequesting) return
+    setPublishRequesting(true)
+    try {
+      const res = await fetch('/api/reporter/request-publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callId: report.id }),
+      })
+      if (res.ok) {
+        setWireStatus('pending')
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setPublishRequesting(false)
     }
   }
 
@@ -218,6 +248,26 @@ export function ReportDetailClient({ report, commentary, agents }: ReportDetailC
             <span className="hidden sm:inline">{copied ? 'Copied!' : 'Share'}</span>
           </button>
         </div>
+
+        {/* ── Owner: wire status + publish request ── */}
+        {isOwner && (
+          <div className="flex items-center gap-3 px-1 py-2">
+            {wireStatus && WIRE_STATUS_BADGE[wireStatus] && (
+              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${WIRE_STATUS_BADGE[wireStatus].className}`}>
+                {WIRE_STATUS_BADGE[wireStatus].label}
+              </span>
+            )}
+            {wireStatus === 'none' && (
+              <button
+                onClick={handleRequestPublish}
+                disabled={publishRequesting}
+                className="rounded-lg bg-t-accent px-4 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
+              >
+                {publishRequesting ? 'Requesting...' : 'Request Publish to Wire'}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* ── Summary (toggleable) ── */}
         {showSummary && report.call_summary && (

@@ -120,6 +120,7 @@ export async function POST(request: Request) {
   const durationSeconds = startTs && endTs ? Math.round((endTs - startTs) / 1000) : null
 
   const dynamicVars  = (call.retell_llm_dynamic_variables ?? {}) as Record<string, unknown>
+  const userId       = (dynamicVars.user_id as string | undefined) ?? null
   const userQuery    = (dynamicVars.user_query as string | undefined) ?? null
   const callLanguage = (call.language as string | undefined) ?? 'en-US'
 
@@ -136,6 +137,24 @@ export async function POST(request: Request) {
     reportDelivered === true &&
     reportQuality === 'Complete' &&
     (sourceCount ?? 0) >= 1
+
+  // ── Determine wire_status based on user role ──────────────────────────
+  let wireStatus: string = 'none'
+  if (isPublished && userId) {
+    try {
+      const lookupDb = createServerClient()
+      const { data: profile } = await lookupDb
+        .from('user_profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+      if (profile?.role === 'journalist' || profile?.role === 'admin') {
+        wireStatus = 'auto'
+      }
+    } catch {
+      console.warn('reporter webhook: failed to look up user role for wire_status')
+    }
+  }
 
   // ── Write to DB ───────────────────────────────────────────────────────────
   try {
@@ -185,6 +204,8 @@ export async function POST(request: Request) {
       user_query:       userQuery,
       duration_seconds: durationSeconds,
       is_published:     isPublished,
+      user_id:          userId,
+      wire_status:      wireStatus,
     })
   } catch (err) {
     console.error('reporter webhook: DB write failed', err)

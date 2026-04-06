@@ -514,6 +514,9 @@ export interface ReporterCall {
   upvotes: number
   downvotes: number
 
+  user_id: string | null
+  wire_status: string
+
   is_published: boolean
   created_at: Timestamp
 }

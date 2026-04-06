@@ -260,15 +260,23 @@ export function MakeCallModal({ onClose }: MakeCallModalProps) {
             <div className="text-center">
               <p className="text-sm font-semibold text-white">Report submitted</p>
               <p className="mt-1 text-xs text-neutral-400">
-                Your report will appear on The Wire shortly after analysis completes.
+                Your report will appear in your dashboard shortly after analysis completes.
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="rounded-lg bg-neutral-800 border border-neutral-700 px-5 py-2 text-sm text-neutral-300 hover:bg-neutral-700 transition"
-            >
-              Close
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep('form')}
+                className="rounded-lg bg-neutral-800 border border-neutral-700 px-5 py-2 text-sm text-neutral-300 hover:bg-neutral-700 transition"
+              >
+                Make Another Call
+              </button>
+              <a
+                href="/my/reports"
+                className="rounded-lg bg-neutral-800 border border-neutral-700 px-5 py-2 text-sm text-neutral-300 hover:bg-neutral-700 transition"
+              >
+                View My Reports
+              </a>
+            </div>
           </div>
         )}
 

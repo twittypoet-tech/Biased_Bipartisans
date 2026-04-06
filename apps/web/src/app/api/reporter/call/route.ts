@@ -79,6 +79,7 @@ export async function POST(request: Request) {
     now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' })
 
   const dynamicVars = {
+    user_id: user.id,
     user_query: userQuery,
     current_date: currentDate,
     response_language: language as string,

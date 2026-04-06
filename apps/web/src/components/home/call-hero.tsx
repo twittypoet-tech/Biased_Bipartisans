@@ -511,15 +511,18 @@ export function CallHero({ presets, agents }: CallHeroProps) {
 
             <LiveWaveform />
             <button onClick={handleLeaveCall} className="mt-2 flex items-center gap-2 rounded-xl border border-t-edge-strong bg-t-surface-el px-6 py-3 text-sm font-medium text-t-text-2 hover:bg-t-hover transition"><PhoneOffIcon /> Leave Call</button>
-            <p className="text-xs text-t-text-3 text-center max-w-xs leading-relaxed">You can leave anytime — the full report will appear on The Wire once The Reporter finishes.</p>
+            <p className="text-xs text-t-text-3 text-center max-w-xs leading-relaxed">You can leave anytime — the full report will appear in your dashboard once The Reporter finishes.</p>
           </div>
         )}
 
         {step === 'done' && (
           <div className="flex flex-col items-center py-16 gap-5">
             <div className="size-16 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center"><CheckIcon /></div>
-            <div className="text-center"><p className="text-lg font-semibold text-t-text">Report submitted</p><p className="mt-1.5 text-sm text-t-text-2">Your report will appear on The Wire shortly after analysis completes.</p></div>
-            <button onClick={handleReset} className="rounded-xl bg-t-surface-el border border-t-edge-strong px-6 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition">Make Another Call</button>
+            <div className="text-center"><p className="text-lg font-semibold text-t-text">Report submitted</p><p className="mt-1.5 text-sm text-t-text-2">Your report will appear in your dashboard shortly after analysis completes.</p></div>
+            <div className="flex gap-3">
+              <button onClick={handleReset} className="rounded-xl bg-t-surface-el border border-t-edge-strong px-6 py-2.5 text-sm font-medium text-t-text-2 hover:bg-t-hover transition">Make Another Call</button>
+              <a href="/my/reports" className="rounded-xl bg-t-accent px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">View My Reports</a>
+            </div>
           </div>
         )}
 

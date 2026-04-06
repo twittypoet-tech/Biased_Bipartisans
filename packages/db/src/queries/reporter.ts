@@ -17,6 +17,7 @@ export async function listPublishedReporterCalls(
     .from('reporter_calls')
     .select('*')
     .eq('is_published', true)
+    .in('wire_status', ['auto', 'approved'])
 
   if (category) {
     query = query.eq('report_category', category)
@@ -51,6 +52,8 @@ export interface InsertReporterCallData {
   call_language?: string
   user_query?: string | null
   duration_seconds?: number | null
+  user_id?: string | null
+  wire_status?: string
   is_published?: boolean
   slug?: string
   transcript?: string | null
@@ -76,7 +79,9 @@ export async function insertReporterCall(
 export async function getReporterCallBySlug(
   db: SupabaseClient,
   slug: string,
+  viewerUserId?: string | null,
 ): Promise<ReporterCall | null> {
+  // First try: published + on wire
   const { data, error } = await db
     .from('reporter_calls')
     .select('*')
@@ -84,7 +89,48 @@ export async function getReporterCallBySlug(
     .eq('is_published', true)
     .single()
   if (error && error.code !== 'PGRST116') throw error
-  return (data as ReporterCall) ?? null
+  if (data) return data as ReporterCall
+
+  // Fallback: let the owner view their own report even if not on wire
+  if (viewerUserId) {
+    const { data: ownData, error: ownError } = await db
+      .from('reporter_calls')
+      .select('*')
+      .eq('slug', slug)
+      .eq('user_id', viewerUserId)
+      .single()
+    if (ownError && ownError.code !== 'PGRST116') throw ownError
+    if (ownData) return ownData as ReporterCall
+  }
+
+  return null
+}
+
+export async function listUserReporterCalls(
+  db: SupabaseClient,
+  userId: string,
+): Promise<ReporterCall[]> {
+  const { data, error } = await db
+    .from('reporter_calls')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []) as ReporterCall[]
+}
+
+export async function requestWirePublish(
+  db: SupabaseClient,
+  callId: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await db
+    .from('reporter_calls')
+    .update({ wire_status: 'pending' })
+    .eq('id', callId)
+    .eq('user_id', userId)
+    .eq('wire_status', 'none')
+  if (error) throw error
 }
 
 export async function listReportCommentary(

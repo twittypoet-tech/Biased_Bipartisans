@@ -18,7 +18,7 @@ const menuGroups = [
   {
     label: 'Work With Us',
     items: [
-      { label: 'Independent Journalists', href: '/work-with-us/journalists', icon: Newspaper },
+      { label: 'Investigative Journalists', href: '/work-with-us/journalists', icon: Newspaper },
       { label: 'Companies and Organizations', href: '/work-with-us/organizations', icon: Building2 },
       { label: 'Contact Us', href: '/contact', icon: Mail },
     ],
