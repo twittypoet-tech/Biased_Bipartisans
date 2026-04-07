@@ -28,14 +28,9 @@ function formatAge(iso: string): string {
 
 interface ReporterCallCardProps {
   call: ReporterCall
-  onUpvote?: (id: string) => void
-  onDownvote?: (id: string) => void
-  userVote?: 'up' | 'down' | null
 }
 
-export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }: ReporterCallCardProps) {
-  const netVotes = call.upvotes - call.downvotes
-
+export function ReporterCallCard({ call }: ReporterCallCardProps) {
   return (
     <Link href={`/reports/${call.slug}`} className="block">
     <article className="rounded-xl border border-t-edge bg-t-surface shadow-t overflow-hidden transition hover:border-t-edge-strong hover:shadow-t-lg">
@@ -47,28 +42,7 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
         </div>
       )}
 
-      <div className="flex gap-3 p-4">
-
-      {/* ── Vote column ── */}
-      <div className="flex flex-col items-center gap-1 pt-0.5 min-w-[32px]">
-        <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUpvote?.(call.id) }}
-          aria-label="Upvote"
-          className={`rounded p-1 transition hover:bg-t-hover ${userVote === 'up' ? 'text-amber-400' : 'text-t-text-3 hover:text-t-text-2'}`}
-        >
-          <ArrowUpIcon />
-        </button>
-        <span className={`text-xs font-semibold tabular-nums ${netVotes > 0 ? 'text-amber-400' : netVotes < 0 ? 'text-blue-400' : 'text-t-text-3'}`}>
-          {netVotes}
-        </span>
-        <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownvote?.(call.id) }}
-          aria-label="Downvote"
-          className={`rounded p-1 transition hover:bg-t-hover ${userVote === 'down' ? 'text-blue-400' : 'text-t-text-3 hover:text-t-text-2'}`}
-        >
-          <ArrowDownIcon />
-        </button>
-      </div>
+      <div className="p-4">
 
       {/* ── Content ── */}
       <div className="flex-1 min-w-0">
@@ -114,8 +88,11 @@ export function ReporterCallCard({ call, onUpvote, onDownvote, userVote = null }
               {call.source_count} {call.source_count === 1 ? 'source' : 'sources'}
             </span>
           )}
+          {(call.view_count ?? 0) > 0 && (
+            <span className="text-[11px] text-t-text-3">{call.view_count?.toLocaleString()} views</span>
+          )}
           {call.key_entities && (
-            <span className="text-[11px] text-t-text-3 truncate max-w-[260px]" title={call.key_entities}>
+            <span className="text-[11px] text-t-text-3 truncate max-w-[200px]" title={call.key_entities}>
               {call.key_entities}
             </span>
           )}
@@ -186,20 +163,6 @@ function AudioPlayer({ url, durationSeconds }: { url: string; durationSeconds: n
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
-function ArrowUpIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="18 15 12 9 6 15"/>
-    </svg>
-  )
-}
-function ArrowDownIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  )
-}
 function PlayIcon() {
   return (
     <svg width="10" height="10" viewBox="0 0 24 24" fill="white">

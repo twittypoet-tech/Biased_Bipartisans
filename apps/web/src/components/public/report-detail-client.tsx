@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowUp, ArrowDown, Eye, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ChevronRight, ExternalLink, AlignLeft, Trash2 } from 'lucide-react'
+// ArrowUp/ArrowDown still used by CommentaryCard
 import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { useAuth } from '@/components/auth-provider'
@@ -85,8 +86,6 @@ const WIRE_STATUS_BADGE: Record<string, { label: string; className: string }> = 
 export function ReportDetailClient({ report, commentary: initialCommentary, agents, isOwner = false, relatedReports = [], upcomingTournament }: ReportDetailClientProps) {
   const { profile } = useAuth()
   const [commentary, setCommentary] = useState(initialCommentary)
-  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null)
-  const [votes, setVotes] = useState({ up: report.upvotes, down: report.downvotes })
   const [copied, setCopied] = useState(false)
   const [showFullTranscript, setShowFullTranscript] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
@@ -104,7 +103,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const netVotes = votes.up - votes.down
   const canRequestCommentary = isOwner || profile?.role === 'journalist' || profile?.role === 'admin'
 
   async function handleDeleteCommentary(commentaryId: string) {
@@ -113,15 +111,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
       const res = await fetch(`/api/commentary/${commentaryId}`, { method: 'DELETE' })
       if (res.ok) setCommentary((prev) => prev.filter((c) => c.id !== commentaryId))
     } catch {}
-  }
-
-  function handleVote(dir: 'up' | 'down') {
-    if (userVote === dir) return
-    setVotes((v) => ({
-      up: v.up + (dir === 'up' ? 1 : 0) - (userVote === 'up' ? 1 : 0),
-      down: v.down + (dir === 'down' ? 1 : 0) - (userVote === 'down' ? 1 : 0),
-    }))
-    setUserVote(dir)
   }
 
   async function handleShare() {
@@ -235,24 +224,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
 
         {/* ── Engagement bar ── */}
         <div className="flex items-center gap-1 py-3 border-y border-t-edge mb-6">
-          <button
-            onClick={() => handleVote('up')}
-            className={cn('rounded-lg p-2 transition', userVote === 'up' ? 'text-t-accent-text bg-t-accent-soft' : 'text-t-text-3 hover:bg-t-hover')}
-          >
-            <ArrowUp className="size-4" />
-          </button>
-          <span className={cn('text-sm font-semibold tabular-nums min-w-[2ch] text-center', netVotes > 0 ? 'text-t-accent-text' : netVotes < 0 ? 'text-blue-400' : 'text-t-text-3')}>
-            {netVotes}
-          </span>
-          <button
-            onClick={() => handleVote('down')}
-            className={cn('rounded-lg p-2 transition', userVote === 'down' ? 'text-blue-400 bg-blue-500/10' : 'text-t-text-3 hover:bg-t-hover')}
-          >
-            <ArrowDown className="size-4" />
-          </button>
-
-          <div className="w-px h-5 bg-t-edge mx-2" />
-
           <div className="flex items-center gap-1.5 px-2 py-2 text-sm text-t-text-3">
             <Eye className="size-4" />
             <span className="tabular-nums">{viewCount.toLocaleString()} {viewCount === 1 ? 'view' : 'views'}</span>

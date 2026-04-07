@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import type { ReporterCall } from '@bipi/shared'
 import { ReporterCallCard } from './reporter-call-card'
-import { useAuth } from '@/components/auth-provider'
 
 // Base categories — new ones from post-call analysis are appended dynamically
 const BASE_CATEGORIES = [
@@ -24,22 +23,10 @@ interface ReporterForumProps {
 }
 
 export function ReporterForum({ initialCalls }: ReporterForumProps) {
-  const { user } = useAuth()
-  const [calls, setCalls]           = useState<ReporterCall[]>(initialCalls)
+  const [calls]                     = useState<ReporterCall[]>(initialCalls)
   const [search, setSearch]         = useState('')
   const [category, setCategory]     = useState<string>('All')
   const [sort, setSort]             = useState<SortMode>('hot')
-  const [userVotes, setUserVotes]   = useState<Record<string, 'up' | 'down' | null>>({})
-
-  // Load user's existing votes on mount
-  useEffect(() => {
-    if (!user || initialCalls.length === 0) return
-    const callIds = initialCalls.map((c) => c.id).join(',')
-    fetch(`/api/reporter/votes?callIds=${callIds}`)
-      .then((r) => r.json())
-      .then((d) => { if (d.votes) setUserVotes(d.votes) })
-      .catch(() => {})
-  }, [user, initialCalls])
 
   const categories = useMemo(() => {
     const dataCategories = new Set(
@@ -62,51 +49,20 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
           c.key_entities?.toLowerCase().includes(q),
       )
     }
+    const now = Date.now()
+    const ONE_DAY = 24 * 60 * 60 * 1000
     return [...result].sort((a, b) => {
       if (sort === 'new') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      if (sort === 'top') return b.upvotes - a.upvotes
-      const netA = a.upvotes - a.downvotes
-      const netB = b.upvotes - b.downvotes
-      if (netB !== netA) return netB - netA
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      if (sort === 'top') return (b.view_count ?? 0) - (a.view_count ?? 0)
+      // Hot: views from last 24 hours (approximate with recency-weighted view count)
+      const ageA = Math.max(1, (now - new Date(a.created_at).getTime()) / ONE_DAY)
+      const ageB = Math.max(1, (now - new Date(b.created_at).getTime()) / ONE_DAY)
+      const hotA = (a.view_count ?? 0) / ageA
+      const hotB = (b.view_count ?? 0) / ageB
+      return hotB - hotA
     })
   }, [calls, category, search, sort])
 
-  function handleVote(id: string, direction: 'up' | 'down') {
-    if (!user) return // Must be logged in
-
-    // Optimistic update
-    const prev = userVotes[id] ?? null
-    const toggling = prev === direction
-    setUserVotes((v) => ({ ...v, [id]: toggling ? null : direction }))
-    setCalls((cs) =>
-      cs.map((c) => {
-        if (c.id !== id) return c
-        let up = c.upvotes
-        let down = c.downvotes
-        if (toggling) {
-          if (direction === 'up') up--; else down--
-        } else {
-          if (direction === 'up') { up++; if (prev === 'down') down-- }
-          else { down++; if (prev === 'up') up-- }
-        }
-        return { ...c, upvotes: Math.max(0, up), downvotes: Math.max(0, down) }
-      }),
-    )
-
-    // Persist to DB
-    fetch('/api/reporter/vote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ callId: id, direction }),
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        setCalls((cs) => cs.map((c) => c.id === id ? { ...c, upvotes: d.upvotes, downvotes: d.downvotes } : c))
-        setUserVotes((v) => ({ ...v, [id]: d.userVote }))
-      })
-      .catch(() => {})
-  }
 
   return (
     <section className="w-full max-w-3xl mx-auto px-4 py-10">
@@ -176,9 +132,6 @@ export function ReporterForum({ initialCalls }: ReporterForumProps) {
             <ReporterCallCard
               key={call.id}
               call={call}
-              onUpvote={(id) => handleVote(id, 'up')}
-              onDownvote={(id) => handleVote(id, 'down')}
-              userVote={userVotes[call.id] ?? null}
             />
           ))}
         </div>
