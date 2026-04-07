@@ -721,14 +721,13 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
 
                 {/* ── Language sheet ── */}
                 {activeSheet === 'language' && (
-                  <div className="px-5 pb-8 pt-2">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="px-5 pt-2 flex flex-col" style={{ maxHeight: 'calc(70vh - 72px)' }}>
+                    <div className="flex items-center justify-between mb-4 shrink-0">
                       <h3 className="text-lg font-semibold text-t-text">Language</h3>
                       <button onClick={() => { setActiveSheet(null); setLangSearch('') }} className="size-8 rounded-full bg-t-surface-el flex items-center justify-center text-t-text-3"><X className="size-4" /></button>
                     </div>
 
-                    {/* Language list (no search needed for 10 languages) */}
-                    <div className="space-y-1">
+                    <div className="space-y-1 overflow-y-auto pb-8 -mx-1 px-1">
                       {LANGUAGES.map((l) => (
                         <button
                           key={l.code}
