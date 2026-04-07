@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowUp, ArrowDown, MessageSquare, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ChevronRight, ExternalLink, AlignLeft, Trash2 } from 'lucide-react'
+import { ArrowUp, ArrowDown, Eye, Share2, FileText, Sparkles, Lock, ChevronDown, ChevronUp, ChevronRight, ExternalLink, AlignLeft, Trash2 } from 'lucide-react'
 import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { useAuth } from '@/components/auth-provider'
@@ -93,6 +93,16 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
   const [showCommentaryRequest, setShowCommentaryRequest] = useState(false)
   const [wireStatus, setWireStatus] = useState(report.wire_status)
   const [publishRequesting, setPublishRequesting] = useState(false)
+  const [viewCount, setViewCount] = useState(report.view_count ?? 0)
+
+  // Track view on mount (fire-and-forget)
+  useEffect(() => {
+    fetch(`/api/reports/${report.id}/view`, { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => { if (d.views) setViewCount(d.views) })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const netVotes = votes.up - votes.down
   const canRequestCommentary = isOwner || profile?.role === 'journalist' || profile?.role === 'admin'
@@ -243,18 +253,24 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
 
           <div className="w-px h-5 bg-t-edge mx-2" />
 
-          <button className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-t-text-3 hover:bg-t-hover transition">
-            <MessageSquare className="size-4" />
-            <span className="hidden sm:inline">0 Comments</span>
-          </button>
+          <div className="flex items-center gap-1.5 px-2 py-2 text-sm text-t-text-3">
+            <Eye className="size-4" />
+            <span className="tabular-nums">{viewCount.toLocaleString()} {viewCount === 1 ? 'view' : 'views'}</span>
+          </div>
 
           {report.call_summary && (
             <button
               onClick={() => setShowSummary(!showSummary)}
-              className={cn('flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition', showSummary ? 'text-t-accent-text bg-t-accent-soft' : 'text-t-text-3 hover:bg-t-hover')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition',
+                showSummary
+                  ? 'text-white'
+                  : 'text-white hover:opacity-90',
+              )}
+              style={{ backgroundColor: '#C8A44A' }}
             >
               <AlignLeft className="size-4" />
-              <span className="hidden sm:inline">Summarize</span>
+              Summarize
             </button>
           )}
 

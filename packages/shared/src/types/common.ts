@@ -518,6 +518,7 @@ export interface ReporterCall {
 
   user_id: string | null
   wire_status: string
+  view_count: number
 
   is_published: boolean
   created_at: Timestamp
