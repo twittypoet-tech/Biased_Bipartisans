@@ -4,6 +4,135 @@
 
 ---
 
+## 2026-04-06 (continued)
+
+### feat: Comprehensive SEO Audit + Fixes
+- metadataBase set to biasedbipartisans.com (fixes OG image on Reddit/iMessage shares)
+- Organization JSON-LD in root layout (name, url, logo, description)
+- Enhanced NewsArticle JSON-LD on reports: articleBody, wordCount, url, articleSection, keywords, author.url
+- BreadcrumbList JSON-LD on article pages (Home > Wire > Category > Title)
+- news_keywords meta tag on articles from key_entities
+- Debate detail pages: added generateMetadata (was completely missing)
+- Custom branded 404 page with BIPI mark + links
+- Alt text "BIPI" on all logo images across 5 files
+- Sitemap expanded: /commentary, /work-with-us/*, /contact, /terms, /privacy
+- Home page explicit metadata export
+
+### feat: Admin Route Protection
+- Admin layout: server-side role='admin' check via user_profiles
+- Non-admin users see "Access Denied" page with lock icon
+- Middleware: /admin/* redirects unauthenticated to /auth, /api/admin/* returns 401
+
+### fix: Auth Hydration Flash
+- Components check isLoading from useAuth() before rendering auth-dependent UI
+- Call Hero: placeholder during load instead of flashing "Sign in"
+- Hamburger menu: empty spacer during load
+- Dashboard home: skeleton animation during load
+- Dashboard header: pulse placeholder for credits/tier badge
+
+### feat: Article View Tracking
+- report_views table tracks unique views per IP (hashed) per report
+- Denormalized view_count on reporter_calls
+- POST /api/reports/[id]/view — records view on page load
+- Engagement bar: eye icon + view counter, removed "0 Comments" button
+- Summarize button moved above article body (gold, visible mobile + desktop)
+- "Collapse" option below summary card
+
+### feat: Site Footer, Terms of Service, Privacy Policy
+- 4-column editorial footer: Platform, Company, Account, Legal (17 internal links)
+- Responsive: 2-col on mobile with dock clearance (pb-24)
+- Terms of Service: 16 sections (AI disclaimer, credits, IP, arbitration, liability)
+- Privacy Policy: 11 sections (data collection, third-party sharing, CCPA/GDPR, security)
+- Third-party services described by category, not named (protects stack)
+- Contact form: saves to DB + sends email via Brevo to contact@biasedbipartisans.com
+
+### feat: Promotional Callouts in Articles + Home Page
+- 3 gold-background sponsored cards distributed within article body
+- Slot 1: Sign Up (anon) / Share with Friend (auth)
+- Slot 2: Upcoming tournament (real title from DB)
+- Slot 3: "Think Further on BIPI" brand banner
+- Home page: full-width CTA for anon users before wire feed
+- All cards: bipi logo + "Sponsored" badge header, black text on gold
+
+### feat: Failed Report Handling
+- Webhook refunds 5 credits when report_delivered=false or quality≠Complete
+- Dashboard shows red error card with original query + "Try Again" CTA
+- credit_transactions reason enum expanded with 'refund'
+
+### fix: Journalist Wire Publishing
+- Journalist reports default to wire_status='none' (was 'auto')
+- Journalists click "Publish to Wire" → instant publish (wire_status='auto')
+- Subscribers click "Request Publish to Wire" → pending admin approval
+
+### feat: Personalized Reporter Presets
+- GPT-4o-mini generates 8 tailored search queries per user daily
+- Inngest dailyPresetGeneration cron (6am UTC)
+- On-demand refresh for 1 credit via /api/presets/generate
+- My Reports: horizontal carousel + "Refresh Suggestions" button
+- Home page: mobile stacked carousels, desktop tab switcher
+- Call Hero reads ?query= URL param on mount
+
+### feat: Persistent Vote Tracking
+- reporter_call_votes + commentary_votes tables (unique per user)
+- POST /api/reporter/vote — upsert + recalculate denormalized counts
+- GET /api/reporter/votes — batch fetch user votes for wire feed
+- Commentary votes require auth + track user
+- Toggle behavior: same direction removes vote
+
+### feat: Commentary Feed (/commentary) + Agent Profile Updates
+- New tab between Home and Debates
+- Twitter-style feed of all agent commentary with report banners
+- Agent profile: Commentary tab, rivals card with names/avatars/relationship tags
+- Category banner + full headline on commentary posts
+
+### feat: Category Banners, Related Reports, Commentary Permissions
+- Full-width category banners on cards + article pages (replace pills)
+- Related Reports horizontal carousel (entity/query/category scoring)
+- Commentary CTA gated by role (subscribers: own reports only)
+- Commentary delete for report owners (soft-delete)
+- User role in auth context client-side
+
+### feat: Stripe Integration + Credit System
+- Products: Pro ($25/mo), 100/500/1000 credit packs
+- /api/stripe/checkout, /api/stripe/portal, /api/webhooks/stripe
+- Full lifecycle: checkout → renewal → cancellation → pause → resume
+- deduct_credits RPC function (atomic with balance check)
+- Inngest weekly free refill (5cr) + monthly pro refill (100cr)
+- Subscribe page: all CTAs wired to live Stripe Checkout
+
+### feat: Commentary Agent System
+- 29 global prompts + 29 KB docs + 812-pair relationship matrix
+- Commentary Host transfer agent for Retell call pairing
+- Full UX: select → connect → live waveform → done → playback
+- Commentary upvotes/downvotes + agent profile running vote count
+
+### feat: User Roles, Wire Filtering, Journalist Program
+- user_role enum (subscriber/journalist/admin), wire_status enum
+- My Reports dashboard, post-call UX, report owner access
+- Investigative Journalists page + application form
+- "Independent" → "Investigative" rename
+
+### feat: About Us + Mission Page Rewrite (stop-slop)
+- Complete content rewrite: active voice, specific claims, no filler
+- What We Built: Reporter (bipartisan) vs 29 Agents (biased)
+- "Evidence is the best weapon of truth"
+- Mission: specific problem stats, two layers, who it's for
+
+### feat: Sponsor BIPI + Contact Us Pages
+- /work-with-us/organizations: 4 placement options, who we work with/decline
+- /contact: 8 contact reasons, form saves to DB + emails via Brevo
+
+### fix: Various UX/UI
+- Nav header: "Biased Bipartisans" → "BiPi"
+- Call Hero: Georgia serif heading, 12+ languages (was 8)
+- Mobile: bottom sheets sit above dock nav (bottom-[72px])
+- Mobile: language list scrollable, no search input zoom
+- Mobile: textarea 16px prevents iOS zoom
+- Auth: unified flow (removed sign-in/sign-up toggle)
+- Email: removed min-height:100vh causing infinite scroll
+
+---
+
 ## 2026-04-06
 
 ### feat: Stripe Integration, Credit System & Weekly Refill

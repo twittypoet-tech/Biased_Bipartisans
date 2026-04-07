@@ -78,9 +78,10 @@
 - [ ] Use interests to filter/rank preset suggestions on home page
 - [ ] Pro user daily digest: "Your daily report on {interests} is waiting"
 
-### Admin Route Protection (LOW)
+### Admin Route Protection ✅ DONE
 - [x] `role` column on user_profiles — `user_role` enum (subscriber/journalist/admin). Done 2026-04-06.
-- [ ] Add admin role check to middleware for `/admin/*` and `/api/admin/*`
+- [x] Admin layout: server-side role='admin' check, "Access Denied" page for non-admins. Done 2026-04-06.
+- [x] Middleware: `/admin/*` redirects to /auth, `/api/admin/*` returns 401. Done 2026-04-06.
 
 ## Important Notes for Next Session
 
@@ -96,8 +97,40 @@
    - Pro tier: 100/month ($25/mo)
    - À la carte: $0.25/credit (down to $0.20 at 1000)
 
-4. **Hamburger menu pages**: About and Mission pages exist. Work With Us: Investigative Journalists page built (2026-04-06) with application form. Contact page still needed.
+4. **Hamburger menu pages**: All built. About, Mission, Investigative Journalists (with application form), Sponsor BIPI (organizations), Contact Us (with form + Brevo email). Done 2026-04-06.
 
 5. **Bipi onboarding agent** prompt is at `docs/prompts/bipi-onboarding-agent.md`. Post-call analysis fields: `user_interests`, `interest_entities`, `onboarding_successful`, `interest_summary`.
 
 6. **AdSense** needs site approval before ads render. Ad slot IDs (`data-ad-slot`) should be added once ad units are created in the AdSense dashboard.
+
+7. **Domain Migration: biasedbipartisans.com → bipinews.com** (PENDING — buy domain first)
+   
+   Code changes (Claude handles):
+   - `apps/web/src/app/layout.tsx` — metadataBase → `https://bipinews.com`
+   - `apps/web/src/app/sitemap.ts` — baseUrl → `https://bipinews.com`
+   - `apps/web/src/app/(public)/reports/[slug]/page.tsx` — all hardcoded URLs
+   - `apps/web/public/robots.txt` — sitemap URL
+   
+   Dashboard changes (user handles):
+   - Vercel: add bipinews.com as primary domain, biasedbipartisans.com as 301 redirect
+   - DNS: point bipinews.com to Vercel
+   - Supabase Auth: Dashboard → Auth → URL Configuration → Site URL to `https://bipinews.com`
+   - Stripe: update webhook endpoint to `https://bipinews.com/api/webhooks/stripe`
+   - Retell: no change needed (uses Vercel deployment URL directly: biased-bipartisans-web.vercel.app)
+   - Brevo: verify bipinews.com as sender domain
+   - Google Search Console: add bipinews.com, submit sitemap, change of address tool
+   - Google AdSense: add bipinews.com as verified site
+   
+   biasedbipartisans.com stays as 301 redirect — all old links transfer SEO equity.
+
+8. **SEO Audit Completed** (2026-04-06)
+   - [x] metadataBase set to production domain (fixes OG images on Reddit/iMessage)
+   - [x] Organization JSON-LD in root layout
+   - [x] Enhanced NewsArticle JSON-LD (articleBody, wordCount, articleSection, keywords)
+   - [x] BreadcrumbList JSON-LD on article pages
+   - [x] news_keywords meta tag on articles
+   - [x] Custom branded 404 page
+   - [x] Debate detail pages have generateMetadata
+   - [x] Alt text on all logo images
+   - [x] Sitemap expanded (added 7 missing pages)
+   - [x] Home page has explicit metadata export
