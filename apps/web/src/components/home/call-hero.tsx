@@ -29,6 +29,7 @@ interface AgentOption {
   name: string
   avatarUrl: string | null
   available: boolean
+  shortBio?: string
 }
 
 interface UserPresetOption {
@@ -343,26 +344,16 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
                         transition={{ duration: 0.15 }}
                         className="hidden sm:block absolute left-0 top-full mt-2 w-64 rounded-xl border border-t-edge bg-t-surface shadow-t-lg overflow-hidden z-50"
                       >
-                        <div className="p-3 max-h-72 overflow-y-auto">
-                          <p className="text-xs font-semibold text-t-text-3 uppercase tracking-wider mb-3">Agent</p>
-                          <div className="space-y-1">
-                            {agents.map((a) => (
-                              <button
-                                key={a.id}
-                                onClick={() => { if (a.available) { setSelectedAgent(a.id); setDesktopDropdown(null) } }}
-                                disabled={!a.available}
-                                className={cn(
-                                  'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition',
-                                  a.id === selectedAgent ? 'bg-t-accent-soft text-t-accent-text' : a.available ? 'text-t-text hover:bg-t-hover' : 'text-t-text-4 cursor-not-allowed',
-                                )}
-                              >
-                                <AgentAvatar agent={a} size={28} />
-                                <span className="flex-1 text-left truncate">{a.name}</span>
-                                {!a.available && <span className="text-[10px] text-t-text-4">Soon</span>}
-                                {a.id === selectedAgent && <CheckMark />}
-                              </button>
-                            ))}
-                          </div>
+                        <div className="p-3">
+                          {agents[0] && (
+                            <div className="flex items-start gap-3 px-2 py-2">
+                              <AgentAvatar agent={agents[0]} size={36} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-t-text">{agents[0].name}</p>
+                                <p className="text-xs text-t-text-3 leading-relaxed mt-1">{agents[0].shortBio}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <div className="border-t border-t-edge-muted p-3">
                           <button
@@ -681,7 +672,7 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="fixed inset-x-0 bottom-0 z-50 sm:hidden"
             >
-              <div className="rounded-t-2xl bg-t-surface border-t border-t-edge shadow-t-lg max-h-[70vh] overflow-y-auto">
+              <div className="rounded-t-2xl bg-t-surface border-t border-t-edge shadow-t-lg max-h-[85vh] overflow-y-auto pb-[env(safe-area-inset-bottom,16px)]">
                 {/* Drag handle */}
                 <div className="flex justify-center pt-3 pb-1">
                   <div className="w-10 h-1 rounded-full bg-t-edge-strong" />
@@ -695,27 +686,17 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
                       <button onClick={() => setActiveSheet(null)} className="size-8 rounded-full bg-t-surface-el flex items-center justify-center text-t-text-3"><X className="size-4" /></button>
                     </div>
 
-                    {/* Agent horizontal scroll */}
+                    {/* Reporter agent card */}
                     <p className="text-xs font-semibold text-t-text-3 uppercase tracking-wider mb-3">Agent</p>
-                    <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-none -mx-1 px-1">
-                      {agents.map((a) => (
-                        <button
-                          key={a.id}
-                          onClick={() => { if (a.available) setSelectedAgent(a.id) }}
-                          disabled={!a.available}
-                          className={cn(
-                            'shrink-0 flex flex-col items-center gap-2 rounded-xl p-3 w-20 transition',
-                            a.id === selectedAgent ? 'bg-t-accent-soft border border-amber-500/30' : a.available ? 'border border-t-edge hover:bg-t-hover' : 'border border-t-edge-muted opacity-50',
-                          )}
-                        >
-                          <AgentAvatar agent={a} size={40} />
-                          <span className={cn('text-[11px] font-medium text-center leading-tight', a.id === selectedAgent ? 'text-t-accent-text' : 'text-t-text-2')}>
-                            {a.name.replace('The ', '')}
-                          </span>
-                          {!a.available && <span className="text-[9px] text-t-text-4">Soon</span>}
-                        </button>
-                      ))}
-                    </div>
+                    {agents[0] && (
+                      <div className="flex items-start gap-3 rounded-xl border border-t-accent/30 bg-t-accent-soft p-4 mb-4">
+                        <AgentAvatar agent={agents[0]} size={44} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-t-text">{agents[0].name}</p>
+                          <p className="text-xs text-t-text-3 leading-relaxed mt-1">{agents[0].shortBio}</p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Deep Research toggle */}
                     <div className="border-t border-t-edge-muted pt-4 mt-2">

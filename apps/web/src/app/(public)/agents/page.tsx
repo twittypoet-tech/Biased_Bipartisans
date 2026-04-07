@@ -8,7 +8,10 @@ export default async function AgentsPage() {
   const db = createServerClient()
   const agents = await getAgentsWithDebateCounts(db)
 
-  const rows = agents.map((a) => ({
+  // Exclude utility agents (Reporter, Wire, Commentary Host) from the listing
+  const HIDDEN_SLUGS = new Set(['the-reporter', 'the-wire', 'the-commentary-host'])
+
+  const rows = agents.filter((a) => !HIDDEN_SLUGS.has(a.slug)).map((a) => ({
     id: a.id,
     name: a.name,
     slug: a.slug,

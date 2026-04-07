@@ -60,14 +60,15 @@ export default async function HomePage() {
   // Featured live debate (shown above the stack when live)
   const featuredLive = liveDebates[0] ?? null
 
-  // Build agent options for CallHero — only The Reporter is functional for now
+  // Only show The Reporter in the agent selector
   const agentOptions = allAgents
-    .filter((a) => a.retell_agent_id)
+    .filter((a) => a.slug === 'the-reporter')
     .map((a) => ({
       id: a.id,
       name: a.name,
       avatarUrl: a.avatar_url,
-      available: a.role === 'reporter',
+      available: true,
+      shortBio: a.short_bio ?? '',
     }))
   // Ensure The Reporter is first
   agentOptions.sort((a, b) => (a.available === b.available ? 0 : a.available ? -1 : 1))

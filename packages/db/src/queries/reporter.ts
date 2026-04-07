@@ -143,8 +143,7 @@ export async function listReportCommentary(
     .select('*, agents(name, slug, avatar_url, archetype)')
     .eq('report_call_id', reportCallId)
     .eq('is_published', true)
-    .order('upvotes', { ascending: false })
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: true })
   if (error) throw error
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((r: any) => {
