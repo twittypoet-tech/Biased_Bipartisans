@@ -267,8 +267,8 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
         }
       }, 2000)
 
-      // Safety timeout: 10 min max
-      setTimeout(() => { clearInterval(retryInterval); room.disconnect() }, 10 * 60 * 1000)
+      // Safety timeout: 25 min max (Retell agent limit is 20 min)
+      setTimeout(() => { clearInterval(retryInterval); room.disconnect() }, 25 * 60 * 1000)
     } catch (err) { setErrorMsg(err instanceof Error ? err.message : 'Something went wrong'); setStep('error') }
   }
 
