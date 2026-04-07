@@ -18,7 +18,7 @@ export default function SubscribePageWrapper() {
 const proFeatures = [
   { icon: Sparkles, label: 'AI-Powered News reports tailored to your schedule, interests, and industry' },
   { icon: Zap, label: '20 reports/month with 100 credits included' },
-  { icon: Globe, label: 'Multi-lingual reporting in 8+ languages' },
+  { icon: Globe, label: 'Multi-lingual reporting in 12+ languages' },
   { icon: Clock, label: 'Unlimited news algorithm refinements' },
   { icon: Phone, label: '1-on-1 voice calls with AI agents' },
 ]

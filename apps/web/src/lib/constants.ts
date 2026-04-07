@@ -3,8 +3,10 @@ export const LANGUAGES = [
   { code: 'es-ES', label: 'Español' },
   { code: 'fr-FR', label: 'Français' },
   { code: 'de-DE', label: 'Deutsch' },
+  { code: 'hi-IN', label: 'हिन्दी' },
+  { code: 'ru-RU', label: 'Русский' },
   { code: 'pt-BR', label: 'Português' },
   { code: 'ja-JP', label: '日本語' },
-  { code: 'zh-CN', label: '中文' },
-  { code: 'ar-SA', label: 'العربية' },
+  { code: 'it-IT', label: 'Italiano' },
+  { code: 'nl-NL', label: 'Nederlands' },
 ] as const

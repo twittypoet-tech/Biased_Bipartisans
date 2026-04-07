@@ -17,8 +17,8 @@ async function createRetellCall(apiKey: string, agentId: string, dynamicVars: Re
 const RETELL_API_BASE   = 'https://api.retellai.com'
 
 const SUPPORTED_LANGUAGES = new Set([
-  'en-US', 'es-ES', 'fr-FR', 'de-DE',
-  'pt-BR', 'ja-JP', 'zh-CN', 'ar-SA',
+  'en-US', 'es-ES', 'fr-FR', 'de-DE', 'hi-IN',
+  'ru-RU', 'pt-BR', 'ja-JP', 'it-IT', 'nl-NL',
 ])
 
 export async function POST(request: Request) {

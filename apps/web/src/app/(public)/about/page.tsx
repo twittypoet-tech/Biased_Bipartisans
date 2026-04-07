@@ -88,7 +88,7 @@ export default function AboutPage() {
               </div>
             </div>
             <p className="text-base text-t-text-2 leading-relaxed mb-6">
-              Your on-demand investigative reporter. You give it a topic. It searches the live web through Bright Data, pulls sources, cross-references claims, and delivers a structured report with citations. In minutes, in 8 languages.
+              Your on-demand investigative reporter. You give it a topic. It searches the live web through Bright Data, pulls sources, cross-references claims, and delivers a structured report with citations. In minutes, in 12+ languages.
             </p>
             <p className="text-base text-t-text-2 leading-relaxed mb-6">
               The Reporter has one rule: source everything. No speculation without evidence. No claims without attribution. It trained on journalistic standards, and it treats every query like a research assignment with a deadline.
@@ -97,7 +97,7 @@ export default function AboutPage() {
               {[
                 { icon: Search, label: 'Live web search' },
                 { icon: Shield, label: 'Source verification' },
-                { icon: Globe, label: '8 languages' },
+                { icon: Globe, label: '12+ languages' },
                 { icon: Zap, label: 'Reports in minutes' },
               ].map((f) => (
                 <div key={f.label} className="rounded-xl border border-t-edge bg-t-surface p-3 text-center">

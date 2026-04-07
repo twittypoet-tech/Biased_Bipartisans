@@ -311,7 +311,7 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
                 onKeyDown={handleKeyDown}
                 placeholder="Give me a detailed report on CIA's project Bluebird"
                 rows={3}
-                className="w-full resize-none rounded-xl bg-transparent px-1 py-2 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none"
+                className="w-full resize-none rounded-xl bg-transparent px-1 py-2 text-base sm:text-sm text-t-text placeholder:text-t-text-4 focus:outline-none"
               />
 
               {/* Toolbar row: [+] [lang pill] ... [send] */}
@@ -727,22 +727,9 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
                       <button onClick={() => { setActiveSheet(null); setLangSearch('') }} className="size-8 rounded-full bg-t-surface-el flex items-center justify-center text-t-text-3"><X className="size-4" /></button>
                     </div>
 
-                    {/* Search */}
-                    <div className="relative mb-4">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-t-text-4" />
-                      <input
-                        type="text"
-                        value={langSearch}
-                        onChange={(e) => setLangSearch(e.target.value)}
-                        placeholder="Search languages..."
-                        className="w-full rounded-xl bg-t-surface-el border border-t-edge pl-10 pr-4 py-3 text-sm text-t-text placeholder:text-t-text-4 focus:outline-none focus:border-t-focus"
-                        autoFocus
-                      />
-                    </div>
-
-                    {/* Language list */}
+                    {/* Language list (no search needed for 10 languages) */}
                     <div className="space-y-1">
-                      {filteredLangs.map((l) => (
+                      {LANGUAGES.map((l) => (
                         <button
                           key={l.code}
                           onClick={() => { setLanguage(l.code); setActiveSheet(null); setLangSearch('') }}
