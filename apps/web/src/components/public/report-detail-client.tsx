@@ -258,22 +258,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
             <span className="tabular-nums">{viewCount.toLocaleString()} {viewCount === 1 ? 'view' : 'views'}</span>
           </div>
 
-          {report.call_summary && (
-            <button
-              onClick={() => setShowSummary(!showSummary)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition',
-                showSummary
-                  ? 'text-white'
-                  : 'text-white hover:opacity-90',
-              )}
-              style={{ backgroundColor: '#C8A44A' }}
-            >
-              <AlignLeft className="size-4" />
-              Summarize
-            </button>
-          )}
-
           <div className="flex-1" />
 
           <button
@@ -309,17 +293,37 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
           </div>
         )}
 
-        {/* ── Summary (toggleable) ── */}
-        {showSummary && report.call_summary && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-6 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Summary</p>
-            <p className="text-sm leading-relaxed text-t-text-2">{report.call_summary}</p>
-          </motion.div>
+        {/* ── Summarize button + Summary card (above report body) ── */}
+        {report.call_summary && (
+          <div className="mb-6">
+            {!showSummary ? (
+              <button
+                onClick={() => setShowSummary(true)}
+                className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 active:scale-[0.98]"
+                style={{ backgroundColor: '#C8A44A' }}
+              >
+                <AlignLeft className="size-4" />
+                Summarize
+              </button>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <div className="rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Summary</p>
+                  <p className="text-sm leading-relaxed text-t-text-2">{report.call_summary}</p>
+                </div>
+                <button
+                  onClick={() => setShowSummary(false)}
+                  className="mt-2 text-xs font-medium text-t-text-3 hover:text-t-text-2 transition"
+                >
+                  Collapse
+                </button>
+              </motion.div>
+            )}
+          </div>
         )}
 
         {/* ── Report body (structured or plain text fallback) ── */}
