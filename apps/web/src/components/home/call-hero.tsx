@@ -670,9 +670,9 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed inset-x-0 bottom-0 z-50 sm:hidden"
+              className="fixed inset-x-0 bottom-[72px] z-50 sm:hidden sm:bottom-0"
             >
-              <div className="rounded-t-2xl bg-t-surface border-t border-t-edge shadow-t-lg max-h-[85vh] overflow-y-auto pb-[env(safe-area-inset-bottom,16px)]">
+              <div className="rounded-t-2xl bg-t-surface border-t border-t-edge shadow-t-lg max-h-[70vh] overflow-y-auto">
                 {/* Drag handle */}
                 <div className="flex justify-center pt-3 pb-1">
                   <div className="w-10 h-1 rounded-full bg-t-edge-strong" />

@@ -813,9 +813,9 @@ function CommentaryRequestSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pb-[72px] sm:pb-0" role="dialog">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={step === 'live' || step === 'connecting' ? undefined : onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-t-surface border border-t-edge shadow-t-lg p-5 mx-0 sm:mx-4 mb-0 sm:mb-0 max-h-[85vh] overflow-y-auto pb-[env(safe-area-inset-bottom,20px)]">
+      <div className="relative z-10 w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-t-surface border border-t-edge shadow-t-lg p-5 mx-0 sm:mx-4 mb-0 sm:mb-0 max-h-[70vh] overflow-y-auto">
         {/* Handle */}
         <div className="sm:hidden flex justify-center mb-3">
           <div className="w-10 h-1 rounded-full bg-t-edge-strong" />
