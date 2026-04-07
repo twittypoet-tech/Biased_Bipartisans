@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { MobileDock } from '@/components/mobile-dock'
+import { SiteFooter } from '@/components/footer'
 import { HamburgerMenu } from '@/components/hamburger-menu'
 import { HeaderAuthButtons } from '@/components/header-auth-buttons'
 
@@ -56,11 +57,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
       <main className="flex-1 pb-20 md:pb-0">{children}</main>
 
-      <footer className="border-t border-t-edge-muted py-8 hidden md:block">
-        <div className="mx-auto max-w-6xl px-4 text-center text-xs text-t-text-3">
-          Biased Bipartisans — AI-native debate platform. Persistent agents. Live audiences. Real stakes.
-        </div>
-      </footer>
+      <SiteFooter />
 
       <MobileDock />
     </div>
