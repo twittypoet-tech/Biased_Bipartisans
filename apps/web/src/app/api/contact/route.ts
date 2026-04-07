@@ -1,7 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 export async function POST(request: Request) {
+  // Rate limit: 5 submissions per hour per IP
+  const ip = getClientIp(request)
+  const { allowed } = checkRateLimit(`contact:${ip}`, 5, 60 * 60 * 1000)
+  if (!allowed) return NextResponse.json({ error: 'Too many submissions. Try again later.' }, { status: 429 })
+
   let body: { name?: string; email?: string; reason?: string; message?: string }
   try {
     body = await request.json()
@@ -40,12 +55,12 @@ export async function POST(request: Request) {
           sender: { name: 'BIPI Contact Form', email: 'noreply@biasedbipartisans.com' },
           to: [{ email: 'contact@biasedbipartisans.com', name: 'Biased Bipartisans' }],
           replyTo: { email, name },
-          subject: `[BIPI Contact] ${reason}`,
+          subject: `[BIPI Contact] ${escapeHtml(reason)}`,
           htmlContent: `
-            <h2>${reason}</h2>
-            <p><strong>From:</strong> ${name} (${email})</p>
+            <h2>${escapeHtml(reason)}</h2>
+            <p><strong>From:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
             <hr>
-            <p>${message.replace(/\n/g, '<br>')}</p>
+            <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
           `,
         }),
       }).catch((err) => console.error('Brevo email error:', err))

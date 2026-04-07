@@ -36,6 +36,18 @@ export async function POST(request: Request) {
 
   const db = createServerClient()
 
+  // ── Idempotency: skip already-processed events ──────────────────────────
+  const { data: existing } = await db
+    .from('credit_transactions')
+    .select('id')
+    .eq('reference_id', event.id)
+    .limit(1)
+
+  if (existing && existing.length > 0) {
+    console.log('Stripe webhook: skipping duplicate event', event.id)
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+
   try {
     switch (event.type) {
       // ── New checkout completed ──────────────────────────────────────────
@@ -62,7 +74,7 @@ export async function POST(request: Request) {
             user_id: userId,
             amount: 100,
             reason: 'monthly_pro',
-            reference_id: session.id,
+            reference_id: event.id,
           })
 
           console.log('Stripe webhook: Pro subscription activated for', userId)
@@ -85,7 +97,7 @@ export async function POST(request: Request) {
               user_id: userId,
               amount: creditAmount,
               reason: 'purchase',
-              reference_id: session.id,
+              reference_id: event.id,
             })
 
             console.log('Stripe webhook: Added', creditAmount, 'credits for', userId)
@@ -122,7 +134,7 @@ export async function POST(request: Request) {
             user_id: profile.id,
             amount: 100,
             reason: 'monthly_pro',
-            reference_id: invoice.id,
+            reference_id: event.id,
           })
 
           console.log('Stripe webhook: Monthly pro refill for', profile.id)

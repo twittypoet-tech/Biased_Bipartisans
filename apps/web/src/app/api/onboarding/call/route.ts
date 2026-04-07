@@ -34,14 +34,10 @@ export async function POST(request: Request) {
     }, { status: 402 })
   }
 
-  // Deduct credit
-  try {
-    await serviceDb.rpc('deduct_credits', { p_user_id: user.id, p_amount: ONBOARDING_CREDIT_COST })
-  } catch {
-    await serviceDb
-      .from('user_profiles')
-      .update({ credits: (profile.credits ?? 0) - ONBOARDING_CREDIT_COST })
-      .eq('id', user.id)
+  // Deduct credit (atomic — fails if insufficient)
+  const { error: deductError } = await serviceDb.rpc('deduct_credits', { p_user_id: user.id, p_amount: ONBOARDING_CREDIT_COST })
+  if (deductError) {
+    return NextResponse.json({ error: 'Failed to deduct credits' }, { status: 402 })
   }
 
   await serviceDb.from('credit_transactions').insert({

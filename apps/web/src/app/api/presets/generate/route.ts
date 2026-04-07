@@ -37,13 +37,9 @@ export async function POST() {
     }, { status: 402 })
   }
 
-  try {
-    await db.rpc('deduct_credits', { p_user_id: user.id, p_amount: GENERATION_CREDIT_COST })
-  } catch {
-    await db
-      .from('user_profiles')
-      .update({ credits: (profile.credits ?? 0) - GENERATION_CREDIT_COST })
-      .eq('id', user.id)
+  const { error: deductError } = await db.rpc('deduct_credits', { p_user_id: user.id, p_amount: GENERATION_CREDIT_COST })
+  if (deductError) {
+    return NextResponse.json({ error: 'Failed to deduct credits' }, { status: 402 })
   }
 
   await db.from('credit_transactions').insert({

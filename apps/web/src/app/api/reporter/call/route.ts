@@ -97,15 +97,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create call' }, { status: 500 })
   }
 
-  // ── Deduct credits ──────────────────────────────────────────────────────
-  try {
-    await serviceDb.rpc('deduct_credits', { p_user_id: user.id, p_amount: REPORT_CREDIT_COST })
-  } catch {
-    // Fallback: manual deduction
-    await serviceDb
-      .from('user_profiles')
-      .update({ credits: (profile.credits ?? 0) - REPORT_CREDIT_COST })
-      .eq('id', user.id)
+  // ── Deduct credits (atomic — fails if insufficient) ─────────────────────
+  const { error: deductError } = await serviceDb.rpc('deduct_credits', { p_user_id: user.id, p_amount: REPORT_CREDIT_COST })
+  if (deductError) {
+    return NextResponse.json({ error: 'Failed to deduct credits' }, { status: 402 })
   }
 
   // Log credit transaction

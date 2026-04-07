@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createAuthServerClient, createServerClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 // POST /api/commentary/vote  { commentaryId, direction: 'up' | 'down' }
 export async function POST(request: Request) {
+  const ip = getClientIp(request)
+  const { allowed } = checkRateLimit(`cvote:${ip}`, 60, 60 * 1000)
+  if (!allowed) return NextResponse.json({ error: 'Too many votes. Slow down.' }, { status: 429 })
   const authClient = await createAuthServerClient()
   const { data: { user } } = await authClient.auth.getUser()
 

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request)
+  const { allowed } = checkRateLimit(`journalist:${ip}`, 3, 60 * 60 * 1000)
+  if (!allowed) return NextResponse.json({ error: 'Too many submissions. Try again later.' }, { status: 429 })
   let body: {
     fullName?: string
     email?: string
