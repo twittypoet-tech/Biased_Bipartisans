@@ -83,17 +83,31 @@ function CommentaryFeedCard({ commentary: c }: { commentary: CommentaryWithRepor
   const needsTruncation = (c.transcript?.length ?? 0) > TRANSCRIPT_PREVIEW
 
   function handleVote(dir: 'up' | 'down') {
-    if (userVote === dir) return
-    setVotes((v) => ({
-      up: v.up + (dir === 'up' ? 1 : 0) - (userVote === 'up' ? 1 : 0),
-      down: v.down + (dir === 'down' ? 1 : 0) - (userVote === 'down' ? 1 : 0),
-    }))
-    setUserVote(dir)
+    const prevVote = userVote
+    const toggling = prevVote === dir
+    setUserVote(toggling ? null : dir)
+    setVotes((v) => {
+      let up = v.up
+      let down = v.down
+      if (toggling) {
+        if (dir === 'up') up--; else down--
+      } else {
+        if (dir === 'up') { up++; if (prevVote === 'down') down-- }
+        else { down++; if (prevVote === 'up') up-- }
+      }
+      return { up: Math.max(0, up), down: Math.max(0, down) }
+    })
     fetch('/api/commentary/vote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ commentaryId: c.id, direction: dir }),
-    }).catch(() => {})
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        setVotes({ up: d.upvotes, down: d.downvotes })
+        setUserVote(d.userVote)
+      })
+      .catch(() => {})
   }
 
   return (
