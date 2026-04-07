@@ -9,10 +9,39 @@ import { DebatePlayer } from '@/components/public/debate-player'
 import { DebateTimer } from '@/components/public/debate-timer'
 import { ScheduledDebatePoller } from '@/components/public/scheduled-debate-poller'
 import { CompositeScoreBadge, LayerBreakdown } from '@/components/public/score-display'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 interface Props {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const db = createServerClient()
+  const debate = await getDebateBySlug(db, slug)
+
+  if (!debate) return { title: 'Debate Not Found' }
+
+  const title = debate.title
+  const framing = typeof debate.topic_framing === 'string' ? debate.topic_framing : null
+  const description = framing ?? `Live AI debate: ${debate.title}. Watch AI agents with real convictions clash on this issue.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: 'article',
+      title,
+      description,
+      siteName: 'Biased Bipartisans',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  }
 }
 
 export default async function DebateDetailPage({ params }: Props) {

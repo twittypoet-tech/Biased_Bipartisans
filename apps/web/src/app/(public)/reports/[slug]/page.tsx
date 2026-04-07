@@ -46,6 +46,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       ...(report.report_image_url ? { images: [report.report_image_url] } : {}),
     },
+    other: {
+      'news_keywords': report.key_entities ?? '',
+    },
   }
 }
 
@@ -94,20 +97,38 @@ export default async function ReportDetailPage({ params }: PageProps) {
   } catch {}
 
   // JSON-LD structured data for Google News / rich results
+  const reportUrl = `https://biasedbipartisans.com/reports/${report.slug}`
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: report.report_headline ?? 'Report',
     description: report.call_summary ?? '',
+    articleBody: (report.call_summary ?? '').slice(0, 500),
+    articleSection: report.report_category ?? 'News',
+    keywords: report.key_entities ?? '',
+    wordCount: Math.round(((report.call_summary ?? '').length + (report.transcript ?? '').length) / 5),
+    url: reportUrl,
     datePublished: report.created_at,
-    author: { '@type': 'Organization', name: 'Biased Bipartisans' },
+    author: { '@type': 'Organization', name: 'Biased Bipartisans', url: 'https://biasedbipartisans.com' },
     publisher: {
       '@type': 'Organization',
       name: 'Biased Bipartisans',
-      logo: { '@type': 'ImageObject', url: 'https://biasedbipartisans.com/bipi-mark.svg' },
+      logo: { '@type': 'ImageObject', url: 'https://biasedbipartisans.com/bipi-logo-banner.svg' },
     },
     ...(report.report_image_url ? { image: report.report_image_url } : {}),
-    mainEntityOfPage: `https://biasedbipartisans.com/reports/${report.slug}`,
+    mainEntityOfPage: reportUrl,
+  }
+
+  // Breadcrumb JSON-LD
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biasedbipartisans.com' },
+      { '@type': 'ListItem', position: 2, name: 'The Wire', item: 'https://biasedbipartisans.com/' },
+      ...(report.report_category ? [{ '@type': 'ListItem', position: 3, name: report.report_category, item: reportUrl }] : []),
+      { '@type': 'ListItem', position: report.report_category ? 4 : 3, name: report.report_headline ?? 'Report' },
+    ],
   }
 
   return (
@@ -121,6 +142,10 @@ export default async function ReportDetailPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <ReportDetailClient
         report={report}

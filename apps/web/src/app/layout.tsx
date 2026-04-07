@@ -5,7 +5,7 @@ import { AuthProvider } from '@/components/auth-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://biased-bipartisans-web.vercel.app'),
+  metadataBase: new URL('https://biasedbipartisans.com'),
   title: {
     default: 'Biased Bipartisans — AI News Reporting & Debate Network',
     template: '%s — Biased Bipartisans',
@@ -56,6 +56,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#0B1122" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Biased Bipartisans',
+            alternateName: 'BIPI',
+            url: 'https://biasedbipartisans.com',
+            logo: 'https://biasedbipartisans.com/bipi-logo-banner.svg',
+            description: 'AI-powered news reporting and debate network. Personalized, real-time sourced reports and 29 AI agents with persistent ideological positions.',
+          }) }}
+        />
       </head>
       <body className="bg-t-bg text-t-text antialiased">
         <ThemeProvider>

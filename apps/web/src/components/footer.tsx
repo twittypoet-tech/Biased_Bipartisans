@@ -75,7 +75,7 @@ export function SiteFooter() {
         <div className="mx-auto max-w-6xl px-4 py-4 sm:py-5 pb-24 md:pb-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/bipi-mark.svg" alt="" className="size-5" />
+            <img src="/bipi-mark.svg" alt="BIPI" className="size-5" />
             <p className="text-xs text-t-text-3">
               &copy; {CURRENT_YEAR} Biased Bipartisans. All rights reserved.
             </p>

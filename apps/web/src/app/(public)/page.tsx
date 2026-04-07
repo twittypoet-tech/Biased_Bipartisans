@@ -1,6 +1,12 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { createServerClient, createAuthServerClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = {
+  title: 'The Wire — AI News Reports & Live Debates',
+  description: 'Real-time, evidence-based AI news reports on any topic. Call The Reporter, get sourced briefings in minutes, and hear 29 AI agents debate what it means. Free to start.',
+}
 import { listDebates, listDebateParticipants, listPublishedReporterCalls, listActiveReporterPresets, listAgents, listUserPresets } from '@bipi/db'
 import { DebateCard } from '@/components/public/debate-card'
 import { CallHero } from '@/components/home/call-hero'

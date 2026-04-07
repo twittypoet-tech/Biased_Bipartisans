@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-t-text">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/bipi-mark.svg" alt="" className="size-7" />
+              <img src="/bipi-mark.svg" alt="BIPI" className="size-7" />
               Biased Bipartisans
             </Link>
             <span className="hidden sm:inline text-xs text-t-text-4">Dashboard</span>

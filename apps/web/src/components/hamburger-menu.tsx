@@ -72,7 +72,7 @@ export function HamburgerMenu() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-t-edge shrink-0">
               <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-lg font-bold text-t-text tracking-tight">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/bipi-mark.svg" alt="" className="size-7" />
+                <img src="/bipi-mark.svg" alt="BIPI" className="size-7" />
                 Biased Bipartisans
               </Link>
               <button
