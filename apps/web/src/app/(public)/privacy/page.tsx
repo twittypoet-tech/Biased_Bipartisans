@@ -63,26 +63,25 @@ export default function PrivacyPage() {
           </Section>
 
           <Section title="4. Third-Party Data Sharing">
-            <p>We share data with third-party service providers only as necessary to operate the Platform:</p>
+            <p>We share data with third-party service providers only as necessary to operate the Platform. These providers fall into the following categories:</p>
             <ul>
-              <li><strong>Supabase:</strong> Database hosting and authentication. Stores your profile, reports, and interactions.</li>
-              <li><strong>Stripe:</strong> Payment processing. Receives your email and payment method for billing.</li>
-              <li><strong>Retell AI:</strong> Voice call processing. Receives your voice audio during reporter calls and onboarding.</li>
-              <li><strong>Bright Data:</strong> Web search during report generation. Receives search queries (not your personal information).</li>
-              <li><strong>OpenAI:</strong> Report structuring and preset generation. Receives report transcripts and your interest list (not your identity).</li>
-              <li><strong>Brevo:</strong> Transactional email delivery. Receives your email address for authentication codes and contact form notifications.</li>
-              <li><strong>Vercel:</strong> Hosting and analytics. Receives standard web request data.</li>
-              <li><strong>Google AdSense:</strong> Advertising on report pages. May use cookies for ad personalization per Google&apos;s privacy policy.</li>
+              <li><strong>Payment processing:</strong> A PCI-DSS compliant processor handles your payment method and billing. We never store card numbers or bank details.</li>
+              <li><strong>Authentication and data storage:</strong> Managed by cloud infrastructure providers that store your profile, reports, and interactions.</li>
+              <li><strong>Voice and AI processing:</strong> Voice call audio is processed by specialized AI providers during reporter calls and onboarding. Transcripts and interest data are processed for report structuring and recommendation generation. Your personal identity is not shared with AI inference providers.</li>
+              <li><strong>Web search:</strong> Report generation involves real-time web search through a data provider. Search queries are sent without your personal information attached.</li>
+              <li><strong>Email delivery:</strong> A transactional email provider receives your email address to deliver authentication codes and notifications.</li>
+              <li><strong>Hosting and analytics:</strong> Our hosting provider receives standard web request data. Aggregate analytics are collected without personally identifiable information.</li>
+              <li><strong>Advertising:</strong> Third-party ad networks on report pages may use cookies for ad personalization per their respective privacy policies.</li>
             </ul>
-            <p>Each provider operates under their own privacy policy and data processing agreements.</p>
+            <p>Each provider operates under their own privacy policy and data processing agreements. A specific list of providers is available upon request by contacting us.</p>
           </Section>
 
           <Section title="5. Cookies and Tracking">
             <p>We use the following cookies:</p>
             <ul>
-              <li><strong>Authentication cookies:</strong> Essential. Managed by Supabase Auth to maintain your session. Cannot be disabled without losing login functionality.</li>
-              <li><strong>Analytics:</strong> Vercel Web Analytics for aggregate usage statistics. No personally identifiable information is collected.</li>
-              <li><strong>Google AdSense:</strong> Third-party cookies on report pages for ad serving and personalization. You can manage ad personalization through Google&apos;s Ad Settings.</li>
+              <li><strong>Authentication cookies:</strong> Essential. Managed by our authentication provider to maintain your session. Cannot be disabled without losing login functionality.</li>
+              <li><strong>Analytics:</strong> Aggregate usage statistics collected by our hosting provider. No personally identifiable information is collected.</li>
+              <li><strong>Advertising:</strong> Third-party cookies on report pages for ad serving and personalization. You can manage ad personalization through your browser settings or the ad network&apos;s preference controls.</li>
             </ul>
             <p>We do not use tracking pixels, fingerprinting, or cross-site tracking technologies beyond those listed above.</p>
           </Section>
@@ -103,9 +102,9 @@ export default function PrivacyPage() {
             <p>We implement security measures including:</p>
             <ul>
               <li>Encrypted data transmission (HTTPS/TLS) for all Platform communications.</li>
-              <li>Secure authentication via Supabase Auth with email OTP (no passwords stored).</li>
-              <li>Row-level security (RLS) policies on all database tables ensuring users can only access their own data.</li>
-              <li>Stripe PCI-DSS compliant payment processing (card data never touches our servers).</li>
+              <li>Passwordless authentication via email one-time codes (no passwords stored).</li>
+              <li>Row-level security policies on all database tables ensuring users can only access their own data.</li>
+              <li>PCI-DSS compliant payment processing (card data never touches our servers).</li>
               <li>Environment variable isolation for API keys and secrets.</li>
             </ul>
             <p>No system is 100% secure. If you discover a security vulnerability, report it to contact@biasedbipartisans.com.</p>

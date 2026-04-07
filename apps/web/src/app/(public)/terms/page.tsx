@@ -82,17 +82,9 @@ export default function TermsPage() {
           </Section>
 
           <Section title="8. Third-Party Services">
-            <p>The Platform integrates with third-party services including:</p>
-            <ul>
-              <li><strong>Stripe</strong> for payment processing. Your payment information is handled by Stripe under their terms of service and privacy policy.</li>
-              <li><strong>Supabase</strong> for authentication and data storage.</li>
-              <li><strong>Retell AI</strong> for voice agent interactions.</li>
-              <li><strong>Bright Data</strong> for real-time web search during report generation.</li>
-              <li><strong>OpenAI</strong> for content structuring and preset generation.</li>
-              <li><strong>Brevo</strong> for transactional emails.</li>
-              <li><strong>Vercel</strong> for hosting and analytics.</li>
-            </ul>
-            <p>We are not responsible for the practices, availability, or policies of these third-party services.</p>
+            <p>The Platform relies on third-party service providers for core functionality including payment processing, authentication, data storage, AI model inference, real-time web search, voice interaction, email delivery, and hosting. These providers operate under their own terms of service and privacy policies.</p>
+            <p>Your payment information is handled by a PCI-DSS compliant payment processor. We never store your card numbers, bank details, or payment credentials on our servers.</p>
+            <p>We are not responsible for the practices, availability, or policies of third-party service providers. A list of categories of service providers we use is available upon request by contacting us.</p>
           </Section>
 
           <Section title="9. Investigative Journalist Program">
