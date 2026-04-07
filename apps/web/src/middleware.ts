@@ -35,6 +35,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
+  // Protect /admin/* routes — redirect to /auth if not authenticated
+  if (request.nextUrl.pathname.startsWith('/admin') && !user) {
+    const redirectUrl = new URL('/auth', request.url)
+    redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // Protect /api/admin/* routes — return 401 if not authenticated
+  if (request.nextUrl.pathname.startsWith('/api/admin') && !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   return response
 }
 
