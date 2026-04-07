@@ -20,8 +20,21 @@ function getNextMonthFirst(): string {
 }
 
 export default function DashboardHome() {
-  const { profile } = useAuth()
+  const { profile, isLoading } = useAuth()
   const isPro = profile?.tier === 'pro'
+
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
+        <div className="h-8 w-48 bg-t-surface-el rounded-lg animate-pulse mb-8" />
+        <div className="h-40 bg-t-surface-el rounded-2xl animate-pulse mb-6" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="h-28 bg-t-surface-el rounded-xl animate-pulse" />
+          <div className="h-28 bg-t-surface-el rounded-xl animate-pulse" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">

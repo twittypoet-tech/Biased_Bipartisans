@@ -15,7 +15,7 @@ const sidebarItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, isLoading: authLoading } = useAuth()
 
   return (
     <div className="min-h-screen bg-t-bg flex flex-col">
@@ -31,16 +31,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="hidden sm:inline text-xs text-t-text-4">Dashboard</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-full border border-t-edge-strong bg-t-surface-el px-3 py-1.5 text-xs font-medium text-t-text-2">
-              <Coins className="size-3 text-t-accent-text" />
-              {profile?.credits ?? 0} credits
-            </div>
-            <span className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase',
-              profile?.tier === 'pro' ? 'bg-t-accent-soft text-t-accent-text' : 'bg-t-surface-el text-t-text-3',
-            )}>
-              {profile?.tier ?? 'free'}
-            </span>
+            {authLoading ? (
+              <div className="h-7 w-24 rounded-full bg-t-surface-el animate-pulse" />
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5 rounded-full border border-t-edge-strong bg-t-surface-el px-3 py-1.5 text-xs font-medium text-t-text-2">
+                  <Coins className="size-3 text-t-accent-text" />
+                  {profile?.credits ?? 0} credits
+                </div>
+                <span className={cn(
+                  'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase',
+                  profile?.tier === 'pro' ? 'bg-t-accent-soft text-t-accent-text' : 'bg-t-surface-el text-t-text-3',
+                )}>
+                  {profile?.tier ?? 'free'}
+                </span>
+              </>
+            )}
             <ThemeToggle />
           </div>
         </div>

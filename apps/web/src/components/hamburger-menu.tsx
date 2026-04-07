@@ -34,7 +34,7 @@ const menuGroups = [
 export function HamburgerMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, isLoading: authLoading } = useAuth()
 
   // Only render portal after mount (SSR safety)
   useEffect(() => { setMounted(true) }, [])
@@ -86,7 +86,9 @@ export function HamburgerMenu() {
 
             {/* Auth buttons */}
             <div className="px-5 py-5 flex gap-3 shrink-0">
-              {user ? (
+              {authLoading ? (
+                <div className="flex-1 h-10" />
+              ) : user ? (
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="size-10 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-sm font-bold text-t-text-2">

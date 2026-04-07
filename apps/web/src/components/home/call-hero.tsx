@@ -79,7 +79,7 @@ function interestColor(interest: string): string {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
-  const { user, profile, refreshProfile } = useAuth()
+  const { user, profile, refreshProfile, isLoading: authLoading } = useAuth()
   const [step, setStep] = useState<Step>('idle')
   const [query, setQuery] = useState('')
   const [presetTab, setPresetTab] = useState<'suggested' | 'recommended'>('suggested')
@@ -436,7 +436,7 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
                 <div className="flex-1" />
 
                 {/* Credits badge (when logged in) */}
-                {user && profile && (
+                {!authLoading && user && profile && (
                   <span className="hidden sm:flex items-center gap-1 text-[10px] font-medium text-t-text-3">
                     <Coins className="size-3 text-t-accent-text" /> {profile.credits}
                   </span>
@@ -449,7 +449,9 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
                 )}
 
                 {/* Send / Sign In button */}
-                {user ? (
+                {authLoading ? (
+                  <div className="size-9 rounded-full bg-t-surface-el" />
+                ) : user ? (
                   <button
                     onClick={handleConnect}
                     disabled={!query.trim()}
