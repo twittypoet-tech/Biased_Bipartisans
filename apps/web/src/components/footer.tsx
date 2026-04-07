@@ -44,16 +44,16 @@ const FOOTER_NAV = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-t-edge bg-t-surface hidden md:block">
+    <footer className="border-t border-t-edge bg-t-surface">
       {/* Main footer content */}
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12">
           {FOOTER_NAV.map((section) => (
             <div key={section.heading}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-3 mb-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-3 mb-3 sm:mb-4">
                 {section.heading}
               </p>
-              <ul className="space-y-2.5">
+              <ul className="space-y-2 sm:space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.href}>
                     <Link
@@ -70,9 +70,9 @@ export function SiteFooter() {
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom bar — extra padding on mobile for dock clearance */}
       <div className="border-t border-t-edge-muted">
-        <div className="mx-auto max-w-6xl px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="mx-auto max-w-6xl px-4 py-4 sm:py-5 pb-24 md:pb-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/bipi-mark.svg" alt="" className="size-5" />
