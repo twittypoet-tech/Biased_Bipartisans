@@ -30,7 +30,7 @@ export default async function HomePage() {
     getFeaturedReport(db),
     listPublishedReports(db, 30),
     listPublishedReporterCalls(db, { limit: 20, sort: 'hot' }),
-    listRecentBreakingReports(db, 60),
+    listRecentBreakingReports(db, 1440),
     listTrendingReports(db, 5),
     listAgents(db),
     listDebates(db),
