@@ -11,6 +11,7 @@ import { FALLBACK_IMAGE_URL } from '@/lib/categories'
 import { NewsAudioPlayer } from './news-audio-player'
 import { SignUpCallout, SponsoredCallout } from './promo-callouts'
 import { CallReporterCta } from './call-reporter-cta'
+import { NewsletterPopup } from './newsletter-popup'
 import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/utils'
 
@@ -773,6 +774,13 @@ export function NewsArticleClient({
           )
         })()}
       </div>
+
+      {/* ── Newsletter Signup Popup ── */}
+      <NewsletterPopup
+        reportId={report.id}
+        reportSlug={report.slug}
+        authorAgent={authorAgent}
+      />
     </div>
   )
 }

@@ -13,6 +13,7 @@ import {
   getAgentCommentaryVotes,
   listAgentReportCommentary,
   getReporterAggregateVotes,
+  listReportsByAgent,
 } from '@bipi/db'
 import { getArchetypeColor } from '@/lib/agent-colors'
 import { AgentProfileClient, type AgentProfileData } from '@/components/public/agent-profile-client'
@@ -51,7 +52,7 @@ export default async function AgentProfilePage({ params }: Props) {
     )
   }
 
-  const [worldview, style, phrases, epistemic, relationships, evalRuns, commentaryVotes, agentCommentary] = await Promise.all([
+  const [worldview, style, phrases, epistemic, relationships, evalRuns, commentaryVotes, agentCommentary, agentArticles] = await Promise.all([
     getActiveWorldview(db, agent.id),
     getActiveStyleProfile(db, agent.id),
     getActivePhraseBank(db, agent.id),
@@ -60,6 +61,7 @@ export default async function AgentProfilePage({ params }: Props) {
     getEvalRunsForAgent(db, agent.id, 10),
     getAgentCommentaryVotes(db, agent.id),
     listAgentReportCommentary(db, agent.id, 20),
+    listReportsByAgent(db, agent.id, 50),
   ])
 
   // Fetch debate metadata for eval runs
@@ -145,6 +147,15 @@ export default async function AgentProfilePage({ params }: Props) {
         endedAt: debate?.ended_at ?? null,
       }
     }),
+    articles: agentArticles.map((a) => ({
+      id: a.id,
+      slug: a.slug,
+      headline: a.headline,
+      category: a.category,
+      hero_image_url: a.hero_image_url,
+      published_at: a.published_at,
+      view_count: a.view_count ?? 0,
+    })),
     agentCommentary: agentCommentary.map((c) => ({
       id: c.id,
       transcript: c.transcript,
@@ -160,6 +171,7 @@ export default async function AgentProfilePage({ params }: Props) {
     stats: {
       totalDebates: evalRuns.length,
       avgScore: avgComposite,
+      totalViews: agentArticles.reduce((sum, a) => sum + (a.view_count ?? 0), 0),
       commentaryUpvotes: (reporterVotes?.upvotes ?? 0) + commentaryVotes.upvotes,
       commentaryDownvotes: (reporterVotes?.downvotes ?? 0) + commentaryVotes.downvotes,
     },

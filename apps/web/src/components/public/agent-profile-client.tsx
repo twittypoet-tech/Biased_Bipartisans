@@ -59,9 +59,19 @@ export interface AgentProfileData {
     score: number | null
     endedAt: string | null
   }>
+  articles: Array<{
+    id: string
+    slug: string
+    headline: string
+    category: string
+    hero_image_url: string | null
+    published_at: string | null
+    view_count: number
+  }>
   stats: {
     totalDebates: number
     avgScore: number | null
+    totalViews: number
     commentaryUpvotes: number
     commentaryDownvotes: number
   }
@@ -85,7 +95,7 @@ export interface AgentProfileData {
   }
 }
 
-type Tab = 'overview' | 'commentary' | 'debates' | 'voice'
+type Tab = 'overview' | 'articles' | 'commentary' | 'debates' | 'voice'
 
 // ── Expertise Badges Component ─────────────────────────────────────────────────
 
@@ -154,7 +164,7 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [isFollowing, setIsFollowing] = useState(false)
 
-  const { agent, worldview, style, phrases, hardLimits, relationships, recentDebates, stats, agentCommentary, colors } = data
+  const { agent, worldview, style, phrases, hardLimits, relationships, recentDebates, stats, articles, agentCommentary, colors } = data
 
   const initials = agent.name
     .split(' ')
@@ -269,29 +279,13 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
           }
         />
         <StatCard
-          label="Votes"
+          value={stats.totalViews.toLocaleString()}
+          label="Total Views"
           icon={
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-500 shrink-0">
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
             </svg>
-          }
-          custom={
-            <div className="flex items-center gap-3 mt-1">
-              <span className="flex items-center gap-1.5 text-emerald-400 text-xl font-bold">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-                </svg>
-                {stats.commentaryUpvotes}
-              </span>
-              <span className="text-neutral-700 text-sm">·</span>
-              <span className="flex items-center gap-1.5 text-red-400 text-xl font-bold">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
-                </svg>
-                {stats.commentaryDownvotes}
-              </span>
-            </div>
           }
         />
         <StatCard
@@ -333,6 +327,7 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
           {(
             [
               { id: 'overview', label: 'Overview' },
+              { id: 'articles', label: 'Articles' },
               { id: 'commentary', label: 'Commentary' },
               { id: 'debates', label: 'Recent Debates' },
               { id: 'voice', label: 'Voice Profile' },
@@ -454,6 +449,57 @@ export function AgentProfileClient({ data }: { data: AgentProfileData }) {
 
               {!worldview && relationships.length === 0 && (
                 <EmptyState message="No overview data available yet." />
+              )}
+            </div>
+          )}
+
+          {/* ── Articles Tab ───────────────────────────────────────────── */}
+          {activeTab === 'articles' && (
+            <div className="space-y-3">
+              {articles.length > 0 ? (
+                articles.map((article) => (
+                  <a
+                    key={article.id}
+                    href={`/news/${article.slug}`}
+                    className="flex gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 hover:border-neutral-700 hover:bg-neutral-800/40 transition group"
+                  >
+                    {article.hero_image_url && (
+                      <div className="relative w-24 h-16 sm:w-32 sm:h-20 rounded-lg overflow-hidden shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={article.hero_image_url}
+                          alt={article.headline}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{article.category}</span>
+                      <h4 className="text-sm font-semibold text-neutral-200 leading-snug group-hover:text-amber-400 transition line-clamp-2 mt-0.5" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                        {article.headline}
+                      </h4>
+                      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-neutral-500">
+                        {article.published_at && (
+                          <span>{new Date(article.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        )}
+                        {article.view_count > 0 && (
+                          <>
+                            <span className="text-neutral-700">·</span>
+                            <span className="flex items-center gap-1">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-600">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                              {article.view_count.toLocaleString()}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </a>
+                ))
+              ) : (
+                <EmptyState message="No articles published yet." />
               )}
             </div>
           )}
