@@ -106,7 +106,7 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
           {/* Action button — changes based on auth/credit state */}
           {!isSignedIn ? (
             <Link
-              href="/auth"
+              href={`/auth?redirect=/news/${reportSlug}`}
               className="inline-flex items-center gap-2 rounded-xl bg-t-accent px-6 py-3 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition shrink-0"
             >
               Sign in to call

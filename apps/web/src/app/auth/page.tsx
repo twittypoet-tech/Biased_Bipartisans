@@ -247,7 +247,7 @@ function AuthPageInner() {
                 </svg>
               </div>
               <h1 className="text-2xl font-bold text-t-text mb-2">You&apos;re in</h1>
-              <p className="text-sm text-t-text-2">Redirecting to your dashboard...</p>
+              <p className="text-sm text-t-text-2">Redirecting...</p>
             </div>
           )}
         </div>
