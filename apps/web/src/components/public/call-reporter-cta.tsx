@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Phone } from 'lucide-react'
+import { useAuth } from '@/components/auth-provider'
 
 interface AuthorAgent {
   id: string
@@ -21,7 +23,10 @@ interface CallReporterCtaProps {
 
 type CallState = 'idle' | 'connecting' | 'live' | 'ended' | 'error'
 
+const CALL_CREDIT_COST = 5
+
 export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
+  const { user, profile } = useAuth()
   const [callState, setCallState] = useState<CallState>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const retellClientRef = useRef<RetellWebClient | null>(null)
@@ -36,6 +41,7 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
 
     try {
       const res = await fetch(`/api/news/${reportSlug}/call`, { method: 'POST' })
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Failed to start call' }))
         throw new Error(err.error ?? `Failed to start call (${res.status})`)
@@ -70,8 +76,13 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
 
   if (!agent.retell_call_agent_id) return null
 
+  const isSignedIn = !!user
+  const hasCredits = (profile?.credits ?? 0) >= CALL_CREDIT_COST
+
   return (
     <div className="my-10 relative overflow-hidden rounded-xl border border-t-accent/30 bg-gradient-to-r from-t-accent-soft to-transparent p-5 sm:p-6">
+
+      {/* ── Idle: Show CTA based on auth state ── */}
       {callState === 'idle' && (
         <div className="relative z-10 flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5">
           {/* Agent avatar */}
@@ -92,16 +103,44 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
             </p>
           </div>
 
-          <button
-            onClick={startCall}
-            className="inline-flex items-center gap-2 rounded-xl bg-t-accent px-6 py-3 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition shrink-0"
-          >
-            <Phone className="size-4" />
-            Call Now
-          </button>
+          {/* Action button — changes based on auth/credit state */}
+          {!isSignedIn ? (
+            <Link
+              href="/auth"
+              className="inline-flex items-center gap-2 rounded-xl bg-t-accent px-6 py-3 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition shrink-0"
+            >
+              Sign in to call
+            </Link>
+          ) : !hasCredits ? (
+            <div className="flex flex-col items-center sm:items-end gap-1.5 shrink-0">
+              <Link
+                href="/subscribe"
+                className="inline-flex items-center gap-2 rounded-xl bg-t-accent px-6 py-3 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition"
+              >
+                Get Credits
+              </Link>
+              <p className="text-[11px] text-t-text-4">
+                {CALL_CREDIT_COST} credits per call ({profile?.credits ?? 0} remaining)
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center sm:items-end gap-1.5 shrink-0">
+              <button
+                onClick={startCall}
+                className="inline-flex items-center gap-2 rounded-xl bg-t-accent px-6 py-3 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition"
+              >
+                <Phone className="size-4" />
+                Call Now
+              </button>
+              <p className="text-[11px] text-t-text-4">
+                {CALL_CREDIT_COST} credits ({profile?.credits ?? 0} remaining)
+              </p>
+            </div>
+          )}
         </div>
       )}
 
+      {/* ── Connecting ── */}
       {callState === 'connecting' && (
         <div className="flex flex-col items-center gap-3 py-6">
           <svg className="animate-spin text-t-accent-text" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -112,6 +151,7 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
         </div>
       )}
 
+      {/* ── Live call ── */}
       {callState === 'live' && (
         <div className="flex flex-col items-center gap-4 py-6">
           <div className="flex items-center gap-2">
@@ -137,6 +177,7 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
         </div>
       )}
 
+      {/* ── Call ended ── */}
       {callState === 'ended' && (
         <div className="flex flex-col items-center gap-3 py-6">
           <div className="size-12 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center">
@@ -149,6 +190,7 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
         </div>
       )}
 
+      {/* ── Error ── */}
       {callState === 'error' && (
         <div className="flex flex-col items-center gap-3 py-6">
           <div className="size-12 rounded-full bg-red-950/40 border border-red-800/60 flex items-center justify-center">

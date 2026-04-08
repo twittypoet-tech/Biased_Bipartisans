@@ -391,7 +391,7 @@ export function NewsArticleClient({
   const { profile } = useAuth()
   const [commentary, setCommentary] = useState(initialCommentary)
   const [copied, setCopied] = useState(false)
-  const [viewCount, setViewCount] = useState(0)
+  const [viewCount, setViewCount] = useState(report.view_count ?? 0)
 
   // Track view on mount
   useEffect(() => {
@@ -529,32 +529,47 @@ export function NewsArticleClient({
           {bodyNodes}
         </article>
 
-        {/* ── Sources & Key Info Card ── */}
-        {report.sources.length > 0 && (
-          <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
-            <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-3">Sources Cited</p>
-            <ol className="space-y-2">
-              {report.sources.map((src, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="shrink-0 text-xs font-bold text-t-text-3 mt-0.5 w-5 text-right">{i + 1}.</span>
-                  <div className="min-w-0">
-                    {src.url ? (
-                      <a href={src.url} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-1.5">
-                        <span className="text-sm font-medium text-t-accent-text group-hover:underline">{src.label}</span>
-                        <ExternalLink className="size-3 shrink-0 text-t-text-4 mt-1 group-hover:text-t-accent-text transition" />
-                      </a>
-                    ) : (
-                      <span className="text-sm text-t-text-2">{src.label}</span>
-                    )}
-                    {src.url && (
-                      <p className="text-[11px] text-t-text-4 truncate max-w-xs">{new URL(src.url).hostname}</p>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
+        {/* ── Sources & Key Entities Card ── */}
+        <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
+          {report.key_entities && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Key Entities</p>
+              <div className="flex flex-wrap gap-1.5">
+                {report.key_entities.split(',').map((entity, i) => (
+                  <span key={i} className="inline-block rounded-full border border-t-edge bg-t-surface-el px-2.5 py-0.5 text-xs text-t-text-2">
+                    {entity.trim()}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {report.sources.length > 0 && (
+            <div className={report.key_entities ? 'mt-4 pt-4 border-t border-t-edge-muted' : ''}>
+              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-3">Sources Cited</p>
+              <ol className="space-y-2">
+                {report.sources.map((src, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="shrink-0 text-xs font-bold text-t-text-3 mt-0.5 w-5 text-right">{i + 1}.</span>
+                    <div className="min-w-0">
+                      {src.url ? (
+                        <a href={src.url} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-1.5">
+                          <span className="text-sm font-medium text-t-accent-text group-hover:underline">{src.label}</span>
+                          <ExternalLink className="size-3 shrink-0 text-t-text-4 mt-1 group-hover:text-t-accent-text transition" />
+                        </a>
+                      ) : (
+                        <span className="text-sm text-t-text-2">{src.label}</span>
+                      )}
+                      {src.url && (
+                        <p className="text-[11px] text-t-text-4 truncate max-w-xs">{new URL(src.url).hostname}</p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
 
         {/* ── Call This Reporter CTA ── */}
         {authorAgent && authorAgent.retell_call_agent_id && (

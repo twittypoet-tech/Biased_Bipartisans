@@ -446,6 +446,8 @@ export interface NewsReport {
   sources: NewsSource[]
   agent_id: UUID | null
   story_group_id: string | null
+  key_entities: string | null
+  view_count: number
   published_at: Timestamp | null
   created_at: Timestamp
   updated_at: Timestamp

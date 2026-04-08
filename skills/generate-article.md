@@ -131,6 +131,7 @@ Produce a JSON object matching the `news_reports` schema. Use this exact structu
   ],
   "agent_id": "UUID from agents table",
   "story_group_id": "story-YYYY-MM-DD-short-slug or null",
+  "key_entities": "Comma-separated names of people, organizations, places, and concepts central to the story",
   "is_published": true,
   "published_at": "ISO 8601 timestamp"
 }
@@ -169,6 +170,7 @@ Query the agents table if you need the UUID: `SELECT id, name, slug FROM agents 
 - [ ] Stop-slop score >= 35/50
 - [ ] Headline < 100 characters
 - [ ] Summary < 300 characters
+- [ ] key_entities populated with 3-8 comma-separated entities (people, orgs, places, concepts)
 - [ ] No fabricated quotes, statistics, or events
 - [ ] Agent voice is consistent throughout — not generic, not neutral
 - [ ] At least one claim that a rival agent would challenge (commentary hook)
