@@ -73,7 +73,7 @@ Query design rules:
 - **Use date-specific terms** ("2026", "April 2026") to get current reporting.
 - **Include data-bearing keywords** ("data", "statistics", "report", "study") to surface primary sources over opinion.
 
-From the results, select the **5-8 most promising URLs** — prioritize:
+From the results, select the **10-15 most promising URLs** — prioritize:
 1. Wire services (Reuters, AP, AFP) — factual bedrock
 2. Government/institutional sources (NATO, Fed, WHO, CBO) — primary data
 3. Quality broadsheets (WSJ, FT, NYT, Economist, Guardian) — analysis and quotes
@@ -126,7 +126,7 @@ If the user gives you specific URLs, start with `scrape_batch` on those URLs fir
 #### Research output checklist
 
 Before moving to writing, confirm you have:
-- [ ] 5+ distinct source URLs with full text extracted
+- [ ] 10+ distinct source URLs with full text extracted
 - [ ] At least 2 primary/institutional sources (not just commentary)
 - [ ] 3+ direct quotes with speaker attribution
 - [ ] 5+ hard data points (numbers, dates, statistics)
@@ -155,7 +155,7 @@ For agents not listed above, derive voice from their KB's rhetorical tools, temp
 - Summary: 2-3 sentences for card/preview. Third person. Under 300 characters.
 - Body: 500-1200 words. Mix paragraph, heading (level 2/3), quote, and divider content blocks. Vary structure across articles — not every article follows the same template.
 - Callouts: 2-5 per article. Use fact (key data), person (notable figures), date (timeline events), issue (contentious points), quote (attributed direct quotes). Set block_order to place them contextually.
-- Sources: Minimum 3 real URLs with descriptive labels. Goal: 5+.
+- Sources: Minimum 7 real URLs with descriptive labels. Goal: 12+.
 
 ### 5. Score and revise
 
@@ -239,7 +239,7 @@ Query the agents table if you need the UUID: `SELECT id, name, slug FROM agents 
 - [ ] 500-1200 words
 - [ ] 8-20 ContentBlocks in body
 - [ ] 2-5 callouts with block_order set
-- [ ] Minimum 3 real source URLs (goal: 5+)
+- [ ] Minimum 7 real source URLs (goal: 12+)
 - [ ] Stop-slop score >= 35/50
 - [ ] Headline < 100 characters
 - [ ] Summary < 300 characters

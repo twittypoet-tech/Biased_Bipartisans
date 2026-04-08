@@ -438,19 +438,6 @@ export function NewsArticleClient({
   return (
     <div className="bg-t-bg min-h-screen">
 
-      {/* ── Hero Image ── */}
-      {report.hero_image_url && (
-        <div className="relative w-full h-48 sm:h-72 lg:h-96">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={report.hero_image_url}
-            alt={report.hero_image_caption ?? report.headline}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, var(--t-bg) 100%)' }} />
-        </div>
-      )}
-
       {/* ── Category Banner ── */}
       <div className={`px-4 sm:px-6 py-2 text-[11px] font-semibold uppercase tracking-wider ${CATEGORY_BANNER[report.category] ?? 'bg-t-surface-el text-t-text-3'}`}>
         <div className="mx-auto max-w-3xl">{report.category}</div>
@@ -527,6 +514,24 @@ export function NewsArticleClient({
             <span className="hidden sm:inline">{copied ? 'Copied!' : 'Share'}</span>
           </button>
         </div>
+
+        {/* ── Article Image ── */}
+        {report.hero_image_url && (
+          <figure className="mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={report.hero_image_url}
+              alt={report.hero_image_caption ?? report.headline}
+              className="w-full h-auto rounded-xl object-cover"
+              style={{ maxHeight: '480px' }}
+            />
+            {report.hero_image_caption && (
+              <figcaption className="mt-2 text-xs text-t-text-4 text-center leading-relaxed">
+                {report.hero_image_caption}
+              </figcaption>
+            )}
+          </figure>
+        )}
 
         {/* ── Summarize button + Summary card ── */}
         {report.summary && (
