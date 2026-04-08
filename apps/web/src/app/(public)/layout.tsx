@@ -4,48 +4,28 @@ import { MobileDock } from '@/components/mobile-dock'
 import { SiteFooter } from '@/components/footer'
 import { HamburgerMenu } from '@/components/hamburger-menu'
 import { HeaderAuthButtons } from '@/components/header-auth-buttons'
-
-const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/commentary', label: 'Commentary' },
-  { href: '/debates', label: 'Debates' },
-  { href: '/tournaments', label: 'Tournaments' },
-  { href: '/agents', label: 'Agents' },
-]
+import { CategoryNav } from '@/components/category-nav'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Desktop header */}
-      <header className="sticky top-0 z-50 border-b border-t-edge bg-t-overlay backdrop-blur-md hidden md:block">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      {/* ── Tier 1: Brand bar ── */}
+      <header className="sticky top-0 z-50 border-b border-t-edge bg-t-overlay backdrop-blur-md">
+        {/* Desktop */}
+        <div className="hidden md:flex mx-auto h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/bipi-mark.svg" alt="BIPI" className="size-7" />
             <span className="text-lg font-bold tracking-tight text-t-text">BiPi</span>
           </Link>
           <div className="flex items-center gap-1">
-            <nav className="flex items-center gap-1 mr-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-md px-3 py-1.5 text-sm text-t-text-2 transition hover:bg-t-hover hover:text-t-text"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
             <HeaderAuthButtons />
             <ThemeToggle />
             <HamburgerMenu />
           </div>
         </div>
-      </header>
-
-      {/* Mobile header */}
-      <header className="sticky top-0 z-50 border-b border-t-edge bg-t-overlay backdrop-blur-md md:hidden">
-        <div className="flex h-12 items-center justify-between px-4">
+        {/* Mobile */}
+        <div className="flex md:hidden h-12 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-1.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/bipi-mark.svg" alt="BIPI" className="size-6" />
@@ -54,6 +34,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <HamburgerMenu />
         </div>
       </header>
+
+      {/* ── Tier 2: Category navigation bar ── */}
+      <CategoryNav />
 
       <main className="flex-1 pb-20 md:pb-0">{children}</main>
 

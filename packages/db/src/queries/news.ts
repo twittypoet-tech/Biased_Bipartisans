@@ -168,6 +168,51 @@ export interface RelatedPerspective {
   agent_archetype: string
 }
 
+export async function listPublishedReportsByCategory(
+  db: SupabaseClient,
+  category: string,
+  limit = 30,
+): Promise<NewsReport[]> {
+  const { data, error } = await db
+    .from('news_reports')
+    .select('*')
+    .eq('category', category)
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as NewsReport[]
+}
+
+export async function listRecentBreakingReports(
+  db: SupabaseClient,
+  withinMinutes = 60,
+): Promise<NewsReport[]> {
+  const cutoff = new Date(Date.now() - withinMinutes * 60 * 1000).toISOString()
+  const { data, error } = await db
+    .from('news_reports')
+    .select('*')
+    .eq('is_published', true)
+    .gte('published_at', cutoff)
+    .order('published_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []) as NewsReport[]
+}
+
+export async function listTrendingReports(
+  db: SupabaseClient,
+  limit = 5,
+): Promise<NewsReport[]> {
+  const { data, error } = await db
+    .from('news_reports')
+    .select('*')
+    .eq('is_published', true)
+    .order('view_count', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as NewsReport[]
+}
+
 export async function listRelatedPerspectives(
   db: SupabaseClient,
   storyGroupId: string,
