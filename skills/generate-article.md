@@ -50,18 +50,91 @@ Read `skills/stop-slop.md`. Every sentence must pass these checks:
 
 ### 3. Research the story
 
-Use **WebSearch** to find current, real reporting on the topic. Run 2-3 queries from different angles to get comprehensive coverage. Use **WebFetch** to read full articles from source URLs.
+Research uses a 3-phase protocol designed to maximize source quality and depth while minimizing redundant calls.
 
-If the user has enabled **Bright Data MCP**, use it for paywalled or captcha-protected sources.
+#### Phase A: Wide discovery (find the best sources)
 
-Every factual claim must be attributable. Never fabricate quotes, statistics, events, or sources.
+Use `mcp__brightdata__search_engine_batch` to run 3-5 queries simultaneously. Each query should attack the topic from a different angle relevant to the agent's worldview.
 
-Collect:
-- Key facts and data points
-- Named people and their roles
-- Timeline of events
-- Direct quotes (attributed)
-- At least 3 source URLs (goal: 5+)
+Example for The Economist writing about tariffs:
+```
+queries: [
+  { "query": "US tariff policy 2026 economic impact GDP", "engine": "google" },
+  { "query": "tariff trade war consumer prices inflation data", "engine": "google" },
+  { "query": "economists criticism tariff policy 2026", "engine": "bing" },
+  { "query": "trade deficit manufacturing jobs tariffs evidence", "engine": "google" },
+  { "query": "WTO trade policy analysis 2026", "engine": "google" }
+]
+```
+
+Query design rules:
+- **Angle the queries to the agent's worldview.** The Hawk searches for security implications. The Populist searches for who got hurt. The Economist searches for market data.
+- **Mix engines** — Google for recency, Bing for different ranking signals.
+- **Use date-specific terms** ("2026", "April 2026") to get current reporting.
+- **Include data-bearing keywords** ("data", "statistics", "report", "study") to surface primary sources over opinion.
+
+From the results, select the **5-8 most promising URLs** — prioritize:
+1. Wire services (Reuters, AP, AFP) — factual bedrock
+2. Government/institutional sources (NATO, Fed, WHO, CBO) — primary data
+3. Quality broadsheets (WSJ, FT, NYT, Economist, Guardian) — analysis and quotes
+4. Domain-specific outlets (Defense One, STAT News, Ars Technica) — expert coverage
+5. Think tanks and research orgs — data and methodology
+
+Discard: aggregators, SEO content farms, undated pages, opinion-only pieces without sourced claims.
+
+#### Phase B: Deep extraction (read the full articles)
+
+Use `mcp__brightdata__scrape_batch` (up to 5 URLs per call) to pull full article text from the best sources. This bypasses paywalls, bot detection, and CAPTCHAs.
+
+Run 1-2 batch scrapes to cover your top sources:
+```
+# First batch: primary sources
+scrape_batch(urls: [reuters_url, govt_report_url, wsj_url, ft_url, domain_expert_url])
+
+# Second batch (if needed): supporting sources
+scrape_batch(urls: [think_tank_url, ap_url, additional_data_source])
+```
+
+From each scraped article, extract and note:
+- **Hard facts**: numbers, dates, names, places — with attribution
+- **Direct quotes**: exact wording + speaker name and title
+- **Data points**: statistics, percentages, dollar amounts — with source methodology if available
+- **Timeline events**: what happened when, in what order
+- **Competing claims**: where sources disagree (these become callouts and commentary hooks)
+
+#### Phase C: Targeted follow-up (fill gaps)
+
+After reading the full sources, you may have gaps — a statistic without context, a person referenced without background, a claim that needs verification. Use `mcp__brightdata__discover` for targeted follow-up:
+
+```
+discover(
+  query: "Janet Yellen tariff impact statement April 2026",
+  intent: "Find the exact quote and context for Yellen's position on the new tariff package",
+  start_date: "2026-04-01",
+  num_results: 5
+)
+```
+
+Then `mcp__brightdata__scrape_as_markdown` on the single best result to get the full context.
+
+Use `discover` over `search_engine` for follow-ups because its AI-ranked relevance scoring finds the specific thing you need faster.
+
+#### When the user provides source URLs
+
+If the user gives you specific URLs, start with `scrape_batch` on those URLs first. Then run Phase A to find additional sources that complement what the user provided. The user's sources are the foundation; your research fills in the gaps.
+
+#### Research output checklist
+
+Before moving to writing, confirm you have:
+- [ ] 5+ distinct source URLs with full text extracted
+- [ ] At least 2 primary/institutional sources (not just commentary)
+- [ ] 3+ direct quotes with speaker attribution
+- [ ] 5+ hard data points (numbers, dates, statistics)
+- [ ] A clear timeline of events
+- [ ] Named people (3-8) with roles/titles
+- [ ] At least one point of disagreement or tension between sources (commentary hook material)
+
+Every factual claim in the article must trace back to a specific scraped source. Never fabricate quotes, statistics, events, or sources.
 
 ### 4. Write the article
 
