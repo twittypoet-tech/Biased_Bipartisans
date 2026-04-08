@@ -213,6 +213,50 @@ export async function listTrendingReports(
   return (data ?? []) as NewsReport[]
 }
 
+export async function getRelatedNewsReports(
+  db: SupabaseClient,
+  currentId: UUID,
+  keyEntities: string | null,
+  category: string | null,
+  limit = 5,
+): Promise<NewsReport[]> {
+  const { data, error } = await db
+    .from('news_reports')
+    .select('*')
+    .eq('is_published', true)
+    .neq('id', currentId)
+    .order('published_at', { ascending: false })
+    .limit(50)
+  if (error) throw error
+  if (!data?.length) return []
+
+  const currentEntities = (keyEntities ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+
+  const scored = data.map((r) => {
+    const row = r as Record<string, unknown>
+    const entities = ((row.key_entities as string) ?? '')
+      .split(',')
+      .map((e: string) => e.trim().toLowerCase())
+      .filter(Boolean)
+
+    let score = 0
+    for (const e of currentEntities) {
+      if (entities.some((re: string) => re.includes(e) || e.includes(re))) score += 3
+    }
+    if (category && (row.category as string) === category) score += 1
+    return { report: r as NewsReport, score }
+  })
+
+  return scored
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((s) => s.report)
+}
+
 export async function listRelatedPerspectives(
   db: SupabaseClient,
   storyGroupId: string,

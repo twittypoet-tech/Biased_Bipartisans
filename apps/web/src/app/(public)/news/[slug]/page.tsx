@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import { notFound } from 'next/navigation'
 import { createServerClient, createAuthServerClient } from '@/lib/supabase/server'
-import { getReportBySlug, listReportImages, listAgentCommentary, listAllAgentsForCommentary, listRelatedPerspectives, listReportsByAgent } from '@bipi/db'
+import { getReportBySlug, listReportImages, listAgentCommentary, listAllAgentsForCommentary, listRelatedPerspectives, listReportsByAgent, getRelatedNewsReports } from '@bipi/db'
 import { NewsArticleClient } from '@/components/public/news-article-client'
 
 interface PageProps {
@@ -70,7 +70,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
     if (agent) authorAgent = agent as AuthorAgentRow
   }
 
-  const [images, commentary, allAgents, relatedPerspectives, moreByAgent] = await Promise.all([
+  const [images, commentary, allAgents, relatedPerspectives, moreByAgent, relatedByEntities] = await Promise.all([
     listReportImages(db, report.id),
     listAgentCommentary(db, report.id),
     listAllAgentsForCommentary(db),
@@ -80,6 +80,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
     report.agent_id
       ? listReportsByAgent(db, report.agent_id, 6)
       : Promise.resolve([]),
+    getRelatedNewsReports(db, report.id, report.key_entities, report.category, 6),
   ])
 
   // Filter out the current report from "more by agent"
@@ -144,6 +145,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
         authorAgent={authorAgent ?? undefined}
         relatedPerspectives={relatedPerspectives}
         relatedByAgent={relatedByAgent}
+        relatedByEntities={relatedByEntities}
       />
     </>
   )

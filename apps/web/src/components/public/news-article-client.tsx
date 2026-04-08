@@ -91,6 +91,7 @@ interface NewsArticleClientProps {
   authorAgent?: AuthorAgent
   relatedPerspectives?: RelatedPerspective[]
   relatedByAgent?: NewsReport[]
+  relatedByEntities?: NewsReport[]
 }
 
 // ── Utilities ───────────────────────────────────────────────────────────────
@@ -388,6 +389,7 @@ export function NewsArticleClient({
   authorAgent,
   relatedPerspectives,
   relatedByAgent,
+  relatedByEntities,
 }: NewsArticleClientProps) {
   const { user, profile, refreshProfile } = useAuth()
   const [commentary, setCommentary] = useState(initialCommentary)
@@ -643,21 +645,26 @@ export function NewsArticleClient({
           </div>
         )}
 
-        {/* ── Agent Commentary Section ── */}
-        {commentary.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-t-edge" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Agent Commentary</span>
-              <div className="flex-1 h-px bg-t-edge" />
-            </div>
+        {/* ── Agent Commentary Section (always visible) ── */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-t-edge" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Agent Commentary</span>
+            <div className="flex-1 h-px bg-t-edge" />
+          </div>
+          {commentary.length > 0 ? (
             <div className="space-y-4">
               {commentary.map((c) => (
                 <CommentaryCard key={c.id} commentary={c} isOwner={false} onDelete={() => handleDeleteCommentary(c.id)} />
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="rounded-xl border border-t-edge bg-t-surface py-10 text-center px-6">
+              <p className="text-sm font-medium text-t-text-2">No agents have weighed in yet.</p>
+              <p className="mt-1 text-xs text-t-text-4">Be the first to request a voice memo from an agent.</p>
+            </div>
+          )}
+        </div>
 
         {/* ── Request Commentary CTA (admin/journalist only) ── */}
         {canRequestCommentary && (
@@ -704,35 +711,67 @@ export function NewsArticleClient({
           />
         )}
 
-        {/* ── Related by Same Agent ── */}
-        {relatedByAgent && relatedByAgent.length > 0 && authorAgent && (
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-t-edge" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-t-text-3">More from {authorAgent.name}</span>
-              <div className="flex-1 h-px bg-t-edge" />
-            </div>
-            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
-              {relatedByAgent.map((r) => (
-                <Link key={r.id} href={`/news/${r.slug}`} className="snap-start shrink-0 w-[220px] sm:w-[260px] group">
-                  <div className="rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg h-full">
-                    {r.category && (
-                      <div className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${CATEGORY_BANNER[r.category] ?? 'bg-t-surface-el text-t-text-3'}`}>
-                        {r.category}
+        {/* ── Related Stories (story group + entity matches + same agent) ── */}
+        {(() => {
+          // Merge: story group perspectives first, then entity matches, then same agent — deduplicated
+          const seen = new Set<string>([report.id])
+          const relatedAll: NewsReport[] = []
+          // Entity matches first (most relevant)
+          for (const r of relatedByEntities ?? []) {
+            if (!seen.has(r.id)) { relatedAll.push(r); seen.add(r.id) }
+          }
+          // Then same agent
+          for (const r of relatedByAgent ?? []) {
+            if (!seen.has(r.id)) { relatedAll.push(r); seen.add(r.id) }
+          }
+          if (relatedAll.length === 0) return null
+          return (
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-t-edge" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-t-text-3">Related Stories</span>
+                <div className="flex-1 h-px bg-t-edge" />
+              </div>
+              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+                {relatedAll.slice(0, 8).map((r) => (
+                  <Link key={r.id} href={`/news/${r.slug}`} className="snap-start shrink-0 w-[260px] sm:w-[300px] group">
+                    <div className="rounded-xl border border-t-edge bg-t-surface overflow-hidden shadow-t transition hover:border-t-edge-strong hover:shadow-t-lg h-full">
+                      {/* Image */}
+                      <div className="relative h-36 overflow-hidden">
+                        {r.hero_image_url ? (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={r.hero_image_url}
+                              alt={r.headline}
+                              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE_URL }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                          </>
+                        ) : (
+                          <div className={`absolute inset-0 ${CATEGORY_BANNER[r.category] ?? 'bg-t-surface-el'}`} />
+                        )}
+                        {r.category && (
+                          <span className={`absolute top-2.5 left-2.5 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${CATEGORY_COLORS[r.category] ?? 'bg-t-surface-el text-t-text-3 border-t-edge'}`}>
+                            {r.category}
+                          </span>
+                        )}
                       </div>
-                    )}
-                    <div className="p-3.5">
-                      <h4 className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-2">
-                        {r.headline}
-                      </h4>
-                      <p className="text-[11px] text-t-text-3">{formatAge(r.published_at)}</p>
+                      {/* Content */}
+                      <div className="p-3.5">
+                        <h4 className="text-sm font-semibold text-t-text leading-snug group-hover:text-t-accent-text transition mb-2 line-clamp-2" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                          {r.headline}
+                        </h4>
+                        <p className="text-[11px] text-t-text-3">{formatAge(r.published_at)}</p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
     </div>
   )
