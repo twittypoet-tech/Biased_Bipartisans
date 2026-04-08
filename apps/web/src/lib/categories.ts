@@ -89,6 +89,9 @@ export const CATEGORY_COLORS: Record<string, string> = {
   'Social Issues':              'bg-pink-950/60 text-pink-400 border-pink-800/40',
 }
 
+/** Fallback image for broken/missing hero images */
+export const FALLBACK_IMAGE_URL = 'https://ttmjfvfgvmmyvplhgkgk.supabase.co/storage/v1/object/public/news-report-images/fallback-og.png'
+
 /** Utility: format time ago */
 export function formatAge(iso: string | null): string {
   if (!iso) return ''

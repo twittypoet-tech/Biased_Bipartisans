@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { Eye, Share2, Sparkles, ChevronRight, ExternalLink, ArrowUp, ArrowDown, Trash2, AlignLeft } from 'lucide-react'
 import type { NewsReport, ReportImage, AgentCommentary, ContentBlock, Callout } from '@bipi/shared'
 import type { RelatedPerspective } from '@bipi/db'
+import { FALLBACK_IMAGE_URL } from '@/lib/categories'
 import { NewsAudioPlayer } from './news-audio-player'
 import { SignUpCallout, TournamentCallout, SponsoredCallout } from './promo-callouts'
 import { CallReporterCta } from './call-reporter-cta'
@@ -499,12 +500,6 @@ export function NewsArticleClient({
 
         {/* ── Engagement bar ── */}
         <div className="flex items-center gap-1 py-3 border-y border-t-edge mb-6">
-          {viewCount > 0 && (
-            <div className="flex items-center gap-1.5 px-2 py-2 text-sm text-t-text-3">
-              <Eye className="size-4" />
-              <span className="tabular-nums">{viewCount.toLocaleString()} {viewCount === 1 ? 'view' : 'views'}</span>
-            </div>
-          )}
           <div className="flex-1" />
           <button
             onClick={handleShare}
@@ -524,6 +519,7 @@ export function NewsArticleClient({
               alt={report.hero_image_caption ?? report.headline}
               className="w-full h-auto rounded-xl object-cover"
               style={{ maxHeight: '480px' }}
+              onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE_URL }}
             />
             {report.hero_image_caption && (
               <figcaption className="mt-2 text-xs text-t-text-4 text-center leading-relaxed">

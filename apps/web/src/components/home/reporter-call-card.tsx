@@ -88,9 +88,6 @@ export function ReporterCallCard({ call }: ReporterCallCardProps) {
               {call.source_count} {call.source_count === 1 ? 'source' : 'sources'}
             </span>
           )}
-          {(call.view_count ?? 0) > 0 && (
-            <span className="text-[11px] text-t-text-3">{call.view_count?.toLocaleString()} views</span>
-          )}
           {call.key_entities && (
             <span className="text-[11px] text-t-text-3 truncate max-w-[200px]" title={call.key_entities}>
               {call.key_entities}

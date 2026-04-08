@@ -57,7 +57,7 @@ export function Sidebar({ trending, agents, isAuthenticated }: SidebarProps) {
                         {r.category.split(' ')[0]}
                       </span>
                     )}
-                    <span className="text-[10px] text-t-text-4">{r.view_count.toLocaleString()} views</span>
+                    <span className="text-[10px] text-t-text-4">{formatAge(r.published_at)}</span>
                   </div>
                 </div>
               </Link>

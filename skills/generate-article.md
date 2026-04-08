@@ -206,6 +206,7 @@ Produce a JSON object matching the `news_reports` schema. Use this exact structu
   "story_group_id": "story-YYYY-MM-DD-short-slug or null",
   "key_entities": "Comma-separated names of people, organizations, places, and concepts central to the story",
   "is_published": true,
+  "is_featured": false,
   "published_at": "ISO 8601 timestamp"
 }
 ```
@@ -213,6 +214,8 @@ Produce a JSON object matching the `news_reports` schema. Use this exact structu
 ### 7. Insert into database
 
 Insert the article into Supabase via MCP `execute_sql` using an INSERT statement. The body, callouts, and sources fields are JSONB — pass them as JSON strings.
+
+**Featured article**: When generating a batch of articles, pick ONE article to be the hero/featured story on the homepage. Choose based on: broadest audience appeal, highest current relevance, strongest headline, and best hero image. Set `is_featured: true` for that article and `is_featured: false` for all others. Before inserting, clear the previous featured flag: `UPDATE news_reports SET is_featured = false WHERE is_featured = true;`
 
 After insertion, report the slug so the user can verify at `/news/{slug}`.
 

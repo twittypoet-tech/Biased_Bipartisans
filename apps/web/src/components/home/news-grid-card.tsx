@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import type { NewsReport, ReporterCall } from '@bipi/shared'
-import { CATEGORY_COLORS, CATEGORY_BANNER, formatAge } from '@/lib/categories'
+import { CATEGORY_COLORS, CATEGORY_BANNER, formatAge, FALLBACK_IMAGE_URL } from '@/lib/categories'
 
 type CardItem =
   | { type: 'report'; data: NewsReport }
@@ -72,7 +72,7 @@ export function NewsGridCard({ item, size }: NewsGridCardProps) {
             {imageUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl} alt={headline} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <img src={imageUrl} alt={headline} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE_URL }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               </>
             ) : (
@@ -92,12 +92,6 @@ export function NewsGridCard({ item, size }: NewsGridCardProps) {
             </h3>
             <div className="mt-auto flex items-center gap-2 text-[11px] text-t-text-4">
               <span>{formatAge(publishedAt)}</span>
-              {viewCount > 0 && (
-                <>
-                  <span className="size-0.5 rounded-full bg-t-text-4" />
-                  <span>{viewCount.toLocaleString()} views</span>
-                </>
-              )}
             </div>
           </div>
         </article>
@@ -115,7 +109,7 @@ export function NewsGridCard({ item, size }: NewsGridCardProps) {
             {imageUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl} alt={headline} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <img src={imageUrl} alt={headline} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE_URL }} />
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20 hidden sm:block" />
               </>
             ) : (
@@ -140,12 +134,6 @@ export function NewsGridCard({ item, size }: NewsGridCardProps) {
             )}
             <div className="flex items-center gap-2 text-[11px] text-t-text-4">
               <span>{formatAge(publishedAt)}</span>
-              {viewCount > 0 && (
-                <>
-                  <span className="size-0.5 rounded-full bg-t-text-4" />
-                  <span>{viewCount.toLocaleString()} views</span>
-                </>
-              )}
             </div>
           </div>
         </div>

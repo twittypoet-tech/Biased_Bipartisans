@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Phone, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { NewsReport } from '@bipi/shared'
+import { FALLBACK_IMAGE_URL } from '@/lib/categories'
 
 interface AgentOption {
   id: string
@@ -81,6 +82,7 @@ export function AgentCarousel({ agents, recentReports }: AgentCarouselProps) {
                           src={report.hero_image_url}
                           alt={report.headline}
                           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE_URL }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                       </>

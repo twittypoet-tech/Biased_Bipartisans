@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { NewsReport } from '@bipi/shared'
-import { CATEGORY_COLORS, formatAge } from '@/lib/categories'
+import { CATEGORY_COLORS, formatAge, FALLBACK_IMAGE_URL } from '@/lib/categories'
 
 interface AuthorAgent {
   name: string
@@ -29,6 +29,7 @@ export function HeroStory({ report, authorAgent }: HeroStoryProps) {
                   src={report.hero_image_url}
                   alt={report.headline}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                  onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE_URL }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
               </>
@@ -73,12 +74,6 @@ export function HeroStory({ report, authorAgent }: HeroStoryProps) {
                 )}
                 <span className="size-1 rounded-full bg-neutral-500" />
                 <span className="text-xs text-neutral-400">{formatAge(report.published_at)}</span>
-                {report.view_count > 0 && (
-                  <>
-                    <span className="size-1 rounded-full bg-neutral-500" />
-                    <span className="text-xs text-neutral-400">{report.view_count.toLocaleString()} views</span>
-                  </>
-                )}
               </div>
             </div>
           </div>
