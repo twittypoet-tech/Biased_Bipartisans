@@ -393,6 +393,18 @@ export type NewsCategory =
   | 'Rhetoric & Persuasion'
   | 'Statistics & Data Science'
   | 'Technology & Innovation'
+  | 'Economy & Business'
+  | 'National Security & Defense'
+  | 'Education & Culture'
+  | 'Energy & Climate'
+  | 'Science & Space'
+  | 'Criminal Justice'
+  | 'Immigration'
+  | 'Infrastructure & Housing'
+  | 'World Affairs'
+  | 'Domestic Policy'
+  | 'Tech & AI'
+  | 'Social Issues'
 
 export type ContentBlockType = 'paragraph' | 'heading' | 'quote' | 'divider'
 
@@ -432,6 +444,8 @@ export interface NewsReport {
   is_featured: boolean
   callouts: Callout[]
   sources: NewsSource[]
+  agent_id: UUID | null
+  story_group_id: string | null
   published_at: Timestamp | null
   created_at: Timestamp
   updated_at: Timestamp

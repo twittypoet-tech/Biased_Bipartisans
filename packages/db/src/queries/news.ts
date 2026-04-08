@@ -29,18 +29,44 @@ export async function getFeaturedReport(db: SupabaseClient): Promise<NewsReport 
   return data as NewsReport | null
 }
 
+export interface NewsReportWithAuthor extends NewsReport {
+  author_agent?: {
+    id: string
+    name: string
+    slug: string
+    avatar_url: string | null
+    archetype: string
+    retell_call_agent_id: string | null
+  } | null
+}
+
 export async function getReportBySlug(
   db: SupabaseClient,
   slug: string,
-): Promise<NewsReport | null> {
+): Promise<NewsReportWithAuthor | null> {
   const { data, error } = await db
     .from('news_reports')
-    .select('*')
+    .select('*, agents(id, name, slug, avatar_url, archetype, retell_call_agent_id)')
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
   if (error && error.code !== 'PGRST116') throw error
-  return data as NewsReport | null
+  if (!data) return null
+  const row = data as Record<string, unknown>
+  const agent = row.agents as Record<string, unknown> | null
+  const report = { ...row } as Record<string, unknown>
+  delete report.agents
+  return {
+    ...report as unknown as NewsReport,
+    author_agent: agent ? {
+      id: agent.id as string,
+      name: agent.name as string,
+      slug: agent.slug as string,
+      avatar_url: agent.avatar_url as string | null,
+      archetype: agent.archetype as string,
+      retell_call_agent_id: agent.retell_call_agent_id as string | null,
+    } : null,
+  }
 }
 
 export async function listReportImages(
@@ -114,4 +140,58 @@ export async function createCommentaryRequest(
     .single()
   if (error) throw error
   return data as CommentaryRequest
+}
+
+export async function listReportsByAgent(
+  db: SupabaseClient,
+  agentId: UUID,
+  limit = 20,
+): Promise<NewsReport[]> {
+  const { data, error } = await db
+    .from('news_reports')
+    .select('*')
+    .eq('agent_id', agentId)
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as NewsReport[]
+}
+
+export interface RelatedPerspective {
+  id: string
+  slug: string
+  headline: string
+  agent_name: string
+  agent_slug: string
+  agent_avatar_url: string | null
+  agent_archetype: string
+}
+
+export async function listRelatedPerspectives(
+  db: SupabaseClient,
+  storyGroupId: string,
+  excludeReportId: UUID,
+): Promise<RelatedPerspective[]> {
+  const { data, error } = await db
+    .from('news_reports')
+    .select('id, slug, headline, agents(name, slug, avatar_url, archetype)')
+    .eq('story_group_id', storyGroupId)
+    .eq('is_published', true)
+    .neq('id', excludeReportId)
+    .order('published_at', { ascending: false })
+  if (error) throw error
+  return ((data ?? []) as unknown[]).map((row) => {
+    const r = row as Record<string, unknown>
+    const agent = r.agents as Record<string, unknown> | null
+    return {
+      id: r.id as string,
+      slug: r.slug as string,
+      headline: r.headline as string,
+      agent_name: (agent?.name as string) ?? 'Unknown',
+      agent_slug: (agent?.slug as string) ?? '',
+      agent_avatar_url: (agent?.avatar_url as string | null) ?? null,
+      agent_archetype: (agent?.archetype as string) ?? '',
+    }
+  })
 }
