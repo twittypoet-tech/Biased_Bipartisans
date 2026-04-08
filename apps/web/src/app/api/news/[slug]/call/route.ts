@@ -27,7 +27,7 @@ export async function POST(
   // Fetch the report and its authoring agent
   const { data: report, error: reportErr } = await serviceDb
     .from('news_reports')
-    .select('id, headline, summary, body, agent_id')
+    .select('id, headline, summary, body, sources, key_entities, agent_id')
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
@@ -79,25 +79,38 @@ export async function POST(
     reference_id: report.id,
   })
 
-  // Build article context for the agent (truncate body to ~2000 chars)
-  const bodyBlocks = report.body as { type: string; content?: string }[]
-  const bodyText = bodyBlocks
-    .filter((b) => b.content)
-    .map((b) => b.content)
-    .join('\n\n')
-    .slice(0, 2000)
+  // Build dynamic vars matching commentary agent variable names exactly
+  const reportBodyText = report.body
+    ? JSON.stringify(report.body).slice(0, 8000)
+    : ''
 
-  const now = new Date()
-  const currentDate = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  // Fetch existing commentary on this article for context
+  const { data: existingCommentary } = await serviceDb
+    .from('agent_commentary')
+    .select('transcript, agents(name)')
+    .eq('report_id', report.id)
+    .eq('is_published', true)
+    .order('created_at', { ascending: true })
+
+  const existingCommentariesText = (existingCommentary ?? [])
+    .filter((c: Record<string, unknown>) => c.transcript)
+    .map((c: Record<string, unknown>) => {
+      const agentData = c.agents as Record<string, unknown> | null
+      const name = (agentData?.name as string) ?? 'Agent'
+      return `${name}: ${c.transcript}`
+    })
+    .join('\n\n') || 'None yet.'
 
   const dynamicVars = {
-    user_name: profile.display_name ?? 'there',
-    user_id: user.id,
-    current_date: currentDate,
-    article_headline: report.headline,
-    article_summary: report.summary ?? '',
-    article_body: bodyText,
-    agent_name: agent.name,
+    report_headline: report.headline ?? 'Untitled Report',
+    report_summary: report.summary ?? '',
+    report_body: reportBodyText,
+    report_sources: report.sources ? JSON.stringify(report.sources) : '',
+    report_entities: report.key_entities ?? '',
+    existing_commentaries: existingCommentariesText,
+    current_date: new Date().toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric',
+    }),
   }
 
   // Create Retell web call — direct 1-on-1, no relay needed
