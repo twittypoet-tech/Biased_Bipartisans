@@ -119,16 +119,63 @@ Then `mcp__brightdata__scrape_as_markdown` on the single best result to get the 
 
 Use `discover` over `search_engine` for follow-ups because its AI-ranked relevance scoring finds the specific thing you need faster.
 
-#### Phase D: Hero image sourcing
+#### Phase D: Hero image sourcing and persistence
 
-Use `mcp__brightdata__search_engine` to search for a relevant news photo (e.g., "Iran ceasefire 2026 photo"). Then use `mcp__brightdata__scrape_as_markdown` on the best result page and look for `og:image` meta tags or direct image URLs in the page content.
+**Every article must have a unique hero image persisted to Supabase Storage.** External image URLs expire. The pipeline downloads the image and stores it permanently.
 
-If no image can be found, use the platform fallback:
+**Step 1: Find an image**
+
+Use `mcp__brightdata__search_engine` to search for a relevant news photo (e.g., "Iran ceasefire 2026 photo"). Pick a result from a major outlet (Reuters, AP, BBC, CNN, Al Jazeera, Getty). Then extract the `og:image` URL:
+
+```bash
+curl -s "PAGE_URL" 2>/dev/null | grep -o 'og:image" content="[^"]*"' | head -1
 ```
-https://ttmjfvfgvmmyvplhgkgk.supabase.co/storage/v1/object/public/news-report-images/fallback-og.png
+
+If BrightData search yields no usable image, try Unsplash as a fallback:
+```
+https://images.unsplash.com/photo-PHOTO_ID?w=1200&h=630&fit=crop
 ```
 
-The frontend has `onError` fallback handlers on all `<img>` tags that swap to this fallback if any image fails to load.
+**Step 2: Download and upload to Supabase Storage**
+
+```python
+import urllib.request, json, ssl
+SUPABASE_URL = 'https://ttmjfvfgvmmyvplhgkgk.supabase.co'
+SUPABASE_KEY = '...'  # service role key
+BUCKET = 'news-report-images'
+
+# Download the image
+ctx = ssl.create_default_context()
+req = urllib.request.Request('IMAGE_URL')
+req.add_header('User-Agent', 'Mozilla/5.0')
+data = urllib.request.urlopen(req, timeout=15, context=ctx).read()
+
+# Upload to Supabase Storage (upsert)
+slug = 'article-slug-here'
+ext = 'jpg'  # or png/webp based on content-type
+path = f'heroes/{slug}.{ext}'
+up_url = f'{SUPABASE_URL}/storage/v1/object/{BUCKET}/{path}'
+up_req = urllib.request.Request(up_url, data=data, method='POST')
+up_req.add_header('apikey', SUPABASE_KEY)
+up_req.add_header('Authorization', f'Bearer {SUPABASE_KEY}')
+up_req.add_header('Content-Type', 'image/jpeg')
+up_req.add_header('x-upsert', 'true')
+urllib.request.urlopen(up_req, timeout=30)
+
+# The permanent URL is:
+permanent_url = f'{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{path}'
+```
+
+**Step 3: Use the Supabase Storage URL as hero_image_url**
+
+Set `hero_image_url` to the permanent Supabase Storage URL (not the original external URL). Format: `https://ttmjfvfgvmmyvplhgkgk.supabase.co/storage/v1/object/public/news-report-images/heroes/{slug}.jpg`
+
+**Image sourcing priority:**
+1. Real news photo from BrightData scraping (og:image from Reuters, AP, BBC, etc.)
+2. Unsplash search for topic-relevant photo
+3. Platform fallback (only as absolute last resort): `https://ttmjfvfgvmmyvplhgkgk.supabase.co/storage/v1/object/public/news-report-images/fallback-og.png`
+
+The frontend has `onError` fallback handlers on all `<img>` tags that swap to the fallback if any image fails to load.
 
 #### When the user provides source URLs
 
