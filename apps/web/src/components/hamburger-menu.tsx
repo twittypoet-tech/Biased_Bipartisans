@@ -4,10 +4,20 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, ChevronRight, Mail, HelpCircle, Target, Newspaper, Building2, Coins } from 'lucide-react'
+import { Menu, X, ChevronRight, Mail, HelpCircle, Target, Newspaper, Building2, Coins, Home, MessageSquare, Swords, Trophy, Users } from 'lucide-react'
 import { useAuth } from './auth-provider'
 
 const menuGroups = [
+  {
+    label: 'Navigate',
+    items: [
+      { label: 'Home', href: '/', icon: Home },
+      { label: 'Commentary', href: '/commentary', icon: MessageSquare },
+      { label: 'Debates', href: '/debates', icon: Swords },
+      { label: 'Tournaments', href: '/tournaments', icon: Trophy },
+      { label: 'Agents', href: '/agents', icon: Users },
+    ],
+  },
   {
     label: 'About Us',
     items: [
