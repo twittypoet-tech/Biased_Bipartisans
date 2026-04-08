@@ -119,55 +119,16 @@ Then `mcp__brightdata__scrape_as_markdown` on the single best result to get the 
 
 Use `discover` over `search_engine` for follow-ups because its AI-ranked relevance scoring finds the specific thing you need faster.
 
-#### Phase D: Hero image sourcing and validation
+#### Phase D: Hero image sourcing
 
-Finding a working, permanent hero image is critical. Many news sites use **signed/tokenized URLs** that expire within minutes (Guardian, AP, Reuters, Getty). These return 401/403 errors after expiration.
+Use `mcp__brightdata__search_engine` to search for a relevant news photo (e.g., "Iran ceasefire 2026 photo"). Then use `mcp__brightdata__scrape_as_markdown` on the best result page and look for `og:image` meta tags or direct image URLs in the page content.
 
-**Step 1: Find candidate images**
-
-Use `mcp__brightdata__search_engine` to search for relevant images:
-```
-search_engine(query: "SpaceX launch 2026 photo", engine: "google")
-```
-
-**Step 2: Scrape the source page for og:image**
-
-Use `mcp__brightdata__scrape_as_markdown` on the result page. Look for:
-- `og:image` meta tag URL (most reliable)
-- Direct image URLs in the page content
-- WordPress `wp-content/uploads` URLs (these are permanent)
-
-**Step 3: Validate the URL is permanent (not signed/expiring)**
-
-REJECT image URLs that contain any of these patterns — they are signed and will expire:
-- `?s=` or `&s=` followed by a hex hash (Guardian signed URLs)
-- `?auth=` or `&auth=` parameters
-- `?token=` or `&token=` parameters
-- `?sig=` or `&sig=` parameters
-- `dims.apnews.com` with long query strings (AP signed CDN)
-- `resize=` + `quality=` + `auto=` in query params (CDN transform chains that often include auth)
-- Any URL with 5+ query parameters (likely a CDN pipeline with auth)
-
-PREFER image URLs from these permanent sources:
-- `wp-content/uploads/` paths (WordPress media — permanent)
-- Supabase storage URLs (`supabase.co/storage/`)
-- Cloudinary URLs without signatures (`res.cloudinary.com`)
-- Static CDN paths without query strings
-- Government/institutional image servers
-- Wikimedia Commons
-
-**Step 4: Test the URL**
-
-Use `mcp__brightdata__scrape_as_markdown` on the candidate image URL itself. If Bright Data returns an error or the response is not an image, reject it and try the next candidate.
-
-**Step 5: Fallback**
-
-If no permanent image URL can be found after 3 attempts, set `hero_image_url` to the platform fallback:
+If no image can be found, use the platform fallback:
 ```
 https://ttmjfvfgvmmyvplhgkgk.supabase.co/storage/v1/object/public/news-report-images/fallback-og.png
 ```
 
-This is better than a broken image. The article page has an `onError` fallback too, but the homepage grid and carousel do not gracefully handle missing images without a URL.
+The frontend has `onError` fallback handlers on all `<img>` tags that swap to this fallback if any image fails to load.
 
 #### When the user provides source URLs
 
