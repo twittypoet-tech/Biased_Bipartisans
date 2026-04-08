@@ -26,11 +26,15 @@ export function AgentCarousel({ agents, recentReports }: AgentCarouselProps) {
 
   if (recentReports.length === 0) return null
 
-  // Pair each report with an agent (cycle through agents)
-  const cards = recentReports.slice(0, 8).map((report, i) => ({
-    report,
-    agent: agents[i % agents.length],
-  }))
+  // Pair each report with its actual author agent (by agent_id match)
+  const agentMap = new Map(agents.map((a) => [a.id, a]))
+  const cards = recentReports
+    .slice(0, 12)
+    .map((report) => ({
+      report,
+      agent: report.agent_id ? agentMap.get(report.agent_id) ?? null : null,
+    }))
+    .filter((c) => c.agent !== null) as { report: typeof recentReports[number]; agent: AgentOption }[]
 
   function scroll(direction: 'left' | 'right') {
     if (!scrollRef.current) return

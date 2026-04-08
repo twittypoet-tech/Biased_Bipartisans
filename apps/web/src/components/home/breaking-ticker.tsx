@@ -67,7 +67,7 @@ export function BreakingTicker({ reports }: BreakingTickerProps) {
                 <Link
                   key={`${r.id}-${i}`}
                   href={`/news/${r.slug}`}
-                  className="inline-flex items-center gap-3 px-6 text-sm text-red-100 hover:text-white transition shrink-0"
+                  className="inline-flex items-center gap-3 px-6 text-sm text-white hover:text-red-100 transition shrink-0"
                 >
                   <span className="font-semibold" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
                     {r.headline}

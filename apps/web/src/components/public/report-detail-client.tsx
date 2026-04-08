@@ -9,7 +9,7 @@ import { ArrowUp, ArrowDown, Eye, Share2, FileText, Sparkles, Lock, ChevronDown,
 import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bipi/shared'
 import { NewsAudioPlayer } from './news-audio-player'
 import { useAuth } from '@/components/auth-provider'
-import { SignUpCallout, TournamentCallout, SponsoredCallout } from './promo-callouts'
+import { SignUpCallout, SponsoredCallout } from './promo-callouts'
 import { cn } from '@/lib/utils'
 
 // ── Category badge colors ────────────────────────────────────────────────────
@@ -306,7 +306,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
               <div className="space-y-5">
                 {buildReportBody(report.body, report.callouts ?? [], [
                   <SignUpCallout key="promo-signup" />,
-                  <TournamentCallout key="promo-tournament" title={upcomingTournament?.title} slug={upcomingTournament?.slug} />,
                   <SponsoredCallout key="promo-sponsored" />,
                 ])}
               </div>

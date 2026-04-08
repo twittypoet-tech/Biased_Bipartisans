@@ -9,7 +9,7 @@ import type { NewsReport, ReportImage, AgentCommentary, ContentBlock, Callout } 
 import type { RelatedPerspective } from '@bipi/db'
 import { FALLBACK_IMAGE_URL } from '@/lib/categories'
 import { NewsAudioPlayer } from './news-audio-player'
-import { SignUpCallout, TournamentCallout, SponsoredCallout } from './promo-callouts'
+import { SignUpCallout, SponsoredCallout } from './promo-callouts'
 import { CallReporterCta } from './call-reporter-cta'
 import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/utils'
@@ -432,7 +432,6 @@ export function NewsArticleClient({
 
   const bodyNodes = buildBody(report.body, report.callouts, images, [
     <SignUpCallout key="promo-signup" />,
-    <TournamentCallout key="promo-tournament" />,
     <SponsoredCallout key="promo-sponsored" />,
   ])
 
