@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Eye, Share2, Sparkles, ChevronRight, ExternalLink, ArrowUp, ArrowDown, Trash2 } from 'lucide-react'
+import { Eye, Share2, Sparkles, ChevronRight, ExternalLink, ArrowUp, ArrowDown, Trash2, AlignLeft } from 'lucide-react'
 import type { NewsReport, ReportImage, AgentCommentary, ContentBlock, Callout } from '@bipi/shared'
 import type { RelatedPerspective } from '@bipi/db'
 import { NewsAudioPlayer } from './news-audio-player'
@@ -388,10 +388,14 @@ export function NewsArticleClient({
   relatedPerspectives,
   relatedByAgent,
 }: NewsArticleClientProps) {
-  const { profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const [commentary, setCommentary] = useState(initialCommentary)
   const [copied, setCopied] = useState(false)
   const [viewCount, setViewCount] = useState(report.view_count ?? 0)
+  const [showSummary, setShowSummary] = useState(false)
+  const [showCommentaryRequest, setShowCommentaryRequest] = useState(false)
+
+  const canRequestCommentary = profile?.role === 'admin' || profile?.role === 'journalist'
 
   // Track view on mount
   useEffect(() => {
@@ -524,6 +528,39 @@ export function NewsArticleClient({
           </button>
         </div>
 
+        {/* ── Summarize button + Summary card ── */}
+        {report.summary && (
+          <div className="mb-6">
+            {!showSummary ? (
+              <button
+                onClick={() => setShowSummary(true)}
+                className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 active:scale-[0.98]"
+                style={{ backgroundColor: '#C8A44A' }}
+              >
+                <AlignLeft className="size-4" />
+                Summarize
+              </button>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <div className="rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Summary</p>
+                  <p className="text-sm leading-relaxed text-t-text-2">{report.summary}</p>
+                </div>
+                <button
+                  onClick={() => setShowSummary(false)}
+                  className="mt-2 text-xs font-medium text-t-text-3 hover:text-t-text-2 transition"
+                >
+                  Collapse
+                </button>
+              </motion.div>
+            )}
+          </div>
+        )}
+
         {/* ── Article Body ── */}
         <article className="space-y-5 mb-8">
           {bodyNodes}
@@ -622,8 +659,8 @@ export function NewsArticleClient({
           </div>
         )}
 
-        {/* ── Request Commentary CTA ── */}
-        {profile && (
+        {/* ── Request Commentary CTA (admin/journalist only) ── */}
+        {canRequestCommentary && (
           <div className="mb-8 relative overflow-hidden rounded-xl border border-t-accent/30 bg-gradient-to-r from-t-accent-soft to-transparent p-5 sm:p-6">
             <div className="relative z-10">
               <div className="flex items-start gap-3">
@@ -633,12 +670,38 @@ export function NewsArticleClient({
                 <div className="flex-1">
                   <h3 className="text-base font-semibold text-t-text mb-1">Want an agent&apos;s take on this article?</h3>
                   <p className="text-sm text-t-text-2 mb-4">
-                    Request commentary from any AI agent. They&apos;ll analyze this article and share their perspective.
+                    Request commentary from any AI agent. They&apos;ll analyze this article and share their perspective as a pinned comment with audio.
                   </p>
+                  <button
+                    onClick={() => setShowCommentaryRequest(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-t-accent px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition"
+                  >
+                    <Sparkles className="size-4" />
+                    Request Commentary
+                  </button>
                 </div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* ── Commentary Request Sheet ── */}
+        {showCommentaryRequest && (
+          <NewsCommentaryRequestSheet
+            reportSlug={report.slug}
+            agents={allAgents}
+            onClose={() => setShowCommentaryRequest(false)}
+            onCommentaryPublished={async () => {
+              await new Promise((r) => setTimeout(r, 3000))
+              try {
+                const res = await fetch(`/api/news/${report.slug}/commentary`)
+                if (res.ok) {
+                  const data = await res.json()
+                  if (data.commentary) setCommentary(data.commentary)
+                }
+              } catch {}
+            }}
+          />
         )}
 
         {/* ── Related by Same Agent ── */}
@@ -667,6 +730,315 @@ export function NewsArticleClient({
                   </div>
                 </Link>
               ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── News Commentary Request Sheet ───────────────────────────────────────────
+
+type CommentaryStep = 'select' | 'confirm' | 'connecting' | 'live' | 'done' | 'error'
+
+function NewsCommentaryRequestSheet({
+  reportSlug,
+  agents,
+  onClose,
+  onCommentaryPublished,
+}: {
+  reportSlug: string
+  agents: Agent[]
+  onClose: () => void
+  onCommentaryPublished?: () => void
+}) {
+  const { refreshProfile } = useAuth()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [step, setStep] = useState<CommentaryStep>('select')
+  const [error, setError] = useState<string | null>(null)
+  const [audioBlocked, setAudioBlocked] = useState(false)
+
+  const roomRef = useRef<ReturnType<typeof Object.create>>(null)
+  const audioElsRef = useRef<HTMLAudioElement[]>([])
+
+  const selectedAgent = agents.find((a) => a.id === selectedId) ?? null
+
+  useEffect(() => {
+    return () => {
+      cleanupAudio()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(roomRef.current as any)?.disconnect?.()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function attachAudio(el: HTMLAudioElement) {
+    el.autoplay = true
+    el.style.display = 'none'
+    document.body.appendChild(el)
+    audioElsRef.current.push(el)
+    el.play()
+      .then(() => setAudioBlocked(false))
+      .catch(() => {
+        setTimeout(() => {
+          el.play().then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true))
+        }, 500)
+      })
+  }
+
+  function cleanupAudio() {
+    for (const el of audioElsRef.current) { el.pause(); el.srcObject = null; el.remove() }
+    audioElsRef.current = []
+    setAudioBlocked(false)
+  }
+
+  function unlockAudio() {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const AC = window.AudioContext || (window as any).webkitAudioContext
+      if (!AC) return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!(window as any).__bipiAudioCtx) (window as any).__bipiAudioCtx = new AC()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ctx = (window as any).__bipiAudioCtx as AudioContext
+      if (ctx.state === 'suspended') ctx.resume()
+      const buf = ctx.createBuffer(1, 1, 22050)
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      src.connect(ctx.destination)
+      src.start(0)
+    } catch {}
+  }
+
+  async function handleRequest() {
+    if (!selectedAgent) return
+    unlockAudio()
+    setStep('connecting')
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/news/${reportSlug}/commentary-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: selectedAgent.id }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Request failed')
+      }
+
+      const { publicRoomUrl, browserToken, retellUrl, commentaryToken } = await res.json()
+      refreshProfile()
+
+      if (!publicRoomUrl && !commentaryToken) {
+        throw new Error('Commentary agent not configured yet')
+      }
+
+      const { Room, RoomEvent, Track } = await import('livekit-client')
+      cleanupAudio()
+      const room = new Room({ adaptiveStream: false, dynacast: false })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      roomRef.current = room as any
+
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind === Track.Kind.Audio) {
+          attachAudio(track.attach())
+          setStep('live')
+        }
+      })
+
+      room.on(RoomEvent.Disconnected, () => {
+        cleanupAudio()
+        roomRef.current = null
+        setStep('done')
+        onCommentaryPublished?.()
+      })
+
+      if (publicRoomUrl && browserToken) {
+        await room.connect(publicRoomUrl, browserToken)
+      } else if (commentaryToken) {
+        await room.connect(retellUrl, commentaryToken)
+      }
+
+      try { await room.startAudio() } catch {}
+
+      for (const p of room.remoteParticipants.values()) {
+        for (const pub of p.audioTrackPublications.values()) {
+          if (pub.track && pub.isSubscribed) {
+            attachAudio(pub.track.attach())
+            setStep('live')
+          }
+        }
+      }
+
+      setTimeout(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(roomRef.current as any)?.disconnect?.()
+      }, 10 * 60 * 1000)
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+      setStep('error')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pb-[72px] sm:pb-0" role="dialog">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={step === 'live' || step === 'connecting' ? undefined : onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-t-surface border border-t-edge shadow-t-lg p-5 mx-0 sm:mx-4 max-h-[70vh] overflow-y-auto">
+        <div className="sm:hidden flex justify-center mb-3">
+          <div className="w-10 h-1 rounded-full bg-t-edge-strong" />
+        </div>
+
+        {/* Header */}
+        {(step === 'select' || step === 'confirm') && (
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-lg font-semibold text-t-text">Request Commentary</h3>
+            <button onClick={onClose} className="size-8 rounded-full bg-t-surface-el flex items-center justify-center text-t-text-3 hover:text-t-text-2 transition">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          </div>
+        )}
+
+        {/* Select Agent */}
+        {step === 'select' && (
+          <>
+            <p className="text-sm text-t-text-3 mb-4">Select an agent to analyze this article and share their perspective.</p>
+            <div className="space-y-2">
+              {agents.map((a) => (
+                <button key={a.id} onClick={() => { setSelectedId(a.id); setStep('confirm') }}
+                  className="w-full flex items-center gap-3 rounded-xl px-4 py-3 transition border border-t-edge hover:bg-t-hover hover:border-t-edge-strong">
+                  <div className="relative size-9 rounded-full overflow-hidden shrink-0 border border-t-edge">
+                    {a.avatar_url ? (
+                      <Image src={a.avatar_url} alt={a.name} fill className="object-cover" sizes="36px" />
+                    ) : (
+                      <div className="size-9 rounded-full bg-t-surface-el flex items-center justify-center text-xs font-bold text-t-text-2">{a.name[0]}</div>
+                    )}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-t-text">{a.name}</p>
+                    <p className="text-xs text-t-text-3 capitalize">{a.archetype.replace(/_/g, ' ')}</p>
+                  </div>
+                  <ChevronRight className="size-4 text-t-text-4" />
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Confirm Agent */}
+        {step === 'confirm' && selectedAgent && (
+          <>
+            <button onClick={() => { setSelectedId(null); setStep('select'); setError(null) }}
+              className="flex items-center gap-1.5 text-sm text-t-text-3 hover:text-t-text-2 transition mb-4">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+              Choose a different agent
+            </button>
+            <div className="rounded-xl border border-t-accent/30 bg-t-accent-soft p-5 mb-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="relative size-12 rounded-full overflow-hidden shrink-0 border border-t-edge">
+                  {selectedAgent.avatar_url ? (
+                    <Image src={selectedAgent.avatar_url} alt={selectedAgent.name} fill className="object-cover" sizes="48px" />
+                  ) : (
+                    <div className="size-12 rounded-full bg-t-surface-el flex items-center justify-center font-bold text-t-text-2">{selectedAgent.name[0]}</div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-base font-semibold text-t-text">{selectedAgent.name}</p>
+                  <p className="text-xs text-t-text-3 capitalize">{selectedAgent.archetype.replace(/_/g, ' ')}</p>
+                </div>
+              </div>
+            </div>
+            {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+            <button onClick={handleRequest}
+              className="w-full rounded-xl py-3 text-sm font-semibold bg-t-accent text-white hover:opacity-90 active:scale-[0.98] transition">
+              Call {selectedAgent.name}
+            </button>
+            <p className="mt-2 text-center text-xs text-t-text-4">1 credit per commentary request</p>
+          </>
+        )}
+
+        {/* Connecting */}
+        {step === 'connecting' && selectedAgent && (
+          <div className="flex flex-col items-center py-10 gap-5">
+            <div className="relative size-14 rounded-full overflow-hidden border border-t-edge">
+              {selectedAgent.avatar_url ? (
+                <Image src={selectedAgent.avatar_url} alt={selectedAgent.name} fill className="object-cover" sizes="56px" />
+              ) : (
+                <div className="size-14 rounded-full bg-t-surface-el flex items-center justify-center font-bold text-t-text-2">{selectedAgent.name[0]}</div>
+              )}
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-t-text mb-1">Connecting to {selectedAgent.name}</p>
+              <p className="text-xs text-t-text-3">Preparing commentary on this article...</p>
+            </div>
+            <svg className="animate-spin text-t-accent-text" width="24" height="24" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+          </div>
+        )}
+
+        {/* Live */}
+        {step === 'live' && selectedAgent && (
+          <div className="flex flex-col items-center py-8 gap-5">
+            <div className="relative">
+              <div className="relative size-16 rounded-full overflow-hidden border border-t-edge">
+                {selectedAgent.avatar_url ? (
+                  <Image src={selectedAgent.avatar_url} alt={selectedAgent.name} fill className="object-cover" sizes="64px" />
+                ) : (
+                  <div className="size-16 rounded-full bg-t-surface-el flex items-center justify-center font-bold text-t-text-2 text-lg">{selectedAgent.name[0]}</div>
+                )}
+              </div>
+              <div className="absolute -top-1 -right-1 size-4 rounded-full bg-green-500 border-2 border-t-surface animate-pulse" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-t-text">{selectedAgent.name}</p>
+              <p className="text-xs text-t-accent-text font-medium uppercase tracking-wider mt-1">Live Commentary</p>
+            </div>
+            <div className="flex items-end gap-1 h-10">
+              {[0.4, 0.7, 1, 0.6, 0.9, 0.5, 0.8, 0.65, 0.45, 0.75, 0.55, 0.85].map((h, i) => (
+                <div key={i} className="w-1.5 rounded-full bg-amber-400 animate-pulse"
+                  style={{ height: `${h * 100}%`, animationDelay: `${i * 70}ms`, animationDuration: '900ms' }} />
+              ))}
+            </div>
+            {audioBlocked && (
+              <button onClick={() => { for (const el of audioElsRef.current) el.play().catch(() => {}); setAudioBlocked(false) }}
+                className="rounded-xl border border-amber-600/50 bg-amber-950/30 px-5 py-2.5 text-sm font-medium text-amber-400 hover:bg-amber-950/50 transition">
+                Tap to Enable Audio
+              </button>
+            )}
+            <p className="text-xs text-t-text-3 text-center max-w-xs">
+              {selectedAgent.name} is analyzing the article and delivering their perspective live.
+            </p>
+          </div>
+        )}
+
+        {/* Done */}
+        {step === 'done' && selectedAgent && (
+          <div className="flex flex-col items-center py-8 gap-4">
+            <div className="size-14 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-400"><polyline points="20 6 9 17 4 12" /></svg>
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-t-text">Commentary Complete</p>
+              <p className="mt-1 text-sm text-t-text-3">{selectedAgent.name}&apos;s commentary has been published.</p>
+            </div>
+            <button onClick={onClose} className="rounded-xl bg-t-accent px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">
+              View Commentary
+            </button>
+          </div>
+        )}
+
+        {/* Error */}
+        {step === 'error' && (
+          <div className="flex flex-col items-center py-8 gap-4">
+            <div className="size-14 rounded-full bg-red-950/40 border border-red-800/60 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+            </div>
+            <p className="text-sm text-red-400 text-center">{error || 'Something went wrong'}</p>
+            <div className="flex gap-3">
+              <button onClick={() => { setStep('confirm'); setError(null) }}
+                className="rounded-xl bg-t-surface-el border border-t-edge-strong px-5 py-2 text-sm text-t-text-2 hover:bg-t-hover transition">Try Again</button>
+              <button onClick={onClose} className="rounded-xl px-5 py-2 text-sm text-t-text-3 hover:text-t-text-2 transition">Close</button>
             </div>
           </div>
         )}
