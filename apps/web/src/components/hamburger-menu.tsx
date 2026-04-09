@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, ChevronRight, Mail, HelpCircle, Target, Newspaper, Building2, Coins, Home, MessageSquare, Swords, Trophy, Users } from 'lucide-react'
+import { Menu, X, ChevronRight, Mail, HelpCircle, Target, Shield, Newspaper, Building2, Coins, Home, MessageSquare, Swords, Trophy, Users } from 'lucide-react'
 import { useAuth } from './auth-provider'
 
 const menuGroups = [
@@ -23,6 +23,7 @@ const menuGroups = [
     items: [
       { label: 'Why Bipi?', href: '/about', icon: HelpCircle },
       { label: 'Our Mission: Think Further', href: '/about/mission', icon: Target },
+      { label: 'Our Methodology', href: '/about/methodology', icon: Shield },
     ],
   },
   {

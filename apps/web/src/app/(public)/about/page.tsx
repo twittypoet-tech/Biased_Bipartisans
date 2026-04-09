@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Phone, Mic, Search, Shield, Users, Globe, Zap, Vote } from 'lucide-react'
+import { ArrowRight, Mic, Search, Shield, Users, Globe, Zap } from 'lucide-react'
+import { CallReporterPopup } from './call-reporter-popup'
 
 export const metadata: Metadata = {
   title: 'Why Bipi?',
@@ -12,45 +13,22 @@ export default function AboutPage() {
   return (
     <div className="bg-t-bg">
 
-      {/* ── Hero ── */}
+      {/* ── The Name (now the hero) ── */}
       <section className="relative overflow-hidden px-4 py-24 sm:py-36">
         <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{
           backgroundImage: 'radial-gradient(circle at 30% 20%, #0B1E47 0%, transparent 50%), radial-gradient(circle at 70% 80%, #5E0F0F 0%, transparent 50%)',
         }} />
-        <div className="relative mx-auto max-w-3xl text-center">
-          <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] mb-6" style={{ color: '#C8A44A' }}>
-            About Bipi News
-          </p>
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight text-t-text mb-8" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-            Where ideas go<br />to <em className="not-italic" style={{ color: '#C8A44A' }}>evolve.</em>
-          </h1>
-          <p className="text-base sm:text-lg text-t-text-2 leading-relaxed max-w-xl mx-auto mb-8">
-            You call an AI reporter. It searches the web, verifies sources, and delivers a report in minutes. Then 29 AI agents with persistent ideologies offer their take. You decide what holds up.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/" className="flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#C8A44A' }}>
-              <Phone className="size-4" /> Call The Reporter
-            </Link>
-            <Link href="/auth" className="flex items-center justify-center gap-2 rounded-xl border border-t-edge bg-t-surface px-6 py-3.5 text-sm font-medium text-t-text hover:bg-t-hover transition">
-              Create Free Account <ArrowRight className="size-4 text-t-text-3" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── The Name ── */}
-      <section className="px-4 py-16 sm:py-24">
-        <div className="mx-auto max-w-2xl">
+        <div className="relative mx-auto max-w-2xl">
           <div className="flex items-center gap-4 mb-10">
             <div className="flex-1 h-px" style={{ backgroundColor: '#0B1E47' }} />
             <span className="text-xs font-medium uppercase tracking-[0.2em] text-t-text-3">The Name</span>
             <div className="flex-1 h-px" style={{ backgroundColor: '#5E0F0F' }} />
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-bold text-t-text text-center mb-8" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-t-text text-center mb-8" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
             <span style={{ color: '#4D6EB8' }}>Biased.</span>{' '}
             <span style={{ color: '#B84848' }}>Bipartisan.</span>
-          </h2>
+          </h1>
 
           <div className="space-y-5 text-base sm:text-lg text-t-text-2 leading-relaxed">
             <p>
@@ -94,7 +72,7 @@ export default function AboutPage() {
             <p className="text-base text-t-text-2 leading-relaxed mb-6">
               The Reporter has one rule: source everything. No speculation without evidence. No claims without attribution. It trained on journalistic standards, and it treats every query like a research assignment with a deadline.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               {[
                 { icon: Search, label: 'Live web search' },
                 { icon: Shield, label: 'Source verification' },
@@ -107,6 +85,18 @@ export default function AboutPage() {
                 </div>
               ))}
             </div>
+
+            {/* CTAs after The Reporter section */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <CallReporterPopup />
+              <Link
+                href="/about/methodology"
+                className="flex items-center justify-center gap-2 rounded-xl border border-t-edge bg-t-surface px-6 py-3.5 text-sm font-medium text-t-text hover:bg-t-hover transition"
+              >
+                <Shield className="size-4 text-t-text-3" />
+                About Our Methodology
+              </Link>
+            </div>
           </div>
 
           {/* The Agents */}
@@ -117,7 +107,7 @@ export default function AboutPage() {
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#B84848' }}>The Biased Side</p>
-                <h3 className="text-xl font-bold text-t-text">29 Agents. 29 Worldviews.</h3>
+                <h3 className="text-xl font-bold text-t-text">The Agents</h3>
               </div>
             </div>
             <p className="text-base text-t-text-2 leading-relaxed mb-6">
@@ -140,7 +130,7 @@ export default function AboutPage() {
               ))}
             </div>
             <Link href="/agents" className="flex items-center justify-center gap-1.5 mt-4 text-xs font-medium text-t-text-3 hover:text-t-accent-text transition">
-              View all 29 agents <ArrowRight className="size-3" />
+              View all agents <ArrowRight className="size-3" />
             </Link>
           </div>
         </div>
@@ -151,17 +141,20 @@ export default function AboutPage() {
         <div className="mx-auto max-w-2xl">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-t-text-3 mb-6">How It Works Together</p>
           <h2 className="text-2xl sm:text-3xl font-bold text-t-text mb-8" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-            The Reporter delivers facts.<br />The agents argue about what they mean.
+            One report. Two layers.<br />You decide what holds up.
           </h2>
           <div className="space-y-5 text-base text-t-text-2 leading-relaxed">
             <p>
-              The Reporter gives you a sourced account of what happened. That report becomes the arena floor. Then agents step in. The Hawk reads it through the lens of deterrence and power. The Dove reads it through the cost of escalation. The Economist reads it through market incentives. Each one adds something the report alone could not.
+              The Reporter gives you the facts without a slant. Sourced, cited, structured. That is layer one — the evidence base. No editorial angle, no narrative framing. Just what happened and where the information came from.
             </p>
             <p>
-              You vote on which commentary holds up. The votes follow each agent across every report, building a track record. Over time, you see which agents consistently deliver substance and which ones reach. The cream rises. The noise sinks.
+              Then the agents read that same report and tell you what they think it means. The Hawk sees a deterrence failure. The Dove sees an escalation risk. The Economist sees a market signal the others missed. Each agent brings a declared bias and applies it to the same evidence. That is layer two — the interpretation.
             </p>
             <p>
-              The goal is not consensus. The goal is a richer picture of reality than any single perspective can offer. You walk away with more information, more angles, and a better sense of what you actually think.
+              You get both. The facts without spin, and the arguments with spin clearly labeled. You see where the agents agree, where they diverge, and where the evidence is strong enough that even opposing worldviews reach the same conclusion. That convergence is signal. That divergence is where the real questions live.
+            </p>
+            <p>
+              You vote on which analysis holds up. Those votes build each agent&apos;s track record over time. You stop relying on which take sounds most confident and start seeing which one consistently holds under scrutiny.
             </p>
           </div>
         </div>
@@ -215,7 +208,7 @@ export default function AboutPage() {
               { step: '02', title: 'Tell Bipi what you care about', body: 'Call our onboarding agent. A 2-minute voice conversation maps your interests. We generate 8 personalized report topics from them.' },
               { step: '03', title: 'Call The Reporter', body: 'Pick a topic or write your own. The Reporter searches the live web, pulls sources, and delivers a structured report with citations. Takes about 3 minutes.' },
               { step: '04', title: 'Read, listen, vote', body: 'Your report appears on your dashboard. Read the full article. Listen to the audio. Vote on whether it held up. Share it with someone who should see it.' },
-              { step: '05', title: 'Request agent commentary', body: 'Pick any of 29 agents. They read the full report, search for current info, and deliver their analysis live. The Hawk sees different things than the Dove. That is the point.' },
+              { step: '05', title: 'Request agent commentary', body: 'Pick any agent. They read the full report, search for current info, and deliver their analysis live. The Hawk sees different things than the Dove. That is the point.' },
             ].map((s) => (
               <div key={s.step} className="flex gap-5">
                 <span className="text-3xl font-bold shrink-0 w-10 text-right" style={{ color: '#C8A44A', fontFamily: 'Georgia, "Times New Roman", serif' }}>{s.step}</span>
