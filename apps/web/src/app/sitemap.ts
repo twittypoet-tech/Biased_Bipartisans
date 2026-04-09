@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next'
 export const dynamic = 'force-dynamic'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://biasedbipartisans.com'
+  const baseUrl = 'https://bipinews.com'
 
   // Import at runtime to avoid build-time env var issues
   const { createServerClient } = await import('@/lib/supabase/server')
@@ -15,8 +15,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/debates`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/agents`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/tournaments`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${baseUrl}/playlists`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.6 },
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${baseUrl}/about/mission`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/about/methodology`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${baseUrl}/commentary`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${baseUrl}/work-with-us/journalists`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
     { url: `${baseUrl}/work-with-us/organizations`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
@@ -24,10 +26,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/subscribe`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
     { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
     { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
-    { url: `${baseUrl}/auth`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
   ]
 
-  // Published reports
+  // Published news reports (with updated_at for lastModified)
+  const { data: newsReports } = await db
+    .from('news_reports')
+    .select('slug, published_at, updated_at')
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .limit(1000)
+
+  const newsPages: MetadataRoute.Sitemap = (newsReports ?? []).map((r) => ({
+    url: `${baseUrl}/news/${r.slug}`,
+    lastModified: new Date(r.updated_at ?? r.published_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.9,
+  }))
+
+  // Reporter calls
   const { data: reports } = await db
     .from('reporter_calls')
     .select('slug, created_at')
@@ -70,5 +86,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticPages, ...reportPages, ...debatePages, ...agentPages]
+  // Tournaments
+  const { data: tournaments } = await db
+    .from('tournaments')
+    .select('slug, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const tournamentPages: MetadataRoute.Sitemap = (tournaments ?? []).map((t) => ({
+    url: `${baseUrl}/tournaments/${t.slug}`,
+    lastModified: new Date(t.created_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  return [...staticPages, ...newsPages, ...reportPages, ...debatePages, ...agentPages, ...tournamentPages]
 }

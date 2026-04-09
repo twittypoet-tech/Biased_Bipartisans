@@ -1,7 +1,21 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { getTournamentBySlug, getTournamentRounds, getTournamentMatchups } from '@bipi/db'
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug, roundSegment } = await params
+  const roundNumber = parseInt(roundSegment.replace('round-', ''), 10)
+  const db = createServerClient()
+  const tournament = await getTournamentBySlug(db, slug)
+  if (!tournament) return { title: 'Round Not Found' }
+  return {
+    title: `Round ${roundNumber} — ${tournament.title}`,
+    description: `Round ${roundNumber} of the ${tournament.title} AI debate tournament on Bipi News.`,
+    alternates: { canonical: `/tournaments/${slug}/${roundSegment}` },
+  }
+}
 import type { TournamentMatchup } from '@bipi/db'
 import Link from 'next/link'
 import Image from 'next/image'

@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { getPlaylistWithDebates } from '@bipi/db'
 import { getArchetypeColor } from '@/lib/agent-colors'
@@ -32,6 +33,19 @@ const statusBadge: Record<string, string> = {
   scheduled: 'bg-blue-900/80 text-blue-200',
   ended:     'bg-zinc-700/60 text-zinc-300',
   draft:     'bg-zinc-800/60 text-zinc-500',
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const db = createServerClient()
+  const result = await getPlaylistWithDebates(db, slug)
+  if (!result) return { title: 'Playlist Not Found' }
+  return {
+    title: `${result.playlist.title} — Debate Playlist`,
+    description: result.playlist.description ?? `Watch the ${result.playlist.title} debate series on Bipi News.`,
+    alternates: { canonical: `/playlists/${slug}` },
+    openGraph: { type: 'article', title: result.playlist.title, siteName: 'Bipi News' },
+  }
 }
 
 export default async function PlaylistDetailPage({ params }: Props) {

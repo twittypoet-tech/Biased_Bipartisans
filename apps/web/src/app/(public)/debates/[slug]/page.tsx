@@ -34,13 +34,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'article',
       title,
       description,
-      siteName: 'Biased Bipartisans',
+      siteName: 'Bipi News',
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
     },
+    alternates: { canonical: `/debates/${slug}` },
   }
 }
 

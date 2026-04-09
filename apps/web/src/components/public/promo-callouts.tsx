@@ -15,7 +15,7 @@ function SponsoredCard({ children, href }: { children: React.ReactNode; href?: s
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/bipi-mark.svg" alt="" className="size-4" style={{ filter: 'brightness(0)' }} />
-          <span className="text-[10px] font-bold tracking-tight" style={{ color: 'rgba(0,0,0,0.7)' }}>Biased Bipartisans</span>
+          <span className="text-[10px] font-bold tracking-tight" style={{ color: 'rgba(0,0,0,0.7)' }}>Bipi News</span>
         </div>
         <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(0,0,0,0.4)' }}>Sponsored</span>
       </div>
@@ -40,7 +40,7 @@ export function SignUpCallout() {
 
   async function handleShare() {
     const shareData = {
-      title: 'Biased Bipartisans — AI-Powered News Reports',
+      title: 'Bipi News — The #1 Source of Biased News',
       text: 'Check out this AI news platform that generates real-time, evidence-based reports on any topic.',
       url: window.location.href,
     }
@@ -154,7 +154,7 @@ export function HomeSignUpCTA() {
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/bipi-mark.svg" alt="" className="size-4" style={{ filter: 'brightness(0)' }} />
-              <span className="text-[10px] font-bold tracking-tight" style={{ color: 'rgba(0,0,0,0.7)' }}>Biased Bipartisans</span>
+              <span className="text-[10px] font-bold tracking-tight" style={{ color: 'rgba(0,0,0,0.7)' }}>Bipi News</span>
             </div>
             <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(0,0,0,0.4)' }}>Sponsored</span>
           </div>

@@ -35,7 +35,7 @@ export async function generateUserPresets(
     messages: [
       {
         role: 'system',
-        content: `You generate detailed, instructive research prompts for a live AI news reporting agent called "The Reporter" on the Biased Bipartisans platform. The Reporter searches the web in real-time, verifies sources, and delivers comprehensive sourced news reports.
+        content: `You generate detailed, instructive research prompts for a live AI news reporting agent called "The Reporter" on the Bipi News platform. The Reporter searches the web in real-time, verifies sources, and delivers comprehensive sourced news reports.
 
 Today's date: ${today}
 

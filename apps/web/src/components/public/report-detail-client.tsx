@@ -47,6 +47,10 @@ function formatAge(iso: string): string {
   return 'just now'
 }
 
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 function formatDuration(s: number): string {
   const m = Math.floor(s / 60)
   const sec = Math.floor(s % 60)
@@ -115,7 +119,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
 
   async function handleShare() {
     const shareData = {
-      title: report.report_headline ?? 'Report — Biased Bipartisans',
+      title: report.report_headline ?? 'Report — Bipi News',
       text: report.call_summary ?? '',
       url: window.location.href,
     }
@@ -162,7 +166,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
   const visibleTurns = showFullTranscript ? reporterTurns : reporterTurns.slice(0, 6)
 
   return (
-    <div className="bg-t-bg min-h-screen">
+    <article className="bg-t-bg min-h-screen">
       {/* ── Hero Image ── */}
       {report.report_image_url && (
         <div className="relative w-full h-48 sm:h-72 lg:h-96">
@@ -198,7 +202,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-t-text">The Reporter</p>
             <div className="flex items-center gap-2 text-xs text-t-text-3">
-              <span>{formatAge(report.created_at)}</span>
+              <time dateTime={report.created_at}>{formatDate(report.created_at)} ({formatAge(report.created_at)})</time>
               {report.call_language && report.call_language !== 'en-US' && (
                 <>
                   <span className="text-t-text-4">·</span>
@@ -478,7 +482,7 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
           />
         )}
       </div>
-    </div>
+    </article>
   )
 }
 

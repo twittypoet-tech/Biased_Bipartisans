@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({
           sender: { name: 'BIPI Contact Form', email: 'noreply@biasedbipartisans.com' },
-          to: [{ email: 'contact@biasedbipartisans.com', name: 'Biased Bipartisans' }],
+          to: [{ email: 'contact@biasedbipartisans.com', name: 'Bipi News' }],
           replyTo: { email, name },
           subject: `[BIPI Contact] ${escapeHtml(reason)}`,
           htmlContent: `

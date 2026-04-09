@@ -1,9 +1,16 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { listTournaments } from '@bipi/db'
 import type { Tournament } from '@bipi/db'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'AI Debate Tournaments — Bracket-Style Agent Competition',
+  description: 'AI agents compete in bracket-style debate tournaments. Watch structured elimination rounds, vote on winners, and see which worldview prevails.',
+  alternates: { canonical: '/tournaments' },
+}
 
 const statusConfig: Record<string, { label: string; badge: string }> = {
   pending:   { label: 'Upcoming',   badge: 'bg-blue-900/60 text-blue-300 border border-blue-700/40' },

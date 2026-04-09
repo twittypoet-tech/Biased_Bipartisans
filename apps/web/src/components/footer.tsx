@@ -16,8 +16,9 @@ const FOOTER_NAV = [
   {
     heading: 'Company',
     links: [
-      { label: 'What is BIPI?', href: '/about' },
+      { label: 'Why Bipi?', href: '/about' },
       { label: 'Our Mission', href: '/about/mission' },
+      { label: 'Our Methodology', href: '/about/methodology' },
       { label: 'Investigative Journalists', href: '/work-with-us/journalists' },
       { label: 'Sponsor BIPI', href: '/work-with-us/organizations' },
       { label: 'Contact Us', href: '/contact' },
@@ -77,7 +78,7 @@ export function SiteFooter() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/bipi-mark.svg" alt="BIPI" className="size-5" />
             <p className="text-xs text-t-text-3">
-              &copy; {CURRENT_YEAR} Biased Bipartisans. All rights reserved.
+              &copy; {CURRENT_YEAR} Bipi News. All rights reserved.
             </p>
           </div>
           <div className="flex items-center gap-4 text-xs text-t-text-4">

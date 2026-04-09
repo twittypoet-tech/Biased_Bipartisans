@@ -21,7 +21,7 @@ const menuGroups = [
   {
     label: 'About Us',
     items: [
-      { label: 'What is Biased Bipartisans?', href: '/about', icon: HelpCircle },
+      { label: 'Why Bipi?', href: '/about', icon: HelpCircle },
       { label: 'Our Mission: Think Further', href: '/about/mission', icon: Target },
     ],
   },
@@ -83,7 +83,7 @@ export function HamburgerMenu() {
               <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-lg font-bold text-t-text tracking-tight">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/bipi-mark.svg" alt="BIPI" className="size-7" />
-                Biased Bipartisans
+                Bipi News
               </Link>
               <button
                 onClick={() => setIsOpen(false)}

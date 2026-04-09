@@ -4,7 +4,8 @@ import { ArrowRight } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Our Mission: Think Further',
-  description: 'Truth is a direction you move toward, not a place you arrive. Biased Bipartisans exists to give you better tools for getting there.',
+  description: 'Truth is a direction you move toward, not a place you arrive. Bipi News uses evidence-based AI agents with declared biases to give you multiple sourced perspectives on every story.',
+  alternates: { canonical: '/about/mission' },
 }
 
 export default function MissionPage() {
@@ -150,7 +151,7 @@ export default function MissionPage() {
             </Link>
           </div>
           <Link href="/about" className="inline-block mt-6 text-xs text-t-text-3 hover:text-t-text-2 transition">
-            ← Back to What is Biased Bipartisans?
+            ← Back to Why Bipi?
           </Link>
         </div>
       </section>

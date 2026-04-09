@@ -117,7 +117,7 @@ function AuthPageInner() {
       {/* Header */}
       <header className="border-b border-t-edge py-4 px-4">
         <Link href="/" className="text-lg font-bold tracking-tight text-t-text">
-          Biased Bipartisans
+          Bipi News
         </Link>
       </header>
 
@@ -129,7 +129,7 @@ function AuthPageInner() {
             <>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-t-text mb-2">
-                  Sign in to Biased Bipartisans
+                  Sign in to Bipi News
                 </h1>
                 <p className="text-sm text-t-text-2">
                   Enter your email. We&apos;ll send a 6-digit code. New accounts are created automatically.

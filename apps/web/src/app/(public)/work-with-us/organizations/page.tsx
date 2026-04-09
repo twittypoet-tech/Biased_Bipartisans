@@ -4,7 +4,8 @@ import { ArrowRight, BarChart3, Users, Globe, Shield, Mic, Vote } from 'lucide-r
 
 export const metadata: Metadata = {
   title: 'Sponsor BIPI — Companies & Organizations',
-  description: 'Reach an audience that reads, thinks, and engages. Sponsor Biased Bipartisans and put your brand in front of people who pay attention.',
+  description: 'Reach an audience that reads, thinks, and engages. Sponsor Bipi News and put your brand in front of people who pay attention.',
+  alternates: { canonical: '/work-with-us/organizations' },
 }
 
 const AUDIENCE_STATS = [

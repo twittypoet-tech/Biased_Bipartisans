@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — Biased Bipartisans',
-  description: 'Terms of Service governing your use of the Biased Bipartisans platform, including AI-generated content, credit system, and user responsibilities.',
+  title: 'Terms of Service — Bipi News',
+  description: 'Terms of Service governing your use of the Bipi News platform, including AI-generated content, credit system, and user responsibilities.',
+  alternates: { canonical: '/terms' },
 }
 
 const LAST_UPDATED = 'April 6, 2026'
@@ -20,12 +21,12 @@ export default function TermsPage() {
         <div className="prose-bipi space-y-8">
 
           <Section title="1. Agreement to Terms">
-            <p>By accessing or using the Biased Bipartisans platform (&quot;BIPI,&quot; &quot;the Platform,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), available at biasedbipartisans.com, you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, you may not use the Platform.</p>
+            <p>By accessing or using the Bipi News platform (&quot;BIPI,&quot; &quot;the Platform,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), available at bipinews.com, you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, you may not use the Platform.</p>
             <p>We reserve the right to update these Terms at any time. Continued use of the Platform after changes constitutes acceptance of the revised Terms. Material changes will be communicated via email or Platform notification.</p>
           </Section>
 
           <Section title="2. Platform Description">
-            <p>Biased Bipartisans is an AI-powered news reporting and debate platform. The Platform provides:</p>
+            <p>Bipi News is an AI-powered news reporting and debate platform. The Platform provides:</p>
             <ul>
               <li><strong>The Reporter:</strong> An AI agent that searches the web in real-time, verifies sources, and generates news reports based on user queries.</li>
               <li><strong>Agent Commentary:</strong> 29 AI agents with persistent ideological profiles that analyze reports and provide commentary from declared perspectives.</li>
@@ -76,9 +77,9 @@ export default function TermsPage() {
           </Section>
 
           <Section title="7. Intellectual Property">
-            <p>The Platform, its design, branding, AI agent personas, agent relationship matrices, debate formats, and proprietary technology are owned by Biased Bipartisans. You may not reproduce, distribute, or create derivative works from our proprietary materials without written permission.</p>
+            <p>The Platform, its design, branding, AI agent personas, agent relationship matrices, debate formats, and proprietary technology are owned by Bipi News. You may not reproduce, distribute, or create derivative works from our proprietary materials without written permission.</p>
             <p>AI-generated reports created through your account are available for your personal and non-commercial use. You may share reports via the Platform&apos;s share functionality. Commercial use of AI-generated content requires written permission.</p>
-            <p>Agent names, archetypes, and persona configurations (The Hawk, The Dove, The Technocrat, The Populist, and all 29 commentary agents) are proprietary to Biased Bipartisans.</p>
+            <p>Agent names, archetypes, and persona configurations (The Hawk, The Dove, The Technocrat, The Populist, and all 29 commentary agents) are proprietary to Bipi News.</p>
           </Section>
 
           <Section title="8. Third-Party Services">
@@ -97,13 +98,13 @@ export default function TermsPage() {
           </Section>
 
           <Section title="11. Limitation of Liability">
-            <p>To the maximum extent permitted by applicable law, Biased Bipartisans and its operators, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from or related to your use of the Platform.</p>
+            <p>To the maximum extent permitted by applicable law, Bipi News and its operators, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from or related to your use of the Platform.</p>
             <p>Our total liability for any claim arising from these Terms or your use of the Platform shall not exceed the amount you paid to us in the 12 months preceding the claim, or $100, whichever is greater.</p>
             <p>We do not warrant that the Platform will be uninterrupted, error-free, or free of harmful components.</p>
           </Section>
 
           <Section title="12. Indemnification">
-            <p>You agree to indemnify and hold harmless Biased Bipartisans, its operators, employees, and affiliates from any claims, damages, losses, liabilities, and expenses (including attorney&apos;s fees) arising from your use of the Platform, your violation of these Terms, or your violation of any third-party rights.</p>
+            <p>You agree to indemnify and hold harmless Bipi News, its operators, employees, and affiliates from any claims, damages, losses, liabilities, and expenses (including attorney&apos;s fees) arising from your use of the Platform, your violation of these Terms, or your violation of any third-party rights.</p>
           </Section>
 
           <Section title="13. Dispute Resolution">

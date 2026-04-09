@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!report) return { title: 'Article Not Found' }
 
   const title = report.headline
-  const description = report.summary ?? 'AI-generated news article by Biased Bipartisans'
+  const description = report.summary ?? 'AI-generated news article by Bipi News'
 
   return {
     title,
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'article',
       title,
       description,
-      siteName: 'Biased Bipartisans',
+      siteName: 'Bipi News',
       locale: 'en_US',
       publishedTime: report.published_at ?? report.created_at,
       ...(report.hero_image_url ? { images: [{ url: report.hero_image_url, width: 1200, height: 630 }] } : {}),
@@ -39,6 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       ...(report.hero_image_url ? { images: [report.hero_image_url] } : {}),
     },
+    alternates: { canonical: `/news/${slug}` },
   }
 }
 
@@ -88,7 +89,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
 
   // JSON-LD structured data
   const bodyText = report.body.filter((b) => b.content).map((b) => b.content).join(' ')
-  const reportUrl = `https://biasedbipartisans.com/news/${report.slug}`
+  const reportUrl = `https://bipinews.com/news/${report.slug}`
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
@@ -99,23 +100,29 @@ export default async function NewsArticlePage({ params }: PageProps) {
     wordCount: Math.round(bodyText.length / 5),
     url: reportUrl,
     datePublished: report.published_at ?? report.created_at,
+    dateModified: report.updated_at ?? report.published_at ?? report.created_at,
     author: authorAgent
-      ? { '@type': 'Person', name: authorAgent.name, url: `https://biasedbipartisans.com/agents/${authorAgent.slug}` }
-      : { '@type': 'Organization', name: 'Biased Bipartisans', url: 'https://biasedbipartisans.com' },
+      ? { '@type': 'Person', name: authorAgent.name, url: `https://bipinews.com/agents/${authorAgent.slug}` }
+      : { '@type': 'Organization', name: 'Bipi News', url: 'https://bipinews.com' },
     publisher: {
       '@type': 'Organization',
-      name: 'Biased Bipartisans',
-      logo: { '@type': 'ImageObject', url: 'https://biasedbipartisans.com/bipi-logo-banner.svg' },
+      name: 'Bipi News',
+      logo: { '@type': 'ImageObject', url: 'https://bipinews.com/bipi-logo-banner.svg' },
     },
     ...(report.hero_image_url ? { image: report.hero_image_url } : {}),
     mainEntityOfPage: reportUrl,
+    isBasedOn: (report.sources ?? []).filter((s: { url?: string }) => s.url).map((s: { url?: string; label?: string }) => ({
+      '@type': 'WebPage',
+      url: s.url,
+      name: s.label ?? s.url,
+    })),
   }
 
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biasedbipartisans.com' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://bipinews.com' },
       { '@type': 'ListItem', position: 2, name: report.category, item: reportUrl },
       { '@type': 'ListItem', position: 3, name: report.headline },
     ],

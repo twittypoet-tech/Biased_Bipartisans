@@ -2,6 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // Markdown mirror: rewrite /news/slug.md or /reports/slug.md → /api/md/...
+  const pathname = request.nextUrl.pathname
+  if (pathname.endsWith('.md') && (pathname.startsWith('/news/') || pathname.startsWith('/reports/') || pathname.startsWith('/agents/'))) {
+    const basePath = pathname.slice(0, -3) // strip .md
+    return NextResponse.rewrite(new URL(`/api/md${basePath}`, request.url))
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(

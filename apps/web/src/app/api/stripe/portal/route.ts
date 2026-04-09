@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No billing account found' }, { status: 400 })
   }
 
-  const origin = request.headers.get('origin') ?? 'https://biasedbipartisans.com'
+  const origin = request.headers.get('origin') ?? 'https://bipinews.com'
 
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,

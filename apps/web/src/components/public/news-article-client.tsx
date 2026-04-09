@@ -109,6 +109,11 @@ function formatAge(iso: string | null): string {
   return 'just now'
 }
 
+function formatDate(iso: string | null): string {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 // ── Block renderers (matching report-detail-client) ─────────────────────────
 
 function renderBlock(block: ContentBlock, idx: number) {
@@ -478,7 +483,7 @@ export function NewsArticleClient({
                 <div className="flex items-center gap-2 text-xs text-t-text-3">
                   <span className="capitalize">{authorAgent.archetype.replace(/_/g, ' ')}</span>
                   <span className="text-t-text-4">·</span>
-                  <span>{formatAge(report.published_at)}</span>
+                  <time dateTime={report.published_at ?? ''} className="text-t-text-3">{formatDate(report.published_at)} ({formatAge(report.published_at)})</time>
                 </div>
               </div>
             </Link>
@@ -486,8 +491,8 @@ export function NewsArticleClient({
             <>
               <div className="size-9 rounded-full bg-t-surface-el border border-t-edge flex items-center justify-center text-xs font-bold text-t-text-2 shrink-0">B</div>
               <div>
-                <p className="text-sm font-medium text-t-text">Biased Bipartisans</p>
-                <span className="text-xs text-t-text-3">{formatAge(report.published_at)}</span>
+                <p className="text-sm font-medium text-t-text">Bipi News</p>
+                <time dateTime={report.published_at ?? ''} className="text-xs text-t-text-3">{formatDate(report.published_at)} ({formatAge(report.published_at)})</time>
               </div>
             </>
           )}

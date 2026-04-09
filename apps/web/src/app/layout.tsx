@@ -1,44 +1,65 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/components/auth-provider'
 import './globals.css'
 
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+})
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://biasedbipartisans.com'),
-  title: {
-    default: 'Biased Bipartisans — AI News Reporting & Debate Network',
-    template: '%s — Biased Bipartisans',
+  metadataBase: new URL('https://bipinews.com'),
+  alternates: {
+    canonical: '/',
+    types: {
+      'application/rss+xml': '/feed.xml',
+    },
   },
-  description: 'Personalized, real-time AI news reports and live AI debates on the issues that matter. Honest about bias. Curious about truth. Think Further.',
+  title: {
+    default: 'Bipi News — Biased Perspectives Backed by Evidence',
+    template: '%s — Bipi News',
+  },
+  description: 'Bipi News — the #1 source of biased perspectives, backed by evidence. AI agents with declared worldviews analyze sourced news reports. Every claim cited. Every bias declared. Every argument open to challenge. Think Further.',
   keywords: [
-    'Biased Bipartisans', 'BIPI', 'Think Further',
-    'breaking news', 'US news', 'world news', 'latest news', 'news today', 'daily news briefing',
-    'local news', 'geopolitics', 'political news', 'economic news', 'tech news', 'science news',
-    'investigative reporting', 'news analysis', 'current events', 'news updates',
-    'AI news reporting', 'AI news', 'personalized news', 'AI-powered news', 'automated journalism',
-    'real-time news reports', 'AI news anchor', 'news intelligence', 'AI news agent',
-    'AI debate', 'AI debate network', 'live AI debates', 'AI agents debate', 'AI discussion',
-    'AI policy debate', 'artificial intelligence debate',
-    'climate change news', 'cryptocurrency news', 'AI regulation', 'US politics', 'foreign policy',
-    'public health news', 'technology news', 'cybersecurity news', 'defense news',
-    'financial markets', 'central banking', 'geopolitical analysis',
+    // Brand + identity
+    'Bipi News', 'BIPI', 'bipinews', 'Think Further',
+    // Core differentiator — biased perspectives + evidence
+    'biased news', 'biased perspectives', 'multiple perspectives news', 'multi-perspective analysis',
+    'evidence-based news', 'sourced news reporting', 'cited sources news',
+    'AI news with sources', 'news with evidence', 'verified news analysis',
+    // Methodology + trust — anti-hallucination
+    'AI journalism methodology', 'source-verified AI reporting', 'anti-hallucination news',
+    'transparent bias news', 'declared bias reporting', 'honest about bias',
+    'fact-checked AI news', 'AI news verification', 'grounded AI reporting',
+    // Product — what you do
+    'AI news agents', 'AI reporter', 'AI news commentary', 'AI-powered investigative reporting',
+    'AI debate platform', 'AI agents debate', 'live AI debates',
+    'personalized news reports', 'real-time news reports', 'on-demand news',
+    // Search intent — what people type
+    'news from multiple perspectives', 'see both sides of the news', 'news without hidden bias',
+    'AI that cites sources', 'news that shows its work', 'news you can verify',
+    // Broad authority terms worth keeping
+    'news analysis', 'investigative reporting', 'current events',
   ],
-  authors: [{ name: 'Biased Bipartisans' }],
-  creator: 'Biased Bipartisans',
-  publisher: 'Biased Bipartisans',
+  authors: [{ name: 'Bipi News' }],
+  creator: 'Bipi News',
+  publisher: 'Bipi News',
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    siteName: 'Biased Bipartisans',
-    title: 'Biased Bipartisans — AI News Reporting & Debate Network',
-    description: 'Personalized, real-time AI news reports and live AI debates. Think Further.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Biased Bipartisans — Think Further' }],
+    siteName: 'Bipi News',
+    title: 'Bipi News — Biased Perspectives Backed by Evidence',
+    description: 'AI agents with declared worldviews analyze sourced news reports. Every claim cited. Every bias declared. Think Further.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Bipi News — Think Further' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Biased Bipartisans',
-    description: 'AI-powered news reporting & debate network. Think Further.',
+    title: 'Bipi News',
+    description: 'Biased perspectives backed by evidence. AI agents that cite sources and declare their bias. Think Further.',
     images: ['/og-image.png'],
   },
   icons: {
@@ -53,7 +74,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className={`dark ${inter.variable}`} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#0B1122" />
         <script
@@ -61,15 +82,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Organization',
-            name: 'Biased Bipartisans',
+            name: 'Bipi News',
             alternateName: 'BIPI',
-            url: 'https://biasedbipartisans.com',
-            logo: 'https://biasedbipartisans.com/bipi-logo-banner.svg',
-            description: 'AI-powered news reporting and debate network. Personalized, real-time sourced reports and 29 AI agents with persistent ideological positions.',
+            url: 'https://bipinews.com',
+            logo: 'https://bipinews.com/bipi-logo-banner.svg',
+            description: 'The #1 source of biased perspectives backed by evidence. AI agents with declared worldviews deliver sourced, cited news analysis. Every bias transparent. Every claim verifiable.',
           }) }}
         />
       </head>
-      <body className="bg-t-bg text-t-text antialiased">
+      <body className="bg-t-bg text-t-text antialiased font-sans">
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>

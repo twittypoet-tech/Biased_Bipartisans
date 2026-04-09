@@ -1,4 +1,4 @@
-# Biased Bipartisans — Brand Guide
+# Bipi News — Brand Guide
 
 ## Brand Files
 
@@ -39,7 +39,7 @@
 <meta name="theme-color" content="#0B1122">
 
 <!-- Open Graph -->
-<meta property="og:title" content="Biased Bipartisans">
+<meta property="og:title" content="Bipi News">
 <meta property="og:description" content="AI-powered debate platform. Think Further.">
 <meta property="og:image" content="https://yourdomain.com/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -49,7 +49,7 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://yourdomain.com/og-image.png">
-<meta name="twitter:title" content="Biased Bipartisans">
+<meta name="twitter:title" content="Bipi News">
 <meta name="twitter:description" content="AI-powered debate platform. Think Further.">
 ```
 

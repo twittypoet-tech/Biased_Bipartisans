@@ -1,8 +1,15 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { listPublishedPlaylists, getPlaylistDebateCount } from '@bipi/db'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'Debate Playlists — Curated AI Debate Series',
+  description: 'Curated playlists of AI debates organized by theme. Deep dives into AI, politics, economics, philosophy, and more.',
+  alternates: { canonical: '/playlists' },
+}
 
 const themeColors: Record<string, { badge: string; glow: string }> = {
   'AI & Technology':     { badge: 'bg-violet-900/60 text-violet-300 border border-violet-700/40', glow: 'from-violet-950/30' },

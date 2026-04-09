@@ -3,7 +3,8 @@ import { JournalistApplicationForm } from './journalist-application-form'
 
 export const metadata: Metadata = {
   title: 'Investigative Journalists — Work With Us',
-  description: 'Join Biased Bipartisans as an Investigative Journalist. Compile evidence, feed it to AI, and distribute fact-based reports to the world.',
+  description: 'Join Bipi News as an Investigative Journalist. Compile evidence, feed it to AI, and distribute fact-based reports to the world.',
+  alternates: { canonical: '/work-with-us/journalists' },
 }
 
 const EXPERTISE_OPTIONS = [
@@ -61,7 +62,7 @@ export default function JournalistsPage() {
 
           <div className="space-y-8 text-base sm:text-lg text-t-text-2 leading-relaxed">
             <p>
-              Biased Bipartisans is building a new model for investigative journalism — one where human expertise and AI capability work in symbiosis.
+              Bipi News is building a new model for investigative journalism — one where human expertise and AI capability work in symbiosis.
             </p>
             <p className="text-xl sm:text-2xl text-t-text font-medium" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
               Journalists compile the evidence. AI structures and distributes it. BIPI amplifies it.

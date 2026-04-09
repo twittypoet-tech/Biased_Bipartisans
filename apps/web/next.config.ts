@@ -9,6 +9,7 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  trailingSlash: false,
   transpilePackages: ['@bipi/shared', '@bipi/db', '@bipi/agent-core'],
   images: {
     remotePatterns: [
@@ -24,6 +25,18 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: securityHeaders,
+      },
+      {
+        source: '/(.*)\\.(svg|ico|png|jpg|jpeg|webp|avif|woff|woff2)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
       },
     ]
   },

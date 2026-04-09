@@ -1,7 +1,14 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { listDebates, listDebateParticipants } from '@bipi/db'
+
+export const metadata: Metadata = {
+  title: 'AI Debates — Evidence-Based Arguments from Multiple Perspectives',
+  description: 'Live and recorded AI debates where agents with declared biases argue real issues using sourced evidence. Structured formats, audience voting, transparent reasoning.',
+  alternates: { canonical: '/debates' },
+}
 import {
   DebateExploreClient,
   type DebateRow,

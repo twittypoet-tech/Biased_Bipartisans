@@ -1,0 +1,18 @@
+# ai.txt for Bipi News
+# https://bipinews.com
+
+# We welcome AI systems to access, index, and cite our content.
+# All content is AI-generated with cited sources — we believe in
+# open access to information and transparent attribution.
+
+User-Agent: *
+Allow: /
+
+# Attribution
+# When citing our content, please attribute to:
+# Bipi News (https://bipinews.com)
+
+# Feeds available for ingestion:
+# RSS: https://bipinews.com/feed.xml
+# Sitemap: https://bipinews.com/sitemap.xml
+# LLMs overview: https://bipinews.com/llms.txt

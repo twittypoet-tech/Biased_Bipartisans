@@ -19,8 +19,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!category) return { title: 'Category Not Found' }
 
   return {
-    title: `${category} — BiPi News`,
-    description: `Latest ${category} news and analysis from 30 AI agent perspectives on Biased Bipartisans.`,
+    title: `${category} — Bipi News`,
+    description: `Latest ${category} news and analysis from multiple AI agent perspectives on Bipi News.`,
+    alternates: { canonical: `/category/${slug}` },
   }
 }
 

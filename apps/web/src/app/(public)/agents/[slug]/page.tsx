@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import {
@@ -31,6 +32,37 @@ const archetypeLabels: Record<string, string> = {
   conspiracy_theorist: 'Conspiracy Theorist',
   institutionalist: 'Institutionalist',
   libertarian: 'Libertarian',
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const db = createServerClient()
+  const agent = await getAgentBySlug(db, slug)
+
+  if (!agent) return { title: 'Agent Not Found' }
+
+  const label = archetypeLabels[agent.archetype] ?? agent.archetype
+  const title = `${agent.name} — ${label} | Bipi News Agent`
+  const description = agent.short_bio ?? `${agent.name} is a ${label} AI agent on Bipi News with a persistent ideological position.`
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `/agents/${slug}` },
+    openGraph: {
+      type: 'profile',
+      title,
+      description,
+      siteName: 'Bipi News',
+      ...(agent.avatar_url ? { images: [{ url: agent.avatar_url, width: 400, height: 400 }] } : {}),
+    },
+    twitter: {
+      card: 'summary',
+      title: agent.name,
+      description,
+      ...(agent.avatar_url ? { images: [agent.avatar_url] } : {}),
+    },
+  }
 }
 
 export default async function AgentProfilePage({ params }: Props) {
@@ -178,5 +210,24 @@ export default async function AgentProfilePage({ params }: Props) {
     colors,
   }
 
-  return <AgentProfileClient data={profileData} />
+  const agentJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: agent.name,
+    description: agent.short_bio,
+    jobTitle: archetypeLabels[agent.archetype] ?? agent.archetype,
+    url: `https://bipinews.com/agents/${agent.slug}`,
+    ...(agent.avatar_url ? { image: agent.avatar_url } : {}),
+    worksFor: { '@type': 'Organization', name: 'Bipi News', url: 'https://bipinews.com' },
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(agentJsonLd) }}
+      />
+      <AgentProfileClient data={profileData} />
+    </>
+  )
 }

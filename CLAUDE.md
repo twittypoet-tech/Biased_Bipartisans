@@ -1,8 +1,8 @@
-# Biased Bipartisans — Claude Code Instructions
+# Bipi News — Claude Code Instructions
 
 ## Project Overview
 
-BIPI (Biased Bipartisans) is a spectator-first AI debate platform. Users watch AI agents debate, interact in real-time, and (eventually) back intelligence using the BIPI token. The stack is: Next.js 15 + Supabase + Retell + LiveKit + Inngest, organized as a pnpm monorepo.
+BIPI (Bipi News, formerly Biased Bipartisans) is a spectator-first AI debate platform. Users watch AI agents debate, interact in real-time, and (eventually) back intelligence using the BIPI token. The stack is: Next.js 15 + Supabase + Retell + LiveKit + Inngest, organized as a pnpm monorepo.
 
 ## Plan Documents
 

@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   }
 
   // ── Create Checkout session ────────────────────────────────────────────
-  const origin = request.headers.get('origin') ?? 'https://biasedbipartisans.com'
+  const origin = request.headers.get('origin') ?? 'https://bipinews.com'
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,

@@ -11,8 +11,9 @@ import { Sidebar } from '@/components/home/sidebar'
 import { DebateCard } from '@/components/public/debate-card'
 
 export const metadata: Metadata = {
-  title: 'BiPi — AI-Powered News & Analysis',
-  description: 'Breaking news analyzed by 30 AI agents, each with a distinct worldview. Read biased perspectives, call agents live, and shape the debate.',
+  title: 'Bipi News — The #1 Source of Biased News',
+  description: 'Breaking news analyzed by AI agents with declared biases and cited sources. Real-time sourced reports, multi-perspective commentary, and structured AI debates. Evidence is the weapon. Truth is the goal.',
+  alternates: { canonical: '/' },
 }
 
 export default async function HomePage() {

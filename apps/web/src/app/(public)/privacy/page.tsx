@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — Biased Bipartisans',
-  description: 'How Biased Bipartisans collects, uses, stores, and protects your personal information.',
+  title: 'Privacy Policy — Bipi News',
+  description: 'How Bipi News collects, uses, stores, and protects your personal information.',
+  alternates: { canonical: '/privacy' },
 }
 
 const LAST_UPDATED = 'April 6, 2026'

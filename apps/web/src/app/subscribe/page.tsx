@@ -84,7 +84,7 @@ function SubscribePage() {
       {/* Header */}
       <header className="border-b border-t-edge py-4 px-4">
         <div className="mx-auto max-w-4xl flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold tracking-tight text-t-text">Biased Bipartisans</Link>
+          <Link href="/" className="text-lg font-bold tracking-tight text-t-text">Bipi News</Link>
           {!user && (
             <Link href="/auth" className="text-sm text-t-text-2 hover:text-t-text transition">Sign in</Link>
           )}

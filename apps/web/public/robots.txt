@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://biasedbipartisans.com/sitemap.xml
+Sitemap: https://bipinews.com/sitemap.xml
+Sitemap: https://bipinews.com/news-sitemap.xml

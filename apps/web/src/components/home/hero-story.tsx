@@ -79,7 +79,7 @@ export function HeroStory({ report, authorAgent }: HeroStoryProps) {
                   <span className="text-xs font-medium text-t-text-2">{authorAgent.name}</span>
                 </>
               ) : (
-                <span className="text-xs font-medium text-t-text-3">Biased Bipartisans</span>
+                <span className="text-xs font-medium text-t-text-3">Bipi News</span>
               )}
               <span className="size-1 rounded-full bg-t-text-4" />
               <span className="text-xs text-t-text-3">{formatAge(report.published_at)}</span>

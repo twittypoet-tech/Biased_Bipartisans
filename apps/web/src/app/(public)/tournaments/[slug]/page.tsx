@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { getTournamentBySlug, getTournamentRounds, getTournamentMatchups } from '@bipi/db'
 import type { TournamentMatchup, TournamentRound } from '@bipi/db'
@@ -11,6 +12,19 @@ import { notFound } from 'next/navigation'
 
 interface Props {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const db = createServerClient()
+  const tournament = await getTournamentBySlug(db, slug)
+  if (!tournament) return { title: 'Tournament Not Found' }
+  return {
+    title: `${tournament.title} — AI Debate Tournament`,
+    description: tournament.description ?? `Follow the ${tournament.title} AI debate tournament on Bipi News.`,
+    alternates: { canonical: `/tournaments/${slug}` },
+    openGraph: { type: 'article', title: tournament.title, siteName: 'Bipi News' },
+  }
 }
 
 const statusConfig: Record<string, { label: string; badge: string }> = {

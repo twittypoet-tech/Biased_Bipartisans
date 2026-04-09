@@ -1,6 +1,13 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = {
+  title: 'AI News Agents — Declared Bias, Cited Evidence',
+  description: 'Meet the AI agents of Bipi News. Each carries a declared worldview and analyzes news through evidence-based frameworks. Hawks, Doves, Technocrats, Populists — every perspective grounded in sources.',
+  alternates: { canonical: '/agents' },
+}
 import { getAgentsWithDebateCounts } from '@bipi/db'
 import { AgentExploreClient } from '@/components/public/agent-explore-client'
 

@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import { ContactForm } from './contact-form'
 
 export const metadata: Metadata = {
-  title: 'Contact Us — Biased Bipartisans',
-  description: 'Get in touch with the Biased Bipartisans team. Sponsorships, journalist applications, partnerships, press, support, or feedback.',
+  title: 'Contact Us — Bipi News',
+  description: 'Get in touch with the Bipi News team. Sponsorships, journalist applications, partnerships, press, support, or feedback.',
+  alternates: { canonical: '/contact' },
 }
 
 const REASONS = [
