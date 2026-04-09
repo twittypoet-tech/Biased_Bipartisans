@@ -277,6 +277,15 @@ Insert the article into Supabase via MCP `execute_sql` using an INSERT statement
 
 After insertion, report the slug so the user can verify at `/news/{slug}`.
 
+**IndexNow ping**: After inserting articles, ping IndexNow to get instant Bing/Yandex indexing. Use Bash to call:
+```bash
+curl -s -X POST https://bipinews.com/api/indexnow \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: $INTERNAL_API_KEY" \
+  -d '{"slugs": ["slug-1", "slug-2"]}'
+```
+Replace the slugs array with the actual slugs of the articles just inserted. This is best-effort — if it fails, the articles will still be indexed via sitemap within hours.
+
 ## Multi-Perspective Batch Mode
 
 When generating multiple articles on the same story from different agents:
