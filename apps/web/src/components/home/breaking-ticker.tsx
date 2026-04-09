@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { NewsReport } from '@bipi/shared'
 
@@ -11,25 +11,21 @@ interface BreakingTickerProps {
 export function BreakingTicker({ reports }: BreakingTickerProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [animating, setAnimating] = useState(true)
+  const [duration, setDuration] = useState(10)
 
   // Double for seamless loop
   const headlines = [...reports, ...reports]
-  const duration = Math.max(1.7, reports.length * 0.57)
 
+  // Measure actual content width and set speed-based duration
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-
-    // Reset animation when it completes a cycle
-    const handleEnd = () => {
-      el.style.animation = 'none'
-      // Force reflow
-      void el.offsetHeight
-      el.style.animation = ''
-    }
-    el.addEventListener('animationiteration', handleEnd)
-    return () => el.removeEventListener('animationiteration', handleEnd)
-  }, [])
+    // scrollWidth is the full doubled content; half is one set of headlines
+    const halfWidth = el.scrollWidth / 2
+    // Target speed: ~120px/s (fast but readable)
+    const targetDuration = Math.max(3, halfWidth / 120)
+    setDuration(targetDuration)
+  }, [reports])
 
   if (reports.length === 0) return null
 
