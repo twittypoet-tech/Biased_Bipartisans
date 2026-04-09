@@ -19,7 +19,9 @@ export function InAppBrowserBanner() {
 
   useEffect(() => {
     const ua = navigator.userAgent
-    if (IN_APP_UA_PATTERNS.some((p) => ua.includes(p))) {
+    const params = new URLSearchParams(window.location.search)
+    console.log('[InAppBanner] UA:', ua)
+    if (params.get('debug-iab') === 'true' || IN_APP_UA_PATTERNS.some((p) => ua.includes(p))) {
       setIsInApp(true)
     }
   }, [])
