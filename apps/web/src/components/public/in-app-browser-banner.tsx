@@ -3,6 +3,19 @@
 import { useState, useEffect } from 'react'
 import { ExternalLink, Check } from 'lucide-react'
 
+const SOCIAL_REFERRERS = [
+  'reddit.com',
+  'instagram.com',
+  'facebook.com',
+  'fb.com',
+  'linkedin.com',
+  'twitter.com',
+  'x.com',
+  't.co',
+  'tiktok.com',
+  'snapchat.com',
+]
+
 const IN_APP_UA_PATTERNS = [
   'Reddit',
   'Instagram',
@@ -13,38 +26,38 @@ const IN_APP_UA_PATTERNS = [
   'Snapchat',
 ]
 
-/**
- * iOS in-app browsers (Reddit, Instagram, etc.) use WKWebView without
- * identifying themselves in the UA string. Detect by checking:
- * - It's an iPhone/iPad (iOS)
- * - It's NOT full Safari (no "Safari/" token, or missing "Version/")
- * - It's NOT Chrome/Firefox/other known browsers
- */
-function isIOSInAppBrowser(): boolean {
-  const ua = navigator.userAgent
-  if (!(/iPhone|iPad|iPod/.test(ua))) return false
-  // Full Safari always has both "Version/" and "Safari/"
-  if (ua.includes('Version/') && ua.includes('Safari/')) return false
-  // Chrome, Firefox, etc. identify themselves
-  if (ua.includes('CriOS') || ua.includes('FxiOS') || ua.includes('EdgiOS')) return false
-  // What's left is a WKWebView in-app browser
-  return true
+function isMobile(): boolean {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+}
+
+function fromSocialApp(): boolean {
+  const ref = document.referrer.toLowerCase()
+  if (SOCIAL_REFERRERS.some((d) => ref.includes(d))) return true
+  // Also check UTM source for links tagged with ?utm_source=reddit etc
+  const params = new URLSearchParams(window.location.search)
+  const source = (params.get('utm_source') ?? '').toLowerCase()
+  return SOCIAL_REFERRERS.some((d) => source.includes(d.replace('.com', '')))
 }
 
 export function InAppBrowserBanner() {
-  const [isInApp, setIsInApp] = useState(false)
+  const [show, setShow] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const ua = navigator.userAgent
     const params = new URLSearchParams(window.location.search)
-    console.log('[InAppBanner] UA:', ua)
-    if (params.get('debug-iab') === 'true' || IN_APP_UA_PATTERNS.some((p) => ua.includes(p)) || isIOSInAppBrowser()) {
-      setIsInApp(true)
-    }
+
+    // Debug override
+    if (params.get('debug-iab') === 'true') { setShow(true); return }
+
+    // Android: UA string detection (they include app name)
+    if (IN_APP_UA_PATTERNS.some((p) => ua.includes(p))) { setShow(true); return }
+
+    // All platforms: mobile + came from a social app referrer
+    if (isMobile() && fromSocialApp()) { setShow(true); return }
   }, [])
 
-  if (!isInApp) return null
+  if (!show) return null
 
   function handleCopy() {
     navigator.clipboard.writeText(window.location.href)
