@@ -22,8 +22,8 @@ export function BreakingTicker({ reports }: BreakingTickerProps) {
     if (!el) return
     // scrollWidth is the full doubled content; half is one set of headlines
     const halfWidth = el.scrollWidth / 2
-    // Target speed: ~120px/s (fast but readable)
-    const targetDuration = Math.max(3, halfWidth / 120)
+    // Target speed: ~80px/s (smooth and readable on all screens)
+    const targetDuration = Math.max(5, halfWidth / 80)
     setDuration(targetDuration)
   }, [reports])
 
