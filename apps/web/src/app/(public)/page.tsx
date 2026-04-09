@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { createServerClient, createAuthServerClient } from '@/lib/supabase/server'
 import { listPublishedReports, getFeaturedReport, listRecentBreakingReports, listTrendingReports, listPublishedReporterCalls, listAgents, listDebates, listDebateParticipants } from '@bipi/db'
 import { BreakingTicker } from '@/components/home/breaking-ticker'
+import { GlobalSearchBar } from '@/components/home/search-bar'
 import { AgentCarousel } from '@/components/home/agent-carousel'
 import { HeroStory } from '@/components/home/hero-story'
 import { NewsGrid } from '@/components/home/news-grid'
@@ -98,6 +99,9 @@ export default async function HomePage() {
 
       {/* ── Breaking Ticker ── */}
       <BreakingTicker reports={breakingReports} />
+
+      {/* ── Global Search ── */}
+      <GlobalSearchBar />
 
       {/* ── Agent Carousel ── */}
       <AgentCarousel agents={agentOptions} recentReports={publishedReports.slice(0, 8)} />

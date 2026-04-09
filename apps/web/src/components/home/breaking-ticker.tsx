@@ -14,7 +14,7 @@ export function BreakingTicker({ reports }: BreakingTickerProps) {
 
   // Double for seamless loop
   const headlines = [...reports, ...reports]
-  const duration = Math.max(12, reports.length * 4)
+  const duration = Math.max(1.7, reports.length * 0.57)
 
   useEffect(() => {
     const el = scrollRef.current
