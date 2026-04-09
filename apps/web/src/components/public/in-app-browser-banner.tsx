@@ -13,6 +13,24 @@ const IN_APP_UA_PATTERNS = [
   'Snapchat',
 ]
 
+/**
+ * iOS in-app browsers (Reddit, Instagram, etc.) use WKWebView without
+ * identifying themselves in the UA string. Detect by checking:
+ * - It's an iPhone/iPad (iOS)
+ * - It's NOT full Safari (no "Safari/" token, or missing "Version/")
+ * - It's NOT Chrome/Firefox/other known browsers
+ */
+function isIOSInAppBrowser(): boolean {
+  const ua = navigator.userAgent
+  if (!(/iPhone|iPad|iPod/.test(ua))) return false
+  // Full Safari always has both "Version/" and "Safari/"
+  if (ua.includes('Version/') && ua.includes('Safari/')) return false
+  // Chrome, Firefox, etc. identify themselves
+  if (ua.includes('CriOS') || ua.includes('FxiOS') || ua.includes('EdgiOS')) return false
+  // What's left is a WKWebView in-app browser
+  return true
+}
+
 export function InAppBrowserBanner() {
   const [isInApp, setIsInApp] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -21,7 +39,7 @@ export function InAppBrowserBanner() {
     const ua = navigator.userAgent
     const params = new URLSearchParams(window.location.search)
     console.log('[InAppBanner] UA:', ua)
-    if (params.get('debug-iab') === 'true' || IN_APP_UA_PATTERNS.some((p) => ua.includes(p))) {
+    if (params.get('debug-iab') === 'true' || IN_APP_UA_PATTERNS.some((p) => ua.includes(p)) || isIOSInAppBrowser()) {
       setIsInApp(true)
     }
   }, [])
