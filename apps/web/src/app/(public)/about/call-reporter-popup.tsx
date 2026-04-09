@@ -19,15 +19,17 @@ export function CallReporterPopup() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
 
+          {/* Scroll container */}
+          <div className="flex min-h-full items-end sm:items-center justify-center p-0 sm:p-4">
           {/* Modal */}
-          <div className="relative w-full max-w-lg rounded-2xl border border-t-edge bg-t-bg shadow-2xl overflow-hidden">
+          <div className="relative w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-t-edge bg-t-bg shadow-2xl overflow-hidden">
 
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-t-edge">
@@ -101,6 +103,7 @@ export function CallReporterPopup() {
                 No credit card required. Reports ready in minutes.
               </p>
             </div>
+          </div>
           </div>
         </div>
       )}
