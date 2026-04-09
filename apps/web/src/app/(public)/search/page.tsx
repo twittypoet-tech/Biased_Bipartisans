@@ -45,7 +45,7 @@ export default async function SearchPage({ searchParams }: Props) {
       .from('news_reports')
       .select('slug, headline, subheadline, summary, category, hero_image_url, published_at, key_entities, agent_id')
       .eq('is_published', true)
-      .or(`key_entities.ilike.${pattern},headline.ilike.${pattern},summary.ilike.${pattern}`)
+      .or(`key_entities.ilike."${pattern}",headline.ilike."${pattern}",summary.ilike."${pattern}"`)
       .order('published_at', { ascending: false })
       .limit(50)
 
@@ -54,7 +54,7 @@ export default async function SearchPage({ searchParams }: Props) {
       .from('reporter_calls')
       .select('slug, report_headline, call_summary, report_category, report_image_url, created_at, key_entities')
       .eq('is_published', true)
-      .or(`key_entities.ilike.${pattern},report_headline.ilike.${pattern},call_summary.ilike.${pattern}`)
+      .or(`key_entities.ilike."${pattern}",report_headline.ilike."${pattern}",call_summary.ilike."${pattern}"`)
       .order('created_at', { ascending: false })
       .limit(50)
 
