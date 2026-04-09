@@ -10,7 +10,6 @@ import type { ReporterCall, ReportCommentary, ContentBlock, Callout } from '@bip
 import { NewsAudioPlayer } from './news-audio-player'
 import { useAuth } from '@/components/auth-provider'
 import { SignUpCallout, SponsoredCallout } from './promo-callouts'
-import { InAppBrowserBanner } from './in-app-browser-banner'
 import { cn } from '@/lib/utils'
 
 // ── Category badge colors ────────────────────────────────────────────────────
@@ -187,9 +186,6 @@ export function ReportDetailClient({ report, commentary: initialCommentary, agen
           <div className="mx-auto max-w-3xl">{report.report_category}</div>
         </div>
       )}
-
-      {/* ── In-App Browser Banner ── */}
-      <InAppBrowserBanner />
 
       <div className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
 

@@ -12,7 +12,6 @@ import { NewsAudioPlayer } from './news-audio-player'
 import { SignUpCallout, SponsoredCallout } from './promo-callouts'
 import { CallReporterCta } from './call-reporter-cta'
 import { NewsletterPopup } from './newsletter-popup'
-import { InAppBrowserBanner } from './in-app-browser-banner'
 import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/utils'
 
@@ -451,9 +450,6 @@ export function NewsArticleClient({
       <div className={`px-4 sm:px-6 py-2 text-[11px] font-semibold uppercase tracking-wider ${CATEGORY_BANNER[report.category] ?? 'bg-t-surface-el text-t-text-3'}`}>
         <div className="mx-auto max-w-3xl">{report.category}</div>
       </div>
-
-      {/* ── In-App Browser Banner ── */}
-      <InAppBrowserBanner />
 
       <div className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
 

@@ -5,6 +5,7 @@ import { SiteFooter } from '@/components/footer'
 import { HamburgerMenu } from '@/components/hamburger-menu'
 import { HeaderAuthButtons } from '@/components/header-auth-buttons'
 import { CategoryNav } from '@/components/category-nav'
+import { InAppBrowserBanner } from '@/components/public/in-app-browser-banner'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -37,6 +38,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
       {/* ── Tier 2: Category navigation bar ── */}
       <CategoryNav />
+
+      {/* ── In-app browser banner (Reddit, Instagram, etc.) ── */}
+      <InAppBrowserBanner />
 
       <main className="flex-1 pb-20 md:pb-0">{children}</main>
 
