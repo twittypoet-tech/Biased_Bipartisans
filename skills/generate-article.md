@@ -48,6 +48,21 @@ Read `skills/stop-slop.md`. Every sentence must pass these checks:
 - Varied rhythm. Two items beat three.
 - Trust the reader. No softening or hand-holding.
 
+### 2b. Header formatting for SEO/GEO
+
+Every article must follow this header ratio:
+- **30% interrogative** — questions people would ask a chatbot or search engine
+  - e.g., "How Did Oil Prices Drop 16% in a Single Day?"
+  - e.g., "What Does the Iran Ceasefire Mean for Energy Markets?"
+  - Mirror natural search queries and voice search phrasing
+- **70% declarative** — strong, specific factual statements
+  - e.g., "WTI Crude Posts Steepest Decline Since April 2020"
+  - e.g., "Netanyahu Rejects Ceasefire Terms for Lebanon"
+  - Use keywords, names, numbers — never vague labels like "Background" or "Analysis"
+
+For a typical article with 6-8 headers: 2 should be questions, the rest declarative.
+Place interrogative headers at natural curiosity points — after presenting a surprising fact or before explaining a mechanism.
+
 ### 3. Research the story
 
 Research uses a 3-phase protocol designed to maximize source quality and depth while minimizing redundant calls.
