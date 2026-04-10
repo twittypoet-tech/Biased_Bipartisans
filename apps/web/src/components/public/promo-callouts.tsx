@@ -1,13 +1,25 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Share2 } from 'lucide-react'
+import { ArrowRight, Phone, Share2 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { useCall } from './call-context'
+
+interface CallableAgent {
+  id: string
+  name: string
+  slug: string
+  avatar_url: string | null
+  archetype: string
+  short_bio: string
+  retell_call_agent_id: string | null
+}
 
 // ── Shared sponsored card wrapper ───────────────────────────────────────────
 
-function SponsoredCard({ children, href }: { children: React.ReactNode; href?: string }) {
+function SponsoredCard({ children, href, onClick }: { children: React.ReactNode; href?: string; onClick?: () => void }) {
   const inner = (
     <div className="my-10 rounded-xl overflow-hidden" style={{ backgroundColor: '#C8A44A' }}>
       {/* Sponsored header */}
@@ -29,13 +41,22 @@ function SponsoredCard({ children, href }: { children: React.ReactNode; href?: s
   if (href) {
     return <Link href={href} className="block group">{inner}</Link>
   }
+  if (onClick) {
+    return <button onClick={onClick} className="block group w-full text-left">{inner}</button>
+  }
   return inner
 }
 
-// ── Sign Up / Share CTA ─────────────────────────────────────────────────────
+// ── Sign Up / Share / Call Agent CTA ─────────────────────────────────────────
 
-export function SignUpCallout() {
+interface SignUpCalloutProps {
+  agent?: CallableAgent
+  reportSlug?: string
+}
+
+export function SignUpCallout({ agent, reportSlug }: SignUpCalloutProps) {
   const { user } = useAuth()
+  const call = useCall()
   const [copied, setCopied] = useState(false)
 
   async function handleShare() {
@@ -53,6 +74,7 @@ export function SignUpCallout() {
     }
   }
 
+  // ── Authenticated user: share CTA ──
   if (user) {
     return (
       <SponsoredCard>
@@ -75,6 +97,49 @@ export function SignUpCallout() {
     )
   }
 
+  // ── Anonymous + agent available: call-the-agent CTA ──
+  if (agent && agent.retell_call_agent_id && reportSlug) {
+    function handleCall() {
+      if (agent && reportSlug) call.startCall(agent, reportSlug)
+    }
+
+    return (
+      <SponsoredCard>
+        <div className="flex flex-col items-center text-center">
+          {/* Agent avatar */}
+          <div className="relative size-20 sm:size-24 rounded-full overflow-hidden mb-4 border-2 border-black/30 shrink-0">
+            {agent.avatar_url ? (
+              <Image src={agent.avatar_url} alt={agent.name} fill className="object-cover" sizes="96px" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-black/60 bg-black/10">
+                {agent.name.charAt(0)}
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/60 mb-2">
+            Talk to The Reporter
+          </p>
+          <p className="text-xl sm:text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+            {agent.name}
+          </p>
+          <p className="text-sm text-white/80 mb-5 max-w-md mx-auto leading-relaxed">
+            {agent.short_bio}
+          </p>
+          <button
+            onClick={handleCall}
+            className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold bg-white/20 text-white transition hover:bg-white/30 active:scale-[0.98]"
+          >
+            <Phone className="size-4" />
+            Call This Agent for Live Updates
+          </button>
+          <p className="mt-3 text-xs text-white/50">First call is free. 5 minutes, no sign-up required.</p>
+        </div>
+      </SponsoredCard>
+    )
+  }
+
+  // ── Fallback: signup CTA (anonymous, no agent context) ──
   return (
     <SponsoredCard href="/auth">
       <div className="text-center">
@@ -82,7 +147,7 @@ export function SignUpCallout() {
           Real-Time, Evidence-Based News Reports
         </p>
         <p className="text-sm text-white/70 mb-5 max-w-sm mx-auto leading-relaxed">
-          Unlimited access to your personalized investigative reporter agent, sourcing real-time and verified reports on any topic. Your personalized news feed starts here.
+          AI-powered investigative reports tailored to your interests. Sourced, verified, and delivered in real-time.
         </p>
         <span className="inline-flex items-center gap-2 text-sm font-semibold text-white group-hover:underline">
           Create Free Account <ArrowRight className="size-4" />
@@ -129,11 +194,11 @@ export function SponsoredCallout() {
   return (
     <SponsoredCard href="/about">
       <div className="text-center">
-        <p className="text-2xl sm:text-3xl font-bold mb-1 tracking-tight" style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#000' }}>
+        <p className="text-2xl sm:text-3xl font-bold mb-3 tracking-tight" style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#000' }}>
           Think Further on BIPI.
         </p>
-        <p className="text-base sm:text-lg mb-5" style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: 'rgba(0,0,0,0.6)' }}>
-          Where seeking the truth is a journey, not a destination.
+        <p className="text-sm sm:text-base mb-5 max-w-md mx-auto leading-relaxed" style={{ color: 'rgba(0,0,0,0.7)' }}>
+          Unlimited access to your personalized investigative reporter agent, sourcing real-time and verified reports on any topic. Your personalized news feed starts here.
         </p>
         <span className="inline-flex items-center gap-1.5 text-sm font-semibold group-hover:underline" style={{ color: '#000' }}>
           Learn more <ArrowRight className="size-3.5" />

@@ -439,7 +439,7 @@ export function NewsArticleClient({
   }
 
   const bodyNodes = buildBody(report.body, report.callouts, images, [
-    <SignUpCallout key="promo-signup" />,
+    <SignUpCallout key="promo-signup" agent={authorAgent} reportSlug={report.slug} />,
     <SponsoredCallout key="promo-sponsored" />,
   ])
 

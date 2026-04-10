@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Phone } from 'lucide-react'
+import { Phone, X } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { useCall } from './call-context'
 import { cn } from '@/lib/utils'
@@ -224,12 +225,14 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
 export function CallReporterMiniCta({ agent, reportSlug }: CallReporterCtaProps) {
   const { user, profile } = useAuth()
   const call = useCall()
+  const [showBlockedModal, setShowBlockedModal] = useState(false)
 
   if (!agent.retell_call_agent_id) return null
 
   const isActiveCall = call.agent?.id === agent.id && call.reportSlug === reportSlug
   const isConnecting = isActiveCall && call.callState === 'connecting'
   const isLive = isActiveCall && call.callState === 'live'
+  const isBlocked = isActiveCall && call.callState === 'blocked'
 
   // ── Connecting state ──
   if (isConnecting) {
@@ -268,32 +271,118 @@ export function CallReporterMiniCta({ agent, reportSlug }: CallReporterCtaProps)
   const cantAfford = isSignedIn && userCredits < 1
 
   function handleClick() {
-    if (cantAfford) return
+    if (cantAfford) {
+      setShowBlockedModal(true)
+      return
+    }
     call.startCall(agent, reportSlug)
   }
 
-  if (cantAfford) {
-    return (
-      <Link
-        href="/subscribe"
-        className="group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition hover:opacity-90"
-        style={{ backgroundColor: '#C8A44A', color: '#000' }}
-      >
-        <Phone className="size-4" />
-        Get Credits to Call
-      </Link>
-    )
+  // Auto-open modal when call comes back blocked from server
+  if (isBlocked && !showBlockedModal) {
+    setShowBlockedModal(true)
+    call.resetCall()
   }
 
   return (
-    <button
-      onClick={handleClick}
-      className="group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition hover:opacity-90 active:scale-95"
-      style={{ backgroundColor: '#C8A44A', color: '#000' }}
-    >
-      <Phone className="size-4 animate-pulse" />
-      Talk with {agent.name} for live updates
-    </button>
+    <>
+      <button
+        onClick={handleClick}
+        className="group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition hover:opacity-90 active:scale-95"
+        style={{ backgroundColor: '#C8A44A', color: '#000' }}
+      >
+        <Phone className={cn('size-4', !cantAfford && 'animate-pulse')} />
+        Talk with {agent.name} for live updates
+      </button>
+
+      {showBlockedModal && (
+        <BlockedCallModal
+          agent={agent}
+          isAnonymous={!isSignedIn}
+          reportSlug={reportSlug}
+          onClose={() => setShowBlockedModal(false)}
+        />
+      )}
+    </>
+  )
+}
+
+// ── Modal shown when user is out of free calls or credits ────────────────
+interface BlockedCallModalProps {
+  agent: AuthorAgent
+  isAnonymous: boolean
+  reportSlug: string
+  onClose: () => void
+}
+
+function BlockedCallModal({ agent, isAnonymous, reportSlug, onClose }: BlockedCallModalProps) {
+  const title = isAnonymous
+    ? 'Free call already used'
+    : 'Out of credits'
+
+  const body = isAnonymous
+    ? `Looks like you've already used your free call. Sign up for an account and you'll get 10 free credits — that's 10 minutes of conversation with ${agent.name} or any other agent on the platform.`
+    : `You're out of credits. Get more to keep talking with ${agent.name} and any other agent on Bipi News. 1 credit equals 1 minute of conversation.`
+
+  const ctaText = isAnonymous ? 'Sign Up — Get 10 Free Credits' : 'Get More Credits'
+  const ctaHref = isAnonymous ? `/auth?redirect=/news/${reportSlug}` : '/subscribe'
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="flex min-h-full items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-t-edge bg-t-bg shadow-2xl overflow-hidden">
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-t-edge">
+            <div className="flex items-center gap-3">
+              <div className="size-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(200,164,74,0.15)', border: '1px solid rgba(200,164,74,0.25)' }}>
+                <Phone className="size-4" style={{ color: '#C8A44A' }} />
+              </div>
+              <p className="text-sm font-bold text-t-text">{title}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="size-8 rounded-lg flex items-center justify-center text-t-text-3 hover:bg-t-hover transition"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="px-5 py-6">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="relative size-14 rounded-full overflow-hidden shrink-0 border border-t-edge">
+                {agent.avatar_url ? (
+                  <Image src={agent.avatar_url} alt={agent.name} fill className="object-cover" sizes="56px" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-lg font-bold text-t-text-2 bg-t-surface-el">
+                    {agent.name.charAt(0)}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-bold text-t-text">{agent.name}</p>
+                <p className="text-xs text-t-text-3 capitalize">{agent.archetype.replace(/_/g, ' ')}</p>
+              </div>
+            </div>
+            <p className="text-sm text-t-text-2 leading-relaxed">{body}</p>
+          </div>
+
+          {/* CTA */}
+          <div className="px-5 py-4 border-t border-t-edge bg-t-surface">
+            <Link
+              href={ctaHref}
+              onClick={onClose}
+              className="flex items-center justify-center gap-2 w-full rounded-xl py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+              style={{ backgroundColor: '#C8A44A' }}
+            >
+              {ctaText}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
