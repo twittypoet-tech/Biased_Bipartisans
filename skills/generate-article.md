@@ -154,9 +154,9 @@ https://images.unsplash.com/photo-PHOTO_ID?w=1200&h=630&fit=crop
 **Step 2: Download and upload to Supabase Storage**
 
 ```python
-import urllib.request, json, ssl
-SUPABASE_URL = 'https://ttmjfvfgvmmyvplhgkgk.supabase.co'
-SUPABASE_KEY = '...'  # service role key
+import os, urllib.request, json, ssl
+SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://ttmjfvfgvmmyvplhgkgk.supabase.co')
+SUPABASE_KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']  # required — fail loud if missing
 BUCKET = 'news-report-images'
 
 # Download the image
