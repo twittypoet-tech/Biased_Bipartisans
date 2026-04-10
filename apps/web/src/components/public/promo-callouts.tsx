@@ -47,7 +47,7 @@ function SponsoredCard({ children, href, onClick }: { children: React.ReactNode;
   return inner
 }
 
-// ── Sign Up / Share / Call Agent CTA ─────────────────────────────────────────
+// ── Call The Agent CTA (always shown when agent has retell_call_agent_id) ──
 
 interface SignUpCalloutProps {
   agent?: CallableAgent
@@ -57,47 +57,8 @@ interface SignUpCalloutProps {
 export function SignUpCallout({ agent, reportSlug }: SignUpCalloutProps) {
   const { user } = useAuth()
   const call = useCall()
-  const [copied, setCopied] = useState(false)
 
-  async function handleShare() {
-    const shareData = {
-      title: 'Bipi News — The #1 Source of Biased News',
-      text: 'Check out this AI news platform that generates real-time, evidence-based reports on any topic.',
-      url: window.location.href,
-    }
-    if (navigator.share) {
-      try { await navigator.share(shareData) } catch {}
-    } else {
-      navigator.clipboard.writeText(window.location.href)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
-
-  // ── Authenticated user: share CTA ──
-  if (user) {
-    return (
-      <SponsoredCard>
-        <div className="text-center">
-          <p className="text-lg sm:text-xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-            Know someone who should read this?
-          </p>
-          <p className="text-sm text-white/70 mb-5 max-w-sm mx-auto">
-            Share this report with a friend who values evidence-based journalism.
-          </p>
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold bg-white/20 text-white transition hover:bg-white/30 active:scale-[0.98]"
-          >
-            <Share2 className="size-4" />
-            {copied ? 'Link Copied!' : 'Share This Report'}
-          </button>
-        </div>
-      </SponsoredCard>
-    )
-  }
-
-  // ── Anonymous + agent available: call-the-agent CTA ──
+  // ── Agent available: call-the-agent CTA (for everyone, signed in or not) ──
   if (agent && agent.retell_call_agent_id && reportSlug) {
     function handleCall() {
       if (agent && reportSlug) call.startCall(agent, reportSlug)
@@ -133,13 +94,15 @@ export function SignUpCallout({ agent, reportSlug }: SignUpCalloutProps) {
             <Phone className="size-4" />
             Call This Agent for Live Updates
           </button>
-          <p className="mt-3 text-xs text-white/50">First call is free. 5 minutes, no sign-up required.</p>
+          <p className="mt-3 text-xs text-white/50">
+            {user ? '1 credit per minute. Pulls live updates from the web.' : 'First call is free. 5 minutes, no sign-up required.'}
+          </p>
         </div>
       </SponsoredCard>
     )
   }
 
-  // ── Fallback: signup CTA (anonymous, no agent context) ──
+  // ── Fallback: signup CTA (no agent context — e.g., reporter calls page) ──
   return (
     <SponsoredCard href="/auth">
       <div className="text-center">
@@ -152,6 +115,47 @@ export function SignUpCallout({ agent, reportSlug }: SignUpCalloutProps) {
         <span className="inline-flex items-center gap-2 text-sm font-semibold text-white group-hover:underline">
           Create Free Account <ArrowRight className="size-4" />
         </span>
+      </div>
+    </SponsoredCard>
+  )
+}
+
+// ── Share Report Callout (separate component, placed near commentary) ──
+
+export function ShareReportCallout() {
+  const [copied, setCopied] = useState(false)
+
+  async function handleShare() {
+    const shareData = {
+      title: 'Bipi News — The #1 Source of Biased News',
+      text: 'Check out this AI news platform that generates real-time, evidence-based reports on any topic.',
+      url: window.location.href,
+    }
+    if (navigator.share) {
+      try { await navigator.share(shareData) } catch {}
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <SponsoredCard>
+      <div className="text-center">
+        <p className="text-lg sm:text-xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+          Know someone who should read this?
+        </p>
+        <p className="text-sm text-white/70 mb-5 max-w-sm mx-auto">
+          Share this report with a friend who values evidence-based journalism.
+        </p>
+        <button
+          onClick={handleShare}
+          className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold bg-white/20 text-white transition hover:bg-white/30 active:scale-[0.98]"
+        >
+          <Share2 className="size-4" />
+          {copied ? 'Link Copied!' : 'Share This Report'}
+        </button>
       </div>
     </SponsoredCard>
   )
