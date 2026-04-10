@@ -6,10 +6,14 @@ import { HamburgerMenu } from '@/components/hamburger-menu'
 import { HeaderAuthButtons } from '@/components/header-auth-buttons'
 import { CategoryNav } from '@/components/category-nav'
 import { InAppBrowserBanner } from '@/components/public/in-app-browser-banner'
+import { CallProvider } from '@/components/public/call-context'
+import { ActiveCallHeader } from '@/components/public/active-call-header'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
+    <CallProvider>
     <div className="min-h-screen flex flex-col">
+      <ActiveCallHeader />
       {/* ── Tier 1: Brand bar ── */}
       <header className="sticky top-0 z-50 border-b border-t-edge bg-t-overlay backdrop-blur-md">
         {/* Desktop */}
@@ -48,5 +52,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
       <MobileDock />
     </div>
+    </CallProvider>
   )
 }

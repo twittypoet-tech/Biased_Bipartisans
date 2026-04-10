@@ -10,7 +10,7 @@ import type { RelatedPerspective } from '@bipi/db'
 import { FALLBACK_IMAGE_URL } from '@/lib/categories'
 import { NewsAudioPlayer } from './news-audio-player'
 import { SignUpCallout, SponsoredCallout } from './promo-callouts'
-import { CallReporterCta } from './call-reporter-cta'
+import { CallReporterCta, CallReporterMiniCta } from './call-reporter-cta'
 import { NewsletterPopup } from './newsletter-popup'
 import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/utils'
@@ -506,7 +506,10 @@ export function NewsArticleClient({
         )}
 
         {/* ── Engagement bar ── */}
-        <div className="flex items-center gap-1 py-3 border-y border-t-edge mb-6">
+        <div className="flex items-center gap-2 py-3 border-y border-t-edge mb-6">
+          {authorAgent && authorAgent.retell_call_agent_id && (
+            <CallReporterMiniCta agent={authorAgent} reportSlug={report.slug} />
+          )}
           <div className="flex-1" />
           <button
             onClick={handleShare}

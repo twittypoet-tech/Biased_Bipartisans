@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Phone } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { useCall } from './call-context'
 import { cn } from '@/lib/utils'
 
 interface AuthorAgent {
@@ -22,8 +22,6 @@ interface CallReporterCtaProps {
   reportSlug: string
 }
 
-type CallState = 'idle' | 'connecting' | 'live' | 'ended' | 'error' | 'blocked'
-
 function formatTimer(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
@@ -37,137 +35,21 @@ function timerColor(seconds: number): string {
 }
 
 export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
-  const { user, profile, refreshProfile } = useAuth()
-  const [callState, setCallState] = useState<CallState>('idle')
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [maxSeconds, setMaxSeconds] = useState(300)
-  const [timeRemaining, setTimeRemaining] = useState(300)
-  const [isAnonymous, setIsAnonymous] = useState(false)
-  const [callId, setCallId] = useState<string | null>(null)
-  const [callDuration, setCallDuration] = useState(0)
-  const retellClientRef = useRef<RetellWebClient | null>(null)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const startTimeRef = useRef<number>(0)
+  const { user, profile } = useAuth()
+  const call = useCall()
 
   const isSignedIn = !!user
   const userCredits = profile?.credits ?? 0
 
-  useEffect(() => {
-    return () => {
-      retellClientRef.current?.stopCall()
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [])
-
-  // Countdown timer — starts when call goes live
-  useEffect(() => {
-    if (callState === 'live') {
-      startTimeRef.current = Date.now()
-      timerRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
-        const remaining = Math.max(0, maxSeconds - elapsed)
-        setTimeRemaining(remaining)
-        setCallDuration(elapsed)
-
-        if (remaining <= 0) {
-          endCall()
-        }
-      }, 1000)
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
-      }
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callState, maxSeconds])
-
-  const startCall = useCallback(async () => {
-    setCallState('connecting')
-    setErrorMsg(null)
-
-    try {
-      const res = await fetch(`/api/news/${reportSlug}/call`, { method: 'POST' })
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Failed to start call' }))
-        if (err.error === 'free_call_used') {
-          setCallState('blocked')
-          return
-        }
-        throw new Error(err.error ?? err.message ?? `Failed to start call (${res.status})`)
-      }
-
-      const data = await res.json() as {
-        callId: string
-        retellCallId: string
-        accessToken: string
-        maxSeconds: number
-        isAnonymous: boolean
-      }
-
-      setCallId(data.retellCallId)
-      setMaxSeconds(data.maxSeconds)
-      setTimeRemaining(data.maxSeconds)
-      setIsAnonymous(data.isAnonymous)
-
-      const { RetellWebClient } = await import('retell-client-js-sdk')
-      const client = new RetellWebClient()
-      retellClientRef.current = client
-
-      client.on('call_started', () => setCallState('live'))
-      client.on('call_ended', () => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
-        setCallDuration(elapsed)
-        setCallState('ended')
-        // Notify server to deduct credits
-        if (data.retellCallId) {
-          fetch(`/api/news/${reportSlug}/end-call`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ callId: data.retellCallId, durationSeconds: elapsed }),
-          }).catch(() => {})
-        }
-      })
-      client.on('error', (err: unknown) => {
-        console.error('Retell call error:', err)
-        setCallState('error')
-        setErrorMsg('Call disconnected unexpectedly.')
-      })
-
-      await client.startCall({ accessToken: data.accessToken })
-    } catch (err) {
-      console.error('Call start error:', err)
-      setCallState('error')
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to start call')
-    }
-  }, [reportSlug])
-
-  const endCall = useCallback(() => {
-    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
-    setCallDuration(elapsed)
-    retellClientRef.current?.stopCall()
-    setCallState('ended')
-
-    // Notify server
-    if (callId) {
-      fetch(`/api/news/${reportSlug}/end-call`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ callId, durationSeconds: elapsed }),
-      }).then(() => refreshProfile()).catch(() => {})
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callId, reportSlug])
+  // Only show this component's call states if THIS agent is the active call
+  const isActiveCall = call.agent?.id === agent.id && call.reportSlug === reportSlug
+  const callState = isActiveCall ? call.callState : 'idle'
 
   if (!agent.retell_call_agent_id) return null
 
   // ── Agent avatar helper ───────────────────────────────────────────────
   const avatarEl = (size: number) => (
-    <div className={`relative rounded-full overflow-hidden shrink-0 border-2 border-t-accent/40`} style={{ width: size, height: size }}>
+    <div className="relative rounded-full overflow-hidden shrink-0 border-2 border-t-accent/40" style={{ width: size, height: size }}>
       {agent.avatar_url ? (
         <Image src={agent.avatar_url} alt={agent.name} fill className="object-cover" sizes={`${size}px`} />
       ) : (
@@ -201,7 +83,7 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
               Get Credits
             </Link>
           ) : (
-            <button onClick={startCall}
+            <button onClick={() => call.startCall(agent, reportSlug)}
               className="inline-flex items-center gap-2 rounded-xl bg-t-accent px-6 py-3 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition shrink-0">
               <Phone className="size-4" />
               {isSignedIn ? 'Call Now' : 'Call Now — 5 min free'}
@@ -224,13 +106,12 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
       {/* ── Live call with timer ── */}
       {callState === 'live' && (
         <div className="flex flex-col items-center gap-4 py-4">
-          {/* Timer — prominent */}
           <div className={cn(
             'text-4xl font-bold tabular-nums tracking-tight transition-colors',
-            timerColor(timeRemaining),
-            timeRemaining <= 30 && 'animate-pulse',
+            timerColor(call.timeRemaining),
+            call.timeRemaining <= 30 && 'animate-pulse',
           )}>
-            {formatTimer(timeRemaining)}
+            {formatTimer(call.timeRemaining)}
           </div>
 
           <div className="flex items-center gap-2">
@@ -249,13 +130,13 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
             ))}
           </div>
 
-          {timeRemaining <= 30 && (
+          {call.timeRemaining <= 30 && (
             <p className="text-xs text-red-400 font-medium">
-              {isAnonymous ? 'Free call ending soon' : 'Low credits — call ending soon'}
+              {call.isAnonymous ? 'Free call ending soon' : 'Low credits — call ending soon'}
             </p>
           )}
 
-          <button onClick={endCall}
+          <button onClick={call.endCall}
             className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 active:scale-[0.98]">
             End Call
           </button>
@@ -272,13 +153,12 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
           <div className="text-center">
             <p className="text-sm font-semibold text-t-text">Call ended</p>
             <p className="text-xs text-t-text-3 mt-1">
-              {callDuration > 0 ? `${Math.floor(callDuration / 60)}m ${callDuration % 60}s` : ''}
+              {call.callDuration > 0 ? `${Math.floor(call.callDuration / 60)}m ${call.callDuration % 60}s` : ''}
             </p>
           </div>
 
-          {/* Action buttons */}
           <div className="flex gap-3">
-            <button onClick={() => { setCallState('idle'); setCallDuration(0) }}
+            <button onClick={call.resetCall}
               className="rounded-xl border border-t-edge bg-t-surface px-5 py-2.5 text-sm font-semibold text-t-text hover:bg-t-hover transition">
               Call Again
             </button>
@@ -290,8 +170,7 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
             </button>
           </div>
 
-          {/* Conversion CTAs for anonymous users */}
-          {isAnonymous && (
+          {call.isAnonymous && (
             <div className="mt-4 w-full rounded-xl border border-t-accent/30 bg-t-surface p-5 text-center">
               <p className="text-base font-semibold text-t-text mb-2">
                 Get 10 free credits when you sign up
@@ -308,14 +187,14 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
         </div>
       )}
 
-      {/* ── Blocked (anon already used free call) ── */}
+      {/* ── Blocked ── */}
       {callState === 'blocked' && (
         <div className="flex flex-col items-center gap-4 py-6">
           {avatarEl(48)}
           <div className="text-center">
             <p className="text-base font-semibold text-t-text mb-1">You&apos;ve used your free call</p>
             <p className="text-sm text-t-text-2">
-              Sign up to unlock unlimited calls with all 30 agents.
+              Sign up to unlock unlimited calls with all agents.
             </p>
           </div>
           <Link href={`/auth?redirect=/news/${reportSlug}`}
@@ -331,8 +210,8 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
           <div className="size-12 rounded-full bg-red-950/40 border border-red-800/60 flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
           </div>
-          <p className="text-sm text-red-400 text-center">{errorMsg ?? 'Something went wrong.'}</p>
-          <button onClick={() => setCallState('idle')} className="text-sm text-t-accent-text hover:underline transition">
+          <p className="text-sm text-red-400 text-center">{call.errorMsg ?? 'Something went wrong.'}</p>
+          <button onClick={call.resetCall} className="text-sm text-t-accent-text hover:underline transition">
             Try again
           </button>
         </div>
@@ -341,7 +220,55 @@ export function CallReporterCta({ agent, reportSlug }: CallReporterCtaProps) {
   )
 }
 
-// Type stub for dynamic import
+// ── Mini variant: compact callout for engagement bar ────────────────────
+export function CallReporterMiniCta({ agent, reportSlug }: CallReporterCtaProps) {
+  const { user, profile } = useAuth()
+  const call = useCall()
+
+  if (!agent.retell_call_agent_id) return null
+
+  const isActiveCall = call.agent?.id === agent.id && call.reportSlug === reportSlug
+  const isCallInProgress = isActiveCall && (call.callState === 'connecting' || call.callState === 'live')
+
+  if (isCallInProgress) return null // Don't show duplicate while live (sticky header handles it)
+
+  const isSignedIn = !!user
+  const userCredits = profile?.credits ?? 0
+  const cantAfford = isSignedIn && userCredits < 1
+
+  function handleClick() {
+    if (cantAfford) return
+    call.startCall(agent, reportSlug)
+  }
+
+  if (cantAfford) {
+    return (
+      <Link
+        href="/subscribe"
+        className="group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition hover:opacity-90"
+        style={{ backgroundColor: '#C8A44A', color: '#000' }}
+      >
+        <Phone className="size-4" />
+        <span className="hidden sm:inline">Get Credits to Call</span>
+        <span className="sm:hidden">Call</span>
+      </Link>
+    )
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      className="group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition hover:opacity-90 active:scale-95"
+      style={{ backgroundColor: '#C8A44A', color: '#000' }}
+    >
+      <Phone className="size-4 animate-pulse" />
+      <span className="hidden sm:inline">Talk to {agent.name} for live updates</span>
+      <span className="sm:hidden">Live with {agent.name.split(' ').pop()}</span>
+    </button>
+  )
+}
+
+// Type stub for dynamic import (kept for backwards compat)
 interface RetellWebClient {
   on(event: string, handler: (...args: unknown[]) => void): void
   startCall(opts: { accessToken: string }): Promise<void>
