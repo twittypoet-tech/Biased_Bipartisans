@@ -228,9 +228,40 @@ export function CallReporterMiniCta({ agent, reportSlug }: CallReporterCtaProps)
   if (!agent.retell_call_agent_id) return null
 
   const isActiveCall = call.agent?.id === agent.id && call.reportSlug === reportSlug
-  const isCallInProgress = isActiveCall && (call.callState === 'connecting' || call.callState === 'live')
+  const isConnecting = isActiveCall && call.callState === 'connecting'
+  const isLive = isActiveCall && call.callState === 'live'
 
-  if (isCallInProgress) return null // Don't show duplicate while live (sticky header handles it)
+  // ── Connecting state ──
+  if (isConnecting) {
+    return (
+      <div
+        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold"
+        style={{ backgroundColor: '#C8A44A', color: '#000' }}
+      >
+        <svg className="animate-spin size-4" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        Connecting you with {agent.name}
+      </div>
+    )
+  }
+
+  // ── Live state ──
+  if (isLive) {
+    return (
+      <div
+        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold"
+        style={{ backgroundColor: '#C8A44A', color: '#000' }}
+      >
+        <div className="relative">
+          <div className="size-2.5 rounded-full bg-red-600 animate-pulse" />
+          <div className="absolute inset-0 size-2.5 rounded-full bg-red-500 animate-ping opacity-75" />
+        </div>
+        You&apos;re live with {agent.name}
+      </div>
+    )
+  }
 
   const isSignedIn = !!user
   const userCredits = profile?.credits ?? 0
@@ -249,8 +280,7 @@ export function CallReporterMiniCta({ agent, reportSlug }: CallReporterCtaProps)
         style={{ backgroundColor: '#C8A44A', color: '#000' }}
       >
         <Phone className="size-4" />
-        <span className="hidden sm:inline">Get Credits to Call</span>
-        <span className="sm:hidden">Call</span>
+        Get Credits to Call
       </Link>
     )
   }
@@ -262,8 +292,7 @@ export function CallReporterMiniCta({ agent, reportSlug }: CallReporterCtaProps)
       style={{ backgroundColor: '#C8A44A', color: '#000' }}
     >
       <Phone className="size-4 animate-pulse" />
-      <span className="hidden sm:inline">Talk to {agent.name} for live updates</span>
-      <span className="sm:hidden">Live with {agent.name.split(' ').pop()}</span>
+      Talk with {agent.name} for live updates
     </button>
   )
 }
