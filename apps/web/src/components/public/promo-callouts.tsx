@@ -54,12 +54,26 @@ interface SignUpCalloutProps {
   reportSlug?: string
 }
 
+function formatTimer(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export function SignUpCallout({ agent, reportSlug }: SignUpCalloutProps) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const call = useCall()
 
   // ── Agent available: call-the-agent CTA (for everyone, signed in or not) ──
   if (agent && agent.retell_call_agent_id && reportSlug) {
+    const isActiveCall = call.agent?.id === agent.id && call.reportSlug === reportSlug
+    const isConnecting = isActiveCall && call.callState === 'connecting'
+    const isLive = isActiveCall && call.callState === 'live'
+    const isEnded = isActiveCall && call.callState === 'ended'
+    const isSignedIn = !!user
+    const userCredits = profile?.credits ?? 0
+    const cantAfford = isSignedIn && userCredits < 1
+
     function handleCall() {
       if (agent && reportSlug) call.startCall(agent, reportSlug)
     }
@@ -76,10 +90,16 @@ export function SignUpCallout({ agent, reportSlug }: SignUpCalloutProps) {
                 {agent.name.charAt(0)}
               </div>
             )}
+            {/* Live indicator overlay */}
+            {isLive && (
+              <div className="absolute -bottom-1 -right-1 size-6 rounded-full bg-red-600 border-2 border-[#C8A44A] flex items-center justify-center">
+                <div className="size-2 rounded-full bg-white animate-pulse" />
+              </div>
+            )}
           </div>
 
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-black/60 mb-2">
-            Talk to The Reporter
+            {isLive ? 'Live Call' : isConnecting ? 'Connecting' : 'Talk to The Reporter'}
           </p>
           <p className="text-xl sm:text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
             {agent.name}
@@ -87,16 +107,80 @@ export function SignUpCallout({ agent, reportSlug }: SignUpCalloutProps) {
           <p className="text-sm text-white/80 mb-5 max-w-md mx-auto leading-relaxed">
             {agent.short_bio}
           </p>
-          <button
-            onClick={handleCall}
-            className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold bg-white/20 text-white transition hover:bg-white/30 active:scale-[0.98]"
-          >
-            <Phone className="size-4" />
-            Call This Agent for Live Updates
-          </button>
-          <p className="mt-3 text-xs text-white/50">
-            {user ? '1 credit per minute. Pulls live updates from the web.' : 'First call is free. 5 minutes, no sign-up required.'}
-          </p>
+
+          {/* ── Idle: Call button ── */}
+          {!isActiveCall && (
+            <>
+              <button
+                onClick={handleCall}
+                className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold bg-white/20 text-white transition hover:bg-white/30 active:scale-[0.98]"
+              >
+                <Phone className="size-4" />
+                Call This Agent for Live Updates
+              </button>
+              <p className="mt-3 text-xs text-white/50">
+                {user ? '1 credit per minute. Pulls live updates from the web.' : 'First call is free. 5 minutes, no sign-up required.'}
+              </p>
+            </>
+          )}
+
+          {/* ── Connecting state ── */}
+          {isConnecting && (
+            <div className="flex flex-col items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold bg-white/20 text-white">
+                <svg className="animate-spin size-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Connecting you with {agent.name}
+              </div>
+              <p className="text-xs text-white/50">Establishing voice connection...</p>
+            </div>
+          )}
+
+          {/* ── Live state ── */}
+          {isLive && (
+            <div className="flex flex-col items-center gap-3">
+              <div className="text-3xl font-bold text-white tabular-nums tracking-tight">
+                {formatTimer(call.timeRemaining)}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <div className="size-2.5 rounded-full bg-red-600 animate-pulse" />
+                  <div className="absolute inset-0 size-2.5 rounded-full bg-red-500 animate-ping opacity-75" />
+                </div>
+                <p className="text-sm font-bold text-white">You&apos;re live with {agent.name}</p>
+              </div>
+              <button
+                onClick={call.endCall}
+                className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 active:scale-[0.98]"
+              >
+                End Call
+              </button>
+            </div>
+          )}
+
+          {/* ── Ended state ── */}
+          {isEnded && (
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-sm font-semibold text-white">Call ended</p>
+              <p className="text-xs text-white/60">
+                {call.callDuration > 0 ? `${Math.floor(call.callDuration / 60)}m ${call.callDuration % 60}s` : ''}
+              </p>
+              <button
+                onClick={call.resetCall}
+                className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold bg-white/20 text-white transition hover:bg-white/30 active:scale-[0.98]"
+              >
+                <Phone className="size-4" />
+                Call Again
+              </button>
+              {!user && cantAfford === false && (
+                <p className="mt-1 text-xs text-white/50">
+                  Sign up for 10 free credits to keep talking with any agent.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </SponsoredCard>
     )
