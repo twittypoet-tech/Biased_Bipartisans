@@ -108,7 +108,7 @@ export function TransitionHero({ agent }: { agent: DisclosureAgent }) {
 
           <div className="min-w-0 flex-1">
             <h2
-              className="text-3xl font-bold leading-[1.05] tracking-tight text-neutral-50 sm:text-4xl"
+              className="text-3xl font-bold leading-[1.05] tracking-tight text-neutral-100 sm:text-4xl"
               style={{ fontFamily: SERIF }}
             >
               {agent.name}
@@ -138,7 +138,7 @@ export function TransitionHero({ agent }: { agent: DisclosureAgent }) {
 function SectionLabel({ number, title }: { number: string; title: string }) {
   return (
     <div className="mb-5 flex items-center gap-3">
-      <span className="text-[10px] font-bold tracking-[0.28em] text-neutral-500">
+      <span className="text-[10px] font-bold tracking-[0.28em] text-neutral-1000">
         {number}
       </span>
       <span className="h-px flex-1 bg-neutral-800" />
@@ -203,14 +203,14 @@ export function LearnMoreAgentCta({ agent }: { agent: DisclosureAgent }) {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-1000">
           Reporter Profile
         </p>
         <p className="text-sm font-semibold text-neutral-100">
           See {agent.name}&rsquo;s full worldview &amp; back catalog
         </p>
       </div>
-      <ArrowRight className="size-4 shrink-0 text-neutral-500 transition-transform group-hover:translate-x-0.5 group-hover:text-neutral-200" />
+      <ArrowRight className="size-4 shrink-0 text-neutral-1000 transition-transform group-hover:translate-x-0.5 group-hover:text-neutral-200" />
     </Link>
   )
 }
@@ -223,7 +223,7 @@ export function VoiceReporterPitch({ agent }: { agent: DisclosureAgent }) {
       <SectionLabel number="02" title="Talk to the reporter" />
 
       <h3
-        className="text-2xl font-bold leading-[1.1] tracking-tight text-neutral-50 sm:text-3xl"
+        className="text-2xl font-bold leading-[1.1] tracking-tight text-neutral-100 sm:text-3xl"
         style={{ fontFamily: SERIF }}
       >
         You can call {agent.name}.
@@ -277,7 +277,7 @@ export function FreeCallCallout({
             Your first call is free
           </p>
           <h3
-            className="text-2xl font-bold leading-[1.05] text-neutral-50 sm:text-[28px]"
+            className="text-2xl font-bold leading-[1.05] text-neutral-100 sm:text-[28px]"
             style={{ fontFamily: SERIF }}
           >
             Five minutes.
@@ -299,7 +299,7 @@ export function FreeCallCallout({
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </button>
 
-          <p className="mt-3 text-center text-[11px] text-neutral-500">
+          <p className="mt-3 text-center text-[11px] text-neutral-1000">
             The call button lives in the article. You will not miss it.
           </p>
         </div>
@@ -315,7 +315,7 @@ export function MethodologyFooterLink() {
     <div className="mb-2 mt-10 flex items-center justify-center">
       <Link
         href="/about/methodology"
-        className="group flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.18em] text-neutral-500 transition hover:text-neutral-300"
+        className="group flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.18em] text-neutral-1000 transition hover:text-neutral-300"
       >
         <span>How Bipi News works</span>
         <span
