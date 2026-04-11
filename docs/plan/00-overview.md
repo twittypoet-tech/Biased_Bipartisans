@@ -1,6 +1,6 @@
 # BIPI Master Plan — Overview
 
-> Last updated: 2026-03-28
+> Last updated: 2026-04-10
 
 This is the master reference for the Biased Bipartisans (BIPI) product plan. It cross-references a ChatGPT-generated system overview with the actual codebase state and provides a ranked implementation roadmap.
 
@@ -16,6 +16,9 @@ This is the master reference for the Biased Bipartisans (BIPI) product plan. It 
 | [05-architecture.md](05-architecture.md) | Tech stack diagram, services, packages |
 | [06-roadmap.md](06-roadmap.md) | 4-tier ranked feature roadmap (15 items) |
 | [07-todo.md](07-todo.md) | Active task tracker (merged from Bipi_plan.md) |
+| [08-auth-credits-remaining.md](08-auth-credits-remaining.md) | Auth + credits work remaining |
+| [09-seo-geo-checklist.md](09-seo-geo-checklist.md) | SEO/GEO audit checklist |
+| [10-article-gen-operations.md](10-article-gen-operations.md) | **Day-to-day operations manual for the automated article generation pipeline** — start/restart the channel session, Telegram command reference, weekly maintenance, troubleshooting playbook, bug log |
 
 ---
 

@@ -4,6 +4,62 @@
 
 ---
 
+## 2026-04-10
+
+### feat: Automated article generation pipeline (Telegram-driven, local /loop-based)
+
+End-to-end pipeline for ~30 articles/day of scheduled AI-written news analysis, steered from Telegram. The whole loop runs inside one long-running Claude Code session on the user's laptop with the official `telegram@claude-plugins-official` plugin in `--channels` mode. No cloud, no Inngest, no webhook — everything lives in that one session.
+
+**New database tables (migration 00041):**
+- `article_queue` — backs the scout → approve → write → publish flow. Statuses: `pending → approved/rejected → generating → published/failed`. Telegram correlation columns (`telegram_chat_id`, `telegram_message_id`) so the console can edit cards in place. Links to `agents(id)` (persona) and `news_reports(id)` (result).
+- `feature_flags` — tiny key/value kill-switch table. `article_scout_enabled` and `article_writer_enabled` flip via Telegram (`/pause scout`, `/resume writer`) without a deploy.
+
+**New database tables (migration 00042):**
+- `news_threads` — curated ongoing-coverage storylines (Russia-Ukraine war, Israel-Gaza, US 2026 midterms, China-Taiwan, Iran, Trump administration, AI regulation, SCOTUS 2026 term). The scout bypasses the 48h novelty filter for candidates that match an active thread, as long as the candidate brings a genuinely new angle.
+- `news_reports.thread_id` + `article_queue.thread_id` — backrefs so the writer can bump `news_threads.last_covered_at` and `total_articles` after publish.
+
+**New skill files (`skills/*.md`):**
+- `news-scout.md` — the scheduled scout. Hard 24h recency rule (date-locked queries, `mcp__brightdata__discover` with `start_date = today`, per-candidate date verification, no padding with stale items). 20-category mix balanced between academic + general news. Thread matching for ongoing coverage. Persona rotation per thread.
+- `article-writer-worker.md` — atomic-claims approved rows, invokes `generate-article.md` in-session for each (no duplication of the writing logic), enforces 11 hard pre-INSERT quality gates including the ≥7-source minimum and ≥35/50 stop-slop floor, sets `thread_id` on new `news_reports` rows, bumps thread stats on publish, sends Telegram status updates.
+- `ops-console.md` — reactive behavior spec for the long-running channel session. Handles inline button callbacks (approve/reject/reassign/edit), all slash commands, free-form English requests, and the reassign/edit interactive flows.
+
+**New docs:**
+- `docs/telegram-bot-setup.md` — 8-step setup guide covering BotFather, plugin install, pairing, channel session launch, env vars, and the `/loop`-based scheduling approach.
+- `docs/plan/10-article-gen-operations.md` — comprehensive day-to-day operations manual for the next 30 days of running the pipeline.
+
+**What ships with it:**
+- Two `/loop` crons (scout 8h, writer 30m) that run inside the channel session
+- Telegram approval cards with inline keyboards (fallback to plain-text replies for button-less environments)
+- Eight starter `news_threads` seeded active
+- 64-char `INTERNAL_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` in `~/.zshrc` and `~/.claude/channels/telegram/.env`
+- `.claude/settings.local.json` with all required tool permissions pre-approved (no mid-run approval prompts)
+
+**Smoke test results:**
+- Published "Two Governments Move Against Anthropic. Both Call It Protection." (The Freeman on Newsom vs Trump on California AI) — 956 words, 14 body blocks, 3 callouts, 13 sources, stop-slop 39/50, Guardian hero image uploaded to Supabase Storage
+- First Iran batch: 7 scout cards all linked to `iran-tensions` thread (scout correctly detected the thread and sent 7 not 10 to stay within the storyline), personas rotated (Politician, Hawk, Technocrat, Prosecutor, Scholar, General, Logician). 3 articles published in the first writer drain: "US Delegation Arrives in Pakistan for Iran Talks With 'Low Expectations'" (Politician, 13 sources), "The Ceasefire Is a Press Release; the Strait of Hormuz Is a Waterway" (Technocrat, 14 sources), "Iran Brings Munich to Islamabad and Calls It Diplomacy" (Hawk, 12 sources). All linked to `iran-tensions` thread.
+
+### fix: Five real bugs caught and patched during smoke test
+
+1. **`agents.status = 'active'` is wrong.** The actual enum is `official | guest | sandbox`. Scout, writer, and ops-console queries all updated to `status = 'official' AND role NOT IN ('moderator', 'reporter')` so The Moderator, The Reporter, The Wire, and The Commentary Host are excluded from article authorship.
+
+2. **`docs/kb/{slug}-kb.md` is the wrong filename pattern.** Actual files are named after the archetype, not the slug (`hawk-kb.md` not `the-hawk-kb.md`). Generate-article.md, news-scout.md, and article-writer-worker.md all corrected to use `docs/kb/{archetype}-kb.md` with an explicit disambiguation note.
+
+3. **IndexNow ping dropped the POST body on 301 redirects.** The site canonical is `www.bipinews.com` but the old curl hit the bare `bipinews.com`, got a 301, and `curl -L` (default) converted the POST to a GET, losing the body. Server then returned `400 Invalid JSON`. Fix: use `--post301 -L` AND hit `www.` directly. Then rewrote entirely as a Python single-quoted heredoc that reads `os.environ['INTERNAL_API_KEY']` directly — no bash command substitution at all, no `export $(grep ...)`, no silent empty headers. Fails gracefully with a log line when the key is missing.
+
+4. **Three slash commands are reserved by the Telegram plugin server.** `/start`, `/help`, `/status` are intercepted by the plugin's built-in command handlers (`grammy` registrations at `server.ts:639-674`) and never reach the Claude LLM session. The ops-console replacements are `/state` and `/commands`. Plain English also works as a fallback for any command.
+
+5. **The telegram plugin's `.mcp.json` uses bare `bun` and a bash-subshell-spawning `start` script.** Two problems: (a) Claude Code's MCP spawn doesn't inherit `~/.bun/bin` on PATH, so bare `bun` fails; (b) even with the absolute path, the `bun run start` script does `bun install --no-summary && bun server.ts`, and the `&&` spawns `/bin/bash` which also doesn't have bun on PATH. Both patched by changing the plugin's `.mcp.json` to `/Users/macbot/.bun/bin/bun ${CLAUDE_PLUGIN_ROOT}/server.ts` — skips the package.json script entirely. Applied to both `0.0.4` and `0.0.5` versions in the cache. Will need re-applying after future plugin updates.
+
+### fix: SUPABASE_SERVICE_ROLE_KEY hardcoded placeholder in generate-article.md
+
+The Phase D image upload Python snippet previously had `SUPABASE_KEY = '...'` as a literal placeholder, requiring manual substitution before every run. Changed to `SUPABASE_KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']` which fails loud if the env var is missing (correct behavior) and Just Works when it's set in `~/.zshrc`.
+
+### fix: agent_status enum + KB filename references across the plan
+
+Updated `skills/news-scout.md`, `skills/article-writer-worker.md`, and `skills/ops-console.md` to use the correct `status = 'official'` enum value and `docs/kb/{archetype}-kb.md` filename pattern. The stale `'active'` + `{slug}` convention was only in memory/CLAUDE.md references that apply to different tables (versioned agent_configs).
+
+---
+
 ## 2026-04-06 (continued)
 
 ### feat: Comprehensive SEO Audit + Fixes
