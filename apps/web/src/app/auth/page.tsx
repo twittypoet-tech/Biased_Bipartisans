@@ -16,6 +16,28 @@ export default function AuthPage() {
   )
 }
 
+// Only allow same-origin relative paths. Anything else (absolute URL,
+// protocol-relative //evil.com, data: URL) falls back to /my. Closes an
+// open-redirect hole where ?redirect=https://evil.com would bounce users
+// offsite right after a successful login.
+function safeRedirect(raw: string | null): string {
+  if (!raw) return '/my'
+  if (!raw.startsWith('/')) return '/my'
+  if (raw.startsWith('//')) return '/my'
+  if (raw.startsWith('/\\')) return '/my'
+  return raw
+}
+
+// Hard navigation that bypasses Next.js's client router cache. Needed after
+// auth because router.push races with @supabase/ssr cookie writes and
+// middleware may read an empty session, redirecting back to /auth and
+// leaving the UI stuck on "Redirecting...". A full page load guarantees
+// the server sees the fresh cookies on a clean request.
+function hardNavigate(url: string) {
+  if (typeof window === 'undefined') return
+  window.location.assign(url)
+}
+
 function AuthPageInner() {
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
@@ -25,7 +47,7 @@ function AuthPageInner() {
   const codeRefs = useRef<(HTMLInputElement | null)[]>([])
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? '/my'
+  const redirect = safeRedirect(searchParams.get('redirect'))
 
   const supabase = getSupabaseBrowserClient()
 
@@ -65,10 +87,21 @@ function AuthPageInner() {
       setError(err.message)
       setCode(['', '', '', '', '', ''])
       codeRefs.current[0]?.focus()
-    } else {
-      setStep('success')
-      setTimeout(() => router.push(redirect), 1000)
+      return
     }
+
+    setStep('success')
+
+    // Invalidate the RSC cache so any parallel soft-nav sees the new session.
+    try {
+      router.refresh()
+    } catch {}
+
+    // Hard navigate after a short beat so the user sees the "You're in"
+    // confirmation. window.location.assign guarantees the server middleware
+    // reads the freshly-set cookies on a clean request, instead of racing
+    // them against Next.js's soft nav.
+    setTimeout(() => hardNavigate(redirect), 400)
   }
 
   function handleCodeChange(index: number, value: string) {
@@ -248,6 +281,15 @@ function AuthPageInner() {
               </div>
               <h1 className="text-2xl font-bold text-t-text mb-2">You&apos;re in</h1>
               <p className="text-sm text-t-text-2">Redirecting...</p>
+              {/* Fallback link in case the hard navigate is blocked by a
+                  service worker, extension, or slow device. Also kicks off
+                  the navigation again if the user lingers. */}
+              <a
+                href={redirect}
+                className="mt-4 inline-block text-xs font-medium text-t-accent-text underline decoration-dotted underline-offset-4 hover:text-t-text transition"
+              >
+                Tap here if you aren&rsquo;t redirected
+              </a>
             </div>
           )}
         </div>
