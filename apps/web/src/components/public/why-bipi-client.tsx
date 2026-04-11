@@ -357,12 +357,12 @@ function HeroAgentTicker({ agents }: { agents: WhyBipiAgent[] }) {
   return (
     <div
       ref={ref}
-      className="relative mx-auto mt-10 max-w-xl overflow-hidden"
+      className="relative mx-auto mt-10 w-full min-w-0 max-w-xl overflow-hidden"
     >
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-t-bg to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-t-bg to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-t-bg to-transparent sm:w-20" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-t-bg to-transparent sm:w-20" />
       <motion.div
-        className="flex gap-4 py-2"
+        className="flex w-max gap-4 py-2"
         animate={inView ? { x: ['0%', '-50%'] } : {}}
         transition={{
           duration: agents.length * 2.8,
@@ -398,7 +398,7 @@ function HeroAgentTicker({ agents }: { agents: WhyBipiAgent[] }) {
 
 export function WhyBipiClient({ agents }: WhyBipiClientProps) {
   return (
-    <div className="bg-t-bg">
+    <div className="overflow-x-hidden bg-t-bg">
       {/* ── Hero: Biased. Bipartisan. ─────────────────────────────────── */}
       <section className="relative overflow-hidden px-4 py-24 sm:py-36">
         <div
@@ -539,7 +539,7 @@ export function WhyBipiClient({ agents }: WhyBipiClientProps) {
             </div>
           </div>
 
-          <div className="grid items-stretch gap-6 md:grid-cols-12">
+          <div className="grid items-stretch gap-6 md:grid-cols-12 [&>*]:min-w-0">
             <div className="md:col-span-7">
               <div className="h-full rounded-2xl border border-t-edge bg-t-card p-6 sm:p-8">
                 <p className="mb-4 text-[14.5px] leading-relaxed text-t-text-2">
@@ -631,7 +631,7 @@ export function WhyBipiClient({ agents }: WhyBipiClientProps) {
             </div>
           </div>
 
-          <div className="grid items-stretch gap-6 md:grid-cols-12">
+          <div className="grid items-stretch gap-6 md:grid-cols-12 [&>*]:min-w-0">
             <div className="md:order-2 md:col-span-7">
               <div className="h-full rounded-2xl border border-t-edge bg-t-card p-6 sm:p-8">
                 <p className="mb-4 text-[14.5px] leading-relaxed text-t-text-2">
