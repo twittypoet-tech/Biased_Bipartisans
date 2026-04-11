@@ -153,20 +153,35 @@ https://images.unsplash.com/photo-PHOTO_ID?w=1200&h=630&fit=crop
 
 **Step 2: Download and upload to Supabase Storage**
 
-**Invoke this as a bash command using a SINGLE-QUOTED heredoc** (`python3 <<'PY' ... PY`). The single quotes around `PY` tell bash *not* to expand `$VARS` inside the body — so `$SUPABASE_SERVICE_ROLE_KEY` stays literal and Python reads the real value from `os.environ`. A double-quoted heredoc (`<<PY`) would shell-expand the `$f'{...}'` f-strings and break things. Replace `IMAGE_URL` and `article-slug-here` with the real values before running:
+**Invoke this as a bash command with `source ~/.zshrc` + a SINGLE-QUOTED heredoc** (`source ~/.zshrc 2>/dev/null ; python3 <<'PY' ... PY`). The `source` populates the env vars into the bash subshell so Python's `os.environ` can see them (Claude Code's Bash tool does NOT inherit these automatically). The single quotes around `PY` tell bash *not* to expand `$VARS` inside the body — so `$SUPABASE_SERVICE_ROLE_KEY` stays literal and Python reads the real value from `os.environ`. A double-quoted heredoc (`<<PY`) would shell-expand the `$f'{...}'` f-strings and break things.
+
+**CRITICAL: if the upload fails for any reason (missing env var, network error, 403 from Supabase Storage), do NOT fall back to the platform default image. Raise an exception so the writer worker marks the queue row `failed`.** The platform default image is reserved for the *image-sourcing* path (step 1 couldn't find a real photo), NOT the upload path. A failed upload is an infrastructure problem that requires operator attention, not a silent degradation.
+
+Replace `IMAGE_URL` and `article-slug-here` with the real values before running:
 
 ```bash
+source ~/.zshrc 2>/dev/null
 python3 <<'PY'
-import os, urllib.request, json, ssl
-SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://ttmjfvfgvmmyvplhgkgk.supabase.co')
-SUPABASE_KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']  # required — fail loud if missing
+import os, sys, urllib.request, urllib.error, ssl
+
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 BUCKET = 'news-report-images'
+
+# Hard-fail if env is broken. No silent fallback to platform default.
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print(f'FATAL: missing env (SUPABASE_URL={"set" if SUPABASE_URL else "MISSING"}, SUPABASE_SERVICE_ROLE_KEY={"set" if SUPABASE_KEY else "MISSING"}). Cannot upload hero image. Writer should mark this row failed with error=env_missing_upload. Do NOT use the platform default image — that is for image-sourcing failures, not upload failures.', file=sys.stderr)
+    sys.exit(2)
 
 # Download the image
 ctx = ssl.create_default_context()
 req = urllib.request.Request('IMAGE_URL')
 req.add_header('User-Agent', 'Mozilla/5.0')
-data = urllib.request.urlopen(req, timeout=15, context=ctx).read()
+try:
+    data = urllib.request.urlopen(req, timeout=15, context=ctx).read()
+except Exception as e:
+    print(f'FATAL: image download failed: {e}. Writer should try the next image-source candidate, not the platform default.', file=sys.stderr)
+    sys.exit(3)
 
 # Upload to Supabase Storage (upsert)
 slug = 'article-slug-here'
@@ -178,13 +193,23 @@ up_req.add_header('apikey', SUPABASE_KEY)
 up_req.add_header('Authorization', f'Bearer {SUPABASE_KEY}')
 up_req.add_header('Content-Type', 'image/jpeg')
 up_req.add_header('x-upsert', 'true')
-urllib.request.urlopen(up_req, timeout=30)
+try:
+    urllib.request.urlopen(up_req, timeout=30)
+except urllib.error.HTTPError as e:
+    body = e.read().decode(errors='replace')[:500]
+    print(f'FATAL: upload failed HTTP {e.code}: {body}. Writer should mark this row failed with error=upload_http_{e.code}.', file=sys.stderr)
+    sys.exit(4)
+except Exception as e:
+    print(f'FATAL: upload failed: {e}. Writer should mark this row failed.', file=sys.stderr)
+    sys.exit(5)
 
 # The permanent URL is:
 permanent_url = f'{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{path}'
 print(f'uploaded: {permanent_url}')
 PY
 ```
+
+**If the bash exit code is non-zero**, the writer MUST mark the queue row `failed` with a specific error string (see exit codes in the stderr output above) and skip to the next row. **Do not publish an article with the platform default image because upload failed.** The platform default is only for the rare case where every image source (BrightData photos + Unsplash + og:image extraction) returned nothing usable — in which case step 1 of the pipeline never produces an `IMAGE_URL` to download, so this upload step never runs.
 
 **Step 3: Use the Supabase Storage URL as hero_image_url**
 
@@ -299,14 +324,15 @@ After insertion, report the slug so the user can verify at `/news/{slug}`.
 
 **IndexNow ping**: After inserting articles, ping IndexNow to get instant Bing/Yandex indexing. **Use Python via a single-quoted heredoc**, never bash `curl` with shell expansion. The reasons are (a) Python reads `os.environ['INTERNAL_API_KEY']` directly with zero chance of command-substitution prompts, (b) it fails gracefully with a clear log line when the env var is missing instead of silently sending an empty header and getting 401, and (c) it matches the `Bash(python3:*)` permission pattern so it runs without approval prompts.
 
-Replace the example slugs list with the real slugs you just inserted:
+Replace the example slugs list with the real slugs you just inserted. Start the bash command with `source ~/.zshrc 2>/dev/null` so Python's `os.environ` sees the var:
 
 ```bash
+source ~/.zshrc 2>/dev/null
 python3 <<'PY'
 import os, json, urllib.request
 key = os.environ.get('INTERNAL_API_KEY')
 if not key:
-    print('IndexNow skipped: INTERNAL_API_KEY not in environment. Articles will index via sitemap within hours.')
+    print('IndexNow skipped: INTERNAL_API_KEY not in environment (source ~/.zshrc did not populate it). Articles will index via sitemap within hours. This is a best-effort ping and not a hard failure — the article is still published.')
 else:
     slugs = ['slug-1', 'slug-2']  # REPLACE with the slugs you just inserted
     data = json.dumps({'slugs': slugs}).encode()
@@ -323,6 +349,8 @@ else:
         print(f'IndexNow failed: {e}. Articles will index via sitemap within hours.')
 PY
 ```
+
+**IndexNow failure is NOT a hard failure** — it's best-effort. Unlike the image upload, a failed IndexNow ping does not require marking the row `failed`. The article is already in `news_reports` and will be indexed via sitemap within hours. Log the failure via Telegram as a heads-up but proceed with marking the queue row `published`.
 
 Successful response: `{"ok":true,"pinged":N}`. This is best-effort — if the env var is missing or the request fails, articles still index via sitemap within hours, so never retry aggressively and never block the publish flow on it.
 

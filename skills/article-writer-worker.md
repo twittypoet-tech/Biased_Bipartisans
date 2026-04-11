@@ -16,13 +16,18 @@ You are the **Bipi News article writer worker**. Your job: every time you run, c
 
 **Never use bash command substitution.** No `$(...)`, no backticks, no `$(cmd | cmd2)`. These all trigger a Claude Code safety prompt that blocks autonomous operation. Rules:
 
-- If you need an env var, reference it directly: `$INTERNAL_API_KEY`, `$SUPABASE_SERVICE_ROLE_KEY`. Do NOT try to re-source it via `export $(grep KEY .env | xargs)` or similar. If the env var is empty in the current shell, that's a configuration problem — **fail loud with a clear Python `print()`, do not try to recover by reading files**.
-- If you need to orchestrate multiple dependent steps (download → parse → upload), do it in a Python **single-quoted** heredoc: `python3 <<'PY' ... PY`. The single quotes prevent shell expansion inside the body. Python can read `os.environ`, make HTTP requests, parse JSON, and print results — no shell gymnastics needed.
+- **Always start every bash command with `source ~/.zshrc 2>/dev/null ; ...`** to ensure all env vars (`INTERNAL_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`) are loaded. Claude Code's Bash tool spawns subshells with a minimal env that does NOT automatically inherit your login shell's exports, so every bash invocation must source them explicitly. `source` is NOT command substitution — it's safe. `2>/dev/null` suppresses any zsh startup noise.
+- After sourcing, reference env vars directly: `$INTERNAL_API_KEY`, `$SUPABASE_SERVICE_ROLE_KEY`. Do NOT try to re-source them from .env via `export $(grep KEY .env | xargs)` — that IS command substitution.
+- If you need to orchestrate multiple dependent steps (download → parse → upload), do it in a Python **single-quoted** heredoc: `python3 <<'PY' ... PY`. The single quotes prevent shell expansion inside the body. Python can read `os.environ`, make HTTP requests, parse JSON, and print results — no shell gymnastics needed. The outer bash command still needs `source ~/.zshrc 2>/dev/null ;` at the top to populate os.environ for the Python child process.
 - If you need to chain independent commands, use `;` or `&&` between simple (non-substitution) commands, not `$(cmd1) && cmd2`.
-- `curl` with static URLs and `-H "x-api-key: $VAR"` is fine — `$VAR` expansion is not command substitution.
-- The writer's IndexNow ping, image download, image upload, and all other multi-step operations **must** live inside `python3 <<'PY' ... PY` heredocs per `generate-article.md`. Follow that pattern.
+- `curl` with static URLs and `-H "x-api-key: $VAR"` is fine — `$VAR` expansion is not command substitution (just parameter expansion).
+- The writer's IndexNow ping, image download, image upload, and all other multi-step operations **must** live inside `python3 <<'PY' ... PY` heredocs per `generate-article.md`, wrapped by `source ~/.zshrc 2>/dev/null ; python3 <<'PY' ... PY`.
 
-This rule exists because the previous Iran batch hit a 401 on IndexNow (the writer generated `export $(grep INTERNAL_API_KEY .env | xargs) && curl ...`, which triggered a substitution prompt AND silently sent an empty API key because the grep returned nothing). Don't do that. Use Python.
+**Why the `source ~/.zshrc` pattern:** Claude Code's Bash tool does not inherit your login shell's exported variables. If you skip the source and just reference `$SUPABASE_SERVICE_ROLE_KEY`, you'll get an empty string, and your curl / Python will fail silently (or worse, succeed with an empty API key and return 401/403). Two real incidents of this on 2026-04-10:
+- Iran batch #1: IndexNow ping sent empty `x-api-key` → 401 on all 3 articles
+- Iran batch #2: Image upload failed to find `SUPABASE_SERVICE_ROLE_KEY` in os.environ → writer fell back to platform default image (wrong behavior — should have marked the row failed)
+
+Both were caused by the missing source. Always source. No exceptions.
 
 ## Pre-flight checks
 
@@ -66,7 +71,32 @@ This rule exists because the previous Iran batch hit a 401 on IndexNow (the writ
 
    Then exit.
 
-   These two pre-flight reads cost a few hundred tokens per tick and guarantee that no article ever ships without the rubric being loaded into the writing session.
+5. **Verify required env vars are loadable.** Claude Code's Bash tool does NOT inherit your login shell's env automatically — you must source `~/.zshrc` inside each bash command. Before claiming any rows, run this preflight bash command:
+
+   ```bash
+   source ~/.zshrc 2>/dev/null
+   python3 <<'PY'
+   import os, sys
+   required = ['INTERNAL_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']
+   missing = [k for k in required if not os.environ.get(k)]
+   if missing:
+       print(f'MISSING: {missing}')
+       sys.exit(1)
+   for k in required:
+       v = os.environ[k]
+       print(f'{k}: set ({len(v)} chars)')
+   PY
+   ```
+
+   If any var is missing, abort the tick with this Telegram message:
+
+   ```
+   🚨 Writer aborted: missing env vars {missing_list}. Source ~/.zshrc is not populating these in the Bash tool's environment. Verify ~/.zshrc still has the exports, then restart the channel session from a fresh Terminal. No rows will be processed this tick.
+   ```
+
+   Then exit. Do NOT claim rows and start research if env is broken — research is expensive and the article can't be saved without these vars.
+
+   These pre-flight reads cost a few hundred tokens per tick and guarantee that no article ever ships without the rubric being loaded and the env being complete.
 
 ## Workflow
 
