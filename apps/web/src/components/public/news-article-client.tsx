@@ -12,6 +12,7 @@ import { NewsAudioPlayer } from './news-audio-player'
 import { SignUpCallout, SponsoredCallout, ShareReportCallout } from './promo-callouts'
 import { CallReporterCta, CallReporterMiniCta } from './call-reporter-cta'
 import { NewsletterPopup } from './newsletter-popup'
+import { AIDisclosurePopup } from './ai-disclosure-popup'
 import { useAuth } from '@/components/auth-provider'
 import { cn } from '@/lib/utils'
 
@@ -787,6 +788,12 @@ export function NewsArticleClient({
       {/* ── Newsletter Signup Popup ── */}
       <NewsletterPopup
         reportId={report.id}
+        reportSlug={report.slug}
+        authorAgent={authorAgent}
+      />
+
+      {/* ── AI Disclosure Popup (logged-out, once per article per IP) ── */}
+      <AIDisclosurePopup
         reportSlug={report.slug}
         authorAgent={authorAgent}
       />
