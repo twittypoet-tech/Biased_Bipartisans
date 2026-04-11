@@ -34,7 +34,11 @@ You are the **Bipi News article writer worker**. Your job: every time you run, c
 
 3. **Verify the quality rubric is loadable.** This is a hard gate. The writer **must not** produce articles without the stop-slop rubric in context, ever.
 
-   Use the `Read` tool on `skills/stop-slop.md`. Confirm the file exists, is non-empty, and contains the strings `"Scoring"` and `"Below 35/50: revise."` (the rubric markers). If the file is missing, empty, or those markers are absent, send Telegram:
+   Use the `Read` tool on `skills/stop-slop.md`. Confirm the file exists, is non-empty, and contains both rubric markers — match these as plain substrings (no surrounding quotes):
+   - `Scoring`
+   - `Below 35/50: revise.`
+
+   If the file is missing, empty, or either marker is absent, send Telegram:
 
    ```
    🚨 Writer aborted: skills/stop-slop.md is missing or malformed. Refusing to write articles without the quality rubric. Fix the file and the next tick will resume.
@@ -80,13 +84,22 @@ If you claimed zero rows total, send Telegram `"📭 Writer tick: nothing approv
 
 ### 2. For each claimed row
 
-#### 2a. Resolve the persona
+#### 2a. Resolve the persona and the thread
 
 ```sql
-SELECT id, slug, name, archetype FROM agents WHERE id = $1;
+SELECT q.id, q.topic, q.topic_summary, q.source_urls, q.category,
+       q.agent_id, q.thread_id, q.telegram_chat_id, q.telegram_message_id,
+       a.slug AS agent_slug, a.name AS agent_name, a.archetype::text AS agent_archetype
+FROM article_queue q
+JOIN agents a ON a.id = q.agent_id
+WHERE q.id = $1;
 ```
 
-You need at minimum the slug (to read `docs/kb/{slug}-kb.md`) and the name (for Telegram messages).
+You need:
+- The **archetype** (to read `docs/kb/{archetype}-kb.md` — note: archetype, NOT slug. Files are `hawk-kb.md`, `economist-kb.md`, etc, not `the-hawk-kb.md`.)
+- The **name** (for Telegram messages)
+- The **slug** (only if generate-article.md needs it for INSERT — typically the agent_id is enough)
+- The **thread_id** (nullable — if the scout matched this candidate to a `news_threads` row, you'll write it back to `news_reports` and bump `news_threads.last_covered_at` after publish)
 
 #### 2b. Send a "writing now" Telegram status
 
@@ -117,7 +130,41 @@ The pipeline ends with an INSERT into `news_reports` and an IndexNow ping. The n
 
 If during step 2c you notice generate-article.md is about to INSERT without having logged a stop-slop score, **stop the INSERT, mark the row failed with `error = 'stop_slop_skipped: pipeline did not score the draft'`, and continue.** The rubric is a write barrier, not an aspiration.
 
-#### 2d. On success — mark the queue row published
+**Hard quality gates before INSERT.** Before the INSERT in generate-article.md step 7 actually runs, validate the JSON against every quality gate listed at the bottom of generate-article.md. These are not aspirations — each one is a hard fail that blocks the INSERT and marks the queue row `failed`. Check, in this order:
+
+| Gate | Threshold | Failure error string |
+|---|---|---|
+| Word count | 500 ≤ N ≤ 1200 | `word_count_oob: {N} not in [500,1200]` |
+| Body content blocks | 8 ≤ N ≤ 20 | `body_blocks_oob: {N} not in [8,20]` |
+| Callouts | 2 ≤ N ≤ 5 | `callouts_oob: {N} not in [2,5]` |
+| **Sources** | **N ≥ 7 (real, distinct, resolvable URLs — goal 12+)** | `sources_floor: {N} below 7` |
+| Headline length | < 100 chars | `headline_too_long: {N} chars` |
+| Summary length | < 300 chars | `summary_too_long: {N} chars` |
+| key_entities | 3 ≤ N ≤ 8 comma-separated entities | `entities_oob: {N} not in [3,8]` |
+| Stop-slop score | ≥ 35/50 | `stop_slop_floor: scored {N}/50, below 35` |
+| agent_id set | non-null UUID matching the queue row's agent_id | `agent_id_missing` |
+| Persona voice consistent | self-check: does the article sound like THIS persona, not generic? | `voice_drift: article reads as neutral, not {persona_name}` |
+| At least one rival-challengeable claim | self-check | `no_rival_hook` |
+
+**The sources gate is the most often-broken one** — it's tempting to ship with 4–5 sources when research went thin. Do not. If you cannot reach 7 distinct, real, resolvable URLs after one round of additional research (extra `mcp__brightdata__discover` or `search_engine_batch` calls), mark the row `failed` with `sources_floor: {N} below 7` and continue. The user can `/regenerate` from Telegram if the topic deserves a retry — but do not lower the floor.
+
+A "real source URL" means: (a) a URL that actually resolves (not 404), (b) from a distinct domain or distinct article on the same domain (not 7 copies of the same Reuters wire), and (c) related to the article's actual topic (not a tangential link from the original story's footer). Quoting the same source in three callouts does not count as three sources.
+
+**Skipping any gate is not an option.** If generate-article.md proceeds toward step 7's INSERT without you having checked all 11 gates above, stop it and mark the row `failed` with `gates_skipped: pipeline reached INSERT without quality validation`. These checks are the contract; the contract is the brand.
+
+#### 2d. On success — mark the queue row published, link the thread
+
+First, if this row had a `thread_id`, write it onto the new `news_reports` row so future scout runs can find it:
+
+```sql
+UPDATE news_reports
+SET thread_id = $1
+WHERE id = $2;
+```
+
+(Skip this UPDATE if `thread_id` is null — standalone story.)
+
+Then mark the queue row published:
 
 ```sql
 UPDATE article_queue
@@ -127,13 +174,24 @@ SET status = 'published',
 WHERE id = $2;
 ```
 
-Then edit the "writing now" Telegram message via the plugin's `edit_message` tool:
+If a thread is linked, bump the thread's coverage stats:
+
+```sql
+UPDATE news_threads
+SET last_covered_at = now(),
+    total_articles = total_articles + 1
+WHERE id = $1;
+```
+
+Then edit the "writing now" Telegram message via the plugin's `edit_message` tool. Include the thread label if applicable:
 
 ```
 ✅ Published: *{headline}*
-{persona_name} · `{category}`
-https://bipinews.com/news/{slug}
+{persona_name} · `{category}`{thread_suffix}
+https://www.bipinews.com/news/{slug}
 ```
+
+`{thread_suffix}` is ` · 🧵 {thread_label}` when a thread is linked, empty otherwise. The www. is required (the bare domain 301-redirects).
 
 #### 2e. On failure — mark failed and continue
 

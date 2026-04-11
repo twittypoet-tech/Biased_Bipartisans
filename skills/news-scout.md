@@ -67,46 +67,121 @@ If `target_category` is set, use that single category for all picks instead.
 
 ### 2. Discover stories
 
+**Recency rule (hard requirement):** every story you queue must be **breaking news from the last 24 hours**. No exceptions for "interesting old stories" — if it's not from today or yesterday, it doesn't belong in this batch. Bipi News is a current-events platform; readers come for what just happened, not for week-old recaps.
+
+To enforce this:
+
+1. **Phrase queries with explicit recency intent.** Always include time-locked terms in the query string itself: `"breaking [topic] today"`, `"[topic] news last 24 hours"`, `"[topic] this morning"`, `"[topic] just announced"`. Avoid generic queries like `"latest [topic] 2026"` — those return month-old content.
+
+2. **Use `mcp__brightdata__discover` with `start_date`, not just `search_engine_batch`.** The `discover` tool accepts a `start_date` parameter (`YYYY-MM-DD` format) and AI-ranks results by relevance to your `intent`. For each story candidate, run:
+
+   ```
+   mcp__brightdata__discover(
+     query: "breaking [topic] today",
+     intent: "Find news from the last 24 hours about [topic]. Prefer wire services (Reuters, AP, AFP), major broadsheets (NYT, WSJ, FT), and government primary sources. Reject anything older than yesterday.",
+     start_date: "<today's date in YYYY-MM-DD>",
+     num_results: 10
+   )
+   ```
+
+   `start_date` set to today filters out anything older. If the result set is thin, fall back to `start_date` = yesterday's date but never further.
+
+3. **Verify each candidate's date before queuing.** When you pick a story from the results, check the result's date field (or the URL's date segment, e.g., `/2026/04/10/`). If you cannot confirm the story is from today or yesterday, **drop it**. If a candidate's date is ambiguous, scrape the page and look for a `<time datetime="...">` or `article:published_time` meta tag.
+
+4. **Hard floor:** if after all queries you cannot find `target_count` stories from the last 24 hours, queue fewer rather than padding with stale items. **Send a Telegram message** explaining the shortfall: `⚠️ Scout: only N/{target_count} stories met the 24h recency floor. {missed_count} categories had no breaking news today.`
+
 **If `seed_topics` is set:**
-- For each seed topic, use `mcp__brightdata__search_engine_batch` with 1-2 angled queries to find current news coverage. Take the top 3-5 sources per topic.
+- For each seed topic, run `mcp__brightdata__discover` with the topic + "today/breaking" framing AND `start_date = today`. Take the top 3-5 sources per topic, all date-verified.
 
 **If free discovery:**
-- For each category in your target mix, craft one news-angled query (e.g. `"latest national security defense news today"`, `"breaking energy climate policy week"`, `"new criminal justice reform 2026"`).
-- Run them as one `mcp__brightdata__search_engine_batch` call (8-10 queries in one batch).
-- For each category, pick the freshest, most substantive story from the results.
+- For each category in your target mix, craft a date-locked query (e.g. `"breaking national security news today"`, `"energy climate policy announced today"`, `"criminal justice ruling today"`).
+- Run them as one `mcp__brightdata__search_engine_batch` call (up to 5 queries in one batch — the tool's max), then for each promising result, do a follow-up `discover` with `start_date` set to today and the topic-specific intent.
+- For each category, pick the freshest, most substantive story from the date-verified results.
 
-You're aiming for one (story, category) pair per slot in the mix. If a category yields nothing usable, fall back to a backup category from the under-used list.
+You're aiming for one (story, category) pair per slot in the mix. If a category yields nothing usable from the last 24 hours, **leave that slot empty** and report the gap in the closing Telegram summary. Do not fall back to old news.
 
-### 3. Novelty filter
+### 3. Novelty filter (with ongoing-thread exemption)
 
-For each candidate story, check whether a published article already covers the same beat:
+The default novelty rule: drop any candidate that duplicates a story published in the last 48 hours. **But some storylines need ongoing coverage even when we just covered them** — wars, elections, major court cases, sustained crises. Those live in the `news_threads` table and are exempt from the default 48h dedup. The exemption is conditional: the new candidate must bring a genuinely new development, not a rehash.
+
+#### 3a. Load active threads
 
 ```sql
-SELECT id, headline, summary FROM news_reports
-WHERE published_at > now() - interval '48 hours'
-  AND (
-    headline ILIKE '%KEYWORD1%'
-    OR headline ILIKE '%KEYWORD2%'
-    OR summary  ILIKE '%KEYWORD1%'
-  );
+SELECT id, slug, label, description, keywords, last_covered_at
+FROM news_threads
+WHERE is_active = true;
 ```
 
-Pick 2-3 distinctive nouns/proper-nouns from the candidate's headline and search them. If you get a match that clearly covers the same event, **drop the candidate** and replace it with another option from the discovery results. Don't be precious — coverage of the same broad topic from a different angle is fine; only drop near-duplicates of the same event.
+Each thread has a list of lowercase keyword phrases. A candidate "matches a thread" if any of the thread's keywords appears as a substring (case-insensitive) in the candidate's `topic` or `topic_summary`.
+
+#### 3b. For each candidate story
+
+1. **Check for thread match.** Lowercase the candidate's topic + summary, then test against each active thread's `keywords` array. If any keyword phrase is a substring, the candidate is a thread match. Note the matching `thread_id`.
+
+2. **If NO thread match** — apply the standard 48h dedup:
+
+   ```sql
+   SELECT id, headline, summary FROM news_reports
+   WHERE published_at > now() - interval '48 hours'
+     AND (
+       headline ILIKE '%KEYWORD1%'
+       OR headline ILIKE '%KEYWORD2%'
+       OR summary  ILIKE '%KEYWORD1%'
+     );
+   ```
+
+   Pick 2-3 distinctive nouns/proper-nouns from the candidate's headline and search them. If you get a match that clearly covers the same event, **drop the candidate** and replace it with another option from the discovery results. Coverage of the same broad topic from a different angle is fine; only drop near-duplicates of the same event.
+
+3. **If YES thread match** — apply the ongoing-coverage check instead:
+
+   - Read the most recent 1-2 published articles for this thread:
+
+     ```sql
+     SELECT id, headline, summary, published_at
+     FROM news_reports
+     WHERE thread_id = $1
+     ORDER BY published_at DESC
+     LIMIT 2;
+     ```
+
+   - **Compare the new candidate's specific development** to the most recent thread coverage. The question is not "did we cover this thread today?" — yes, probably we did. The question is **"does this candidate report a new development the prior article does not cover?"** Examples:
+     - "Russia masses 50,000 troops near Sumy" (yesterday's article) vs. "Russia strikes Kyiv overnight, kills 12" (new candidate) → **NEW ANGLE, keep**
+     - "Newsom signs CA AI executive order" (yesterday) vs. "CalMatters publishes analysis of Newsom EO" (new candidate) → **SAME EVENT, drop**
+     - "Trump unveils national AI framework" (yesterday) vs. "Senate Commerce Committee schedules hearing on Trump AI framework" (new candidate) → **NEW ANGLE, keep**
+
+   - If the candidate brings a genuinely new development, **keep it AND set its `thread_id`** when inserting into the queue. The writer will use this to update the thread's `last_covered_at` after publishing.
+   - If the candidate is a rehash with no new substance, drop it.
+
+4. **Cooldown floor for thread re-coverage:** even with new angles, a single thread should not get more than ~3 articles per day across all batches. If `news_reports` already has 3+ rows with this `thread_id` in the last 24 hours, drop the candidate even if it has a new angle. Some restraint.
+
+#### 3c. Persona pairing for thread matches
+
+When a thread match is queued, the persona pick should rotate — do not let the same persona dominate one thread. Query:
+
+```sql
+SELECT agent_id, COUNT(*)
+FROM news_reports
+WHERE thread_id = $1 AND published_at > now() - interval '7 days'
+GROUP BY agent_id;
+```
+
+Pick a persona that has not yet covered this thread in the last week (or whose count is lowest). This keeps each ongoing storyline multi-perspective.
 
 ### 4. Pick a persona for each story
 
-Get the active persona roster:
+Get the persona roster eligible to write articles. The `agent_status` enum is `official | guest | sandbox` — the production roster is `official`. Also exclude the `moderator` and `reporter` roles, since those personas (The Moderator, The Reporter, The Wire, The Commentary Host) don't write opinion columns:
 
 ```sql
-SELECT id, slug, name, archetype, role, short_bio, expertise
+SELECT id, slug, name, archetype::text, role::text, short_bio, expertise
 FROM agents
-WHERE status = 'active'
+WHERE status = 'official'
+  AND role NOT IN ('moderator', 'reporter')
 ORDER BY name;
 ```
 
 For each story, pick the best-suited persona by:
 
-1. **Reading the relevant persona KBs.** For each candidate persona, read `docs/kb/{slug}-kb.md` and check thesis, expertise, temperament, red lines. Don't read all KBs every run — narrow to 3-4 candidates per story based on archetype + expertise overlap with the topic, then read those.
+1. **Reading the relevant persona KBs.** For each candidate persona, read `docs/kb/{archetype}-kb.md` (the file is named after the archetype, NOT the slug — e.g. `hawk-kb.md` not `the-hawk-kb.md`). Check thesis, expertise, temperament, red lines. Don't read all KBs every run — narrow to 3-4 candidates per story based on archetype + expertise overlap with the topic, then read those.
 2. **Avoiding overuse.** Query persona usage today:
 
    ```sql

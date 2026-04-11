@@ -63,9 +63,12 @@ This is a small interactive flow:
 2. Wait for the next message from the user that's a reply to your prompt (the plugin gives you the `reply_to_message_id`).
 3. Validate the slug:
    ```sql
-   SELECT id, name FROM agents WHERE slug = $1 AND status = 'active';
+   SELECT id, name FROM agents
+   WHERE slug = $1
+     AND status = 'official'
+     AND role NOT IN ('moderator', 'reporter');
    ```
-   If empty, `reply` `"❓ Unknown slug: {slug}. Try one of: ..."` (list 5 active slugs) and abort.
+   If empty, `reply` `"❓ Unknown slug: {slug}. Try one of: ..."` (list 5 valid slugs) and abort.
 4. Update the queue row:
    ```sql
    UPDATE article_queue
@@ -96,7 +99,7 @@ Same interactive shape:
 | `/topics <a, b, c>` | Save the comma-list to a small ephemeral file (`/tmp/bipi-scout-seeds.json`) that the next scheduled scout run will read. Confirm with `🌱 Seeded {n} topics for next scout tick.` |
 | `/queue` | `SELECT id, topic, status, agent_id FROM article_queue WHERE status IN ('pending','approved') ORDER BY created_at LIMIT 30;` Format as a list of one-liners with the queue id, status emoji (🟡 pending, 🟢 approved), persona name, topic. |
 | `/status` | Counts: pending / approved / generating / today's published / today's failed. Plus the two `feature_flags` (scout enabled? writer enabled?). Plus a count of `article_queue` rows in each terminal status from the last 24h. |
-| `/last` | Last 5 published news_reports rows: title, slug, persona, published_at. Include URLs (`https://bipinews.com/news/{slug}`). |
+| `/last` | Last 5 published news_reports rows: title, slug, persona, published_at. Include URLs (`https://www.bipinews.com/news/{slug}` — the www. is required, the bare domain 301-redirects). |
 | `/last 10` | Same with limit 10. |
 | `/assign <queue_id> <persona-slug>` | Same logic as the reassign callback, but driven by command instead of button. Validate the queue id exists and the slug is active. Reply with confirmation. |
 | `/edit <queue_id> <new topic>` | Same as the edit callback. The "new topic" is everything after the queue id. |
@@ -105,6 +108,12 @@ Same interactive shape:
 | `/cancel <queue_id>` | `UPDATE article_queue SET status='rejected' WHERE id = $1;` |
 | `/pause scout` / `/pause writer` | Flip `feature_flags.{article_scout_enabled\|article_writer_enabled}` to `false`. Confirm. |
 | `/resume scout` / `/resume writer` | Flip back to `true`. Confirm. |
+| `/threads` | List ACTIVE news_threads: `SELECT slug, label, total_articles, last_covered_at FROM news_threads WHERE is_active = true ORDER BY last_covered_at DESC NULLS LAST;`. Format as one-liners showing slug, label, article count, hours since last coverage. |
+| `/threads all` | Same query without the `is_active = true` filter; show inactive threads with a 🚫 marker. |
+| `/threads pause <slug>` | `UPDATE news_threads SET is_active = false WHERE slug = $1 RETURNING label;` Confirm with the label. |
+| `/threads resume <slug>` | `UPDATE news_threads SET is_active = true WHERE slug = $1 RETURNING label;` Confirm. |
+| `/threads add <slug> "<label>" <kw1, kw2, ...>` | Validate slug is lowercase-with-hyphens and unique. Parse the quoted label. Parse comma-separated keywords (lowercase). INSERT into news_threads. Reply with the new thread id, label, and keyword count. |
+| `/threads rm <slug>` | TWO-STEP CONFIRMATION (destructive). First reply: `"Delete thread \`{slug}\` (\"{label}\")? It has {N} published articles linked. The articles will keep their thread_id as null. Reply 'yes delete {slug}' to confirm."` Wait for the user's next message. Only delete if it matches `yes delete {slug}` exactly. |
 | `/help` | Send the full command list (above). |
 
 For any unknown slash command: `react` ❓ and reply with `"Unknown command. Try /help."`.

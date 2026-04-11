@@ -107,27 +107,40 @@ Then send `/status`. You should get a counts summary back.
 
 ---
 
-## Step 7 — Schedule the two cron remote agents
+## Step 7 — Run scout + writer on a recurring interval via `/loop`
 
-In a regular Claude Code session (not the channel session), use the `/schedule` skill to create two scheduled remote agents:
+> **Why `/loop`, not `/schedule`?** The `/schedule` skill creates *remote* Claude Code agents that run in Anthropic's cloud — they have no access to BrightData MCP, no Telegram plugin, no `INTERNAL_API_KEY` / `SUPABASE_SERVICE_ROLE_KEY` from your shell, and a 1-hour minimum cron interval. Our scout and writer depend on all of those. So they have to run locally, inside the same long-running Claude session that holds the channel. The `/loop` skill (already installed) is the right tool: it runs a prompt on a recurring local interval inside the current session.
 
-```
-/schedule
-  name: bipi-news-scout
-  cron: 0 7,13,19 * * *
-  prompt: Read /Users/macbot/Biased_Bipartisans/skills/news-scout.md and execute it with default inputs (target_count = 10).
-```
+Inside the **same long-running channel session** you launch in Step 8 (after pasting the bootstrap prompt that loads `ops-console.md`), issue these two slash commands to start the recurring scout and writer:
 
 ```
-/schedule
-  name: bipi-article-writer
-  cron: */20 * * * *
-  prompt: Read /Users/macbot/Biased_Bipartisans/skills/article-writer-worker.md and execute it.
+/loop 8h Read /Users/macbot/Biased_Bipartisans/skills/news-scout.md and execute it with target_count = 10
 ```
 
-### Tool inventory — what each agent must have
+```
+/loop 30m Read /Users/macbot/Biased_Bipartisans/skills/article-writer-worker.md and execute it
+```
 
-This is exhaustive. If anything in the list below is missing at runtime, the agent will silently degrade or hard-fail. Verify every row before relying on the cron.
+That sets up:
+
+- **Scout** every 8 hours → 3 batches of 10 cards per day, ~30 articles/day target
+- **Writer** every 30 minutes → drains the queue throughout the day (each tick claims up to 3 approved rows, processes them serially)
+
+Both loops queue serially through the same session's turn loop. If the scout fires while the writer is mid-article, the scout waits its turn. Manual Telegram commands also queue through the same loop, so the order is: in-flight task → queued loop ticks → queued Telegram commands. This is fine for our scale (~30 articles/day, ~5 manual commands/day).
+
+To inspect or stop the loops, use the `/loop` skill's management commands inside the same session:
+
+```
+/loop list           # see all running loops with their intervals and last-fired times
+/loop stop <id>      # stop a specific loop
+/loop stop all       # stop everything (e.g. before /pause writer testing)
+```
+
+If the laptop sleeps or you restart Claude Code, **the loops stop with the session**. Re-issue them when you bring the channel session back up. The setup is intentionally low-infra; resilience comes from the laptop staying awake (see the `caffeinate` notes in Step 8).
+
+### Tool inventory — what the channel session must have
+
+Since the scout and writer both run inside the long-running channel session via `/loop` (not as separate scheduled processes), this list applies to the **single Claude Code session you launch in Step 8**. If anything below is missing when you start that session, the loops will silently degrade or hard-fail. Verify every row before issuing the `/loop` commands.
 
 #### Built-in Claude Code tools (both agents)
 
@@ -142,7 +155,7 @@ This is exhaustive. If anything in the list below is missing at runtime, the age
 
 #### MCP servers (both agents)
 
-The agents do not work without these. Each must be configured in the runtime environment's MCP settings (typically `~/.claude/mcp_settings.json` or equivalent) and the scheduled agent must have permission to call the listed tools.
+The loops do not work without these. Each must be configured in your local Claude Code MCP settings (typically `~/.claude/mcp_settings.json` or equivalent) and your channel session must have permission to call the listed tools. Since everything runs in a single local session, "configure once" covers all loops + the ops console.
 
 | MCP server | Specific tools used | Used by |
 |---|---|---|
@@ -169,20 +182,20 @@ The ops console session additionally needs the plugin in **`--channels` mode** (
 | `SUPABASE_URL` | writer (image upload) | `https://ttmjfvfgvmmyvplhgkgk.supabase.co` |
 | `ANTHROPIC_API_KEY` | all sessions | Claude API auth — provided automatically by Claude Code in most setups but verify on remote hosts |
 
-> ⚠️ The Supabase service-role key currently appears as a literal `'...'` placeholder inside the Python snippet at `skills/generate-article.md:159`. In your local runs you've been substituting it from `.env` by hand. For the remote writer agent, this must come from `SUPABASE_SERVICE_ROLE_KEY` in the environment instead. **Verify this works end-to-end during the writer dry-run in the plan's verification step 8 before flipping the cron on.** If the upload fails because the key is missing, the writer will mark the row failed (which is correct loud-fail behavior) but you'll get zero articles until you fix the env.
+> ⚠️ The Supabase service-role key was previously hardcoded as a literal `'...'` placeholder in the Python snippet at `skills/generate-article.md`. That has been fixed to read from `os.environ['SUPABASE_SERVICE_ROLE_KEY']`. For the local channel session, that variable comes from `~/.zshrc`. As long as you launch Claude from a shell that sourced your `.zshrc` (the default behavior), the writer will inherit it.
 
-#### Filesystem access (both agents)
+#### Filesystem access (channel session)
 
-- Working directory **must** be the Bipi News repo root (`/Users/macbot/Biased_Bipartisans` or wherever the repo lives on the host). All skill paths in `article-writer-worker.md`, `news-scout.md`, and `generate-article.md` are repo-relative.
-- Read access to **at minimum** these directories:
+- Working directory **must** be the Bipi News repo root (`/Users/macbot/Biased_Bipartisans`). All skill paths in `article-writer-worker.md`, `news-scout.md`, and `generate-article.md` are repo-relative. Always launch the channel session from inside the repo: `cd ~/Biased_Bipartisans && claude --channels ...`.
+- Read access to **at minimum** these directories (Claude Code's default is to allow everything under the cwd, which covers all of them):
   - `skills/` (entire directory — the writer reads `article-writer-worker.md`, `generate-article.md`, `stop-slop.md`)
   - `docs/kb/` (entire directory — every persona KB plus `bipi-commentary-agents-kb.md`)
   - `supabase/migrations/` (the scout reads `00037_article_agent_authorship.sql` for the category list)
 - Write access to a temp directory (image processing). `/tmp` is fine.
 
-#### Quick pre-flight verification (run before /schedule)
+#### Quick pre-flight verification (run before issuing the /loop commands)
 
-In a one-off Claude Code session in the same environment you'll schedule the agents, run:
+In your channel session — after Claude has launched and you've pasted the ops-console bootstrap prompt — run a one-off bash check before kicking off the loops:
 
 ```bash
 # Filesystem
@@ -210,36 +223,71 @@ Then ask Claude to do these calls in the session and confirm they all return dat
 3. The telegram plugin's `reply` tool sending "preflight ok" to TELEGRAM_CHAT_ID
 ```
 
-If all six environment vars print `yes`, all five filesystem paths exist, all three MCP/plugin probes succeed, and you receive the "preflight ok" message on Telegram, the environment is ready for `/schedule`.
+If all six environment vars print `yes`, all five filesystem paths exist, all three MCP/plugin probes succeed, and you receive the "preflight ok" message on Telegram, the session is ready for `/loop`.
 
-You can list, pause, or delete them anytime:
+You can list, pause, or stop the loops anytime from inside the same session:
 
 ```
-/schedule list
-/schedule pause bipi-news-scout
-/schedule delete bipi-news-scout
+/loop list
+/loop stop <id>          # stop a specific loop by id from /loop list
+/loop stop all           # stop everything
 ```
+
+To pause the work without killing the loops (e.g., you want them to wake up next tick but not do anything this hour), use the Telegram `/pause scout` and `/pause writer` commands instead — those flip the kill-switch in `feature_flags`, which the skills check on every tick.
 
 ---
 
-## Step 8 — Pick a host for the operations console
+## Step 8 — Launch the long-running channel session
 
-The console session must stay alive 24/7 to receive Telegram messages. Two options:
+The channel session is the single Claude Code process that holds everything: Telegram polling, the operations console behavior, and the two `/loop` workers (scout + writer). It must stay alive 24/7 to receive Telegram messages and to fire the loops.
 
 ### Option A — Your laptop in tmux (recommended for week 1)
+
+**Step 8.1 — Start tmux + launch Claude with the channel flag:**
 
 ```bash
 tmux new -s bipi-ops
 cd ~/Biased_Bipartisans
+caffeinate -dimsu &        # prevent the laptop from sleeping while attached
 claude --channels plugin:telegram@claude-plugins-official
-# Inside the session, paste the prompt from Step 6.
-# Detach with Ctrl-b d.
 ```
 
-To check on it: `tmux attach -t bipi-ops`. To restart after a laptop reboot: same commands.
+The `caffeinate -dimsu` keeps the laptop awake (display-off OK, system stays on). Without it, polling pauses every time the laptop sleeps and Telegram approvals stack up until you wake it.
 
-Pros: zero infrastructure, easy to inspect, free.
-Cons: dies if your laptop sleeps, dies if Claude Code updates, dies if you're on a flight.
+**Step 8.2 — Bootstrap the ops console behavior** (paste this as your first message in the new Claude session):
+
+> You are the Bipi News operations console. Read `/Users/macbot/Biased_Bipartisans/skills/ops-console.md` and follow it for every incoming Telegram message and `<channel>` callback you receive. Only act on messages from `chat_id 7284074128` — silently ignore everything else. Use the `mcp__plugin_telegram_telegram__reply`, `react`, and `edit_message` tools to send all user-facing output back through Telegram.
+
+**Step 8.3 — Run the pre-flight verification from Step 7's "Quick pre-flight verification" block**, just to confirm every env var, every MCP, and the Telegram outbound path are alive in this session.
+
+**Step 8.4 — Kick off the two loops** (paste these one at a time):
+
+```
+/loop 8h Read /Users/macbot/Biased_Bipartisans/skills/news-scout.md and execute it with target_count = 10
+```
+
+```
+/loop 30m Read /Users/macbot/Biased_Bipartisans/skills/article-writer-worker.md and execute it
+```
+
+Both loops are now running in this session. The next scout tick fires 8 hours from now; the next writer tick fires 30 minutes from now.
+
+**Step 8.5 — Detach and leave it running:**
+
+```
+Ctrl-b d
+```
+
+The tmux session keeps running in the background. To check on it later:
+
+```bash
+tmux attach -t bipi-ops
+```
+
+To restart after a laptop reboot: `tmux new -s bipi-ops`, then re-do Step 8.1 → 8.4. The skills are repo-checked-in so they'll be the same. The article queue and the threads table are in Supabase, so all state survives the restart.
+
+Pros: zero new infrastructure, easy to inspect, free.
+Cons: dies if your laptop sleeps without `caffeinate`, dies if Claude Code updates, dies if you're on a flight without your laptop. For each of those, the laptop coming back up + re-running Step 8 brings everything back from saved state.
 
 ### Option B — Railway service (week 2+)
 
@@ -259,9 +307,9 @@ This is more work but is the right shape for long-term operation.
 
 Once everything is running, your day looks like:
 
-- 07:00, 13:00, 19:00 UTC: scout fires, you get 10 cards on Telegram. Tap Approve / Reject / Reassign / Edit on each.
-- Every 20 minutes: writer wakes up, claims up to 3 approved items, writes them via `skills/generate-article.md`, sends you a status message per article (`✍️ Writing... → ✅ Published` or `❌ Failed`).
-- Anytime: `/scout` to trigger an extra batch, `/status` to check the queue, `/last` to see what shipped, `/pause writer` if something's wrong, `/regenerate <id>` to retry a failed item.
+- **Every 8 hours from session start**: scout fires (via `/loop 8h`), you get up to 10 cards on Telegram. Tap Approve / Reject / Reassign / Edit on each. Note: the schedule is "8 hours from when you started the loop", not fixed clock times — to align to clock hours like 07/15/23 UTC, restart the loop at the desired time.
+- **Every 30 minutes**: writer wakes up (via `/loop 30m`), claims up to 3 approved items, writes them via `skills/generate-article.md`, sends you a status message per article (`✍️ Writing... → ✅ Published` or `❌ Failed`).
+- **Anytime**: `/scout` to trigger an extra batch out-of-cycle, `/scout topic: <text>` to scout around a specific topic right now, `/status` to check the queue, `/last` to see what shipped, `/pause writer` if something's wrong, `/regenerate <id>` to retry a failed item, `/threads` to see active ongoing-coverage storylines.
 
 For a full command reference: send `/help` to the bot, or read `skills/ops-console.md`.
 
@@ -271,12 +319,15 @@ For a full command reference: send `/help` to the bot, or read `skills/ops-conso
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Bot doesn't react to any messages | Console session not running, or `TELEGRAM_CHAT_ID` mismatch | Check `tmux attach -t bipi-ops`. Confirm chat id with `getUpdates`. |
-| Scout sends cards but Approve does nothing | Console session is running but didn't load `ops-console.md` | Re-paste the Step 6 prompt into the session. |
-| Writer never picks up approved items | `feature_flags.article_writer_enabled = false`, or scheduled writer agent paused | `/resume writer`, then `/schedule list` and unpause `bipi-article-writer`. |
+| Bot doesn't react to any messages | Channel session not running, not launched with `--channels`, or `TELEGRAM_CHAT_ID` allowlist mismatch | `tmux attach -t bipi-ops`, confirm Claude is alive and was launched with `--channels plugin:telegram@claude-plugins-official`. Check `~/.claude/channels/telegram/access.json` has your chat id in `allowFrom`. |
+| Scout sends cards but Approve does nothing | Channel session is running but didn't load `ops-console.md` | Re-paste the Step 8.2 bootstrap prompt into the session. |
+| Loops never fire | `/loop` was never issued, or all loops were stopped | `/loop list` to inspect. Re-issue per Step 8.4 if empty. |
+| Writer never picks up approved items | `feature_flags.article_writer_enabled = false`, or the writer loop was stopped | From Telegram: `/resume writer`. From the channel session: `/loop list`, then re-issue the writer loop if missing. |
+| Loops are running but no cards arriving | The scout loop is still on its 8h cooldown | `/loop list` to see when the next scout tick fires. To force one now, send `/scout` from Telegram (or paste the scout prompt directly into the channel session). |
 | Articles published with wrong persona | Scout's persona pick wasn't overridden in time | Use the 🔁 Reassign button before tapping Approve, or `/assign <id> <slug>` after the fact (must be done while still `pending`). |
-| Telegram messages stop arriving | Telegram bot polling stalled | Restart the console session (`tmux attach`, `Ctrl-c`, re-run `claude --channels ...`). |
-| Two writers ran the same row | Should not happen — the `WHERE status = 'approved'` claim guard prevents it | Check `article_queue` for duplicate `generated_report_id`. If you see one, file an issue. |
+| Telegram messages stop arriving | Bot polling stalled, laptop slept, or session crashed | `tmux attach -t bipi-ops`. If Claude exited, relaunch per Step 8.1. If polling stalled but the session is alive, send the channel session a "ping" to wake it up, or stop and restart the plugin via `/reload-plugins`. |
+| Laptop sleeps during the day | `caffeinate` not running | In a separate tmux pane: `caffeinate -dimsu &`. Add to login items if you want it permanent. |
+| Two writers ran the same row | Should not happen — the `WHERE status = 'approved'` claim guard prevents it. With a single channel session running a single writer loop, two-at-once is impossible anyway. | Check `article_queue` for duplicate `generated_report_id`. If you see one, file an issue. |
 
 ---
 

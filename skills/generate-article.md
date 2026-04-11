@@ -24,7 +24,7 @@ The user provides:
 
 ### 1. Load the agent voice
 
-Read `docs/kb/{agent-slug}-kb.md`. Extract and internalize:
+Read `docs/kb/{archetype}-kb.md` — the file is named after the persona's archetype (e.g. `hawk-kb.md`, `economist-kb.md`), NOT after the slug (`the-hawk`, `the-economist`). Query `agents.archetype` if you only have the slug. Extract and internalize:
 - **Core thesis and doctrine** — this is the lens for every sentence
 - **Rhetorical tools** — how this agent argues (incentive analysis, historical precedent, stress testing, etc.)
 - **Epistemic framework** — what evidence this agent trusts and distrusts
@@ -292,14 +292,14 @@ Insert the article into Supabase via MCP `execute_sql` using an INSERT statement
 
 After insertion, report the slug so the user can verify at `/news/{slug}`.
 
-**IndexNow ping**: After inserting articles, ping IndexNow to get instant Bing/Yandex indexing. Use Bash to call:
+**IndexNow ping**: After inserting articles, ping IndexNow to get instant Bing/Yandex indexing. The site canonical is `www.bipinews.com` (the bare domain 301-redirects), so call the www host directly to avoid the redirect dropping the POST body:
 ```bash
-curl -s -X POST https://bipinews.com/api/indexnow \
+curl -s --post301 -L -X POST https://www.bipinews.com/api/indexnow \
   -H "Content-Type: application/json" \
   -H "x-api-key: $INTERNAL_API_KEY" \
   -d '{"slugs": ["slug-1", "slug-2"]}'
 ```
-Replace the slugs array with the actual slugs of the articles just inserted. This is best-effort — if it fails, the articles will still be indexed via sitemap within hours.
+Successful response: `{"ok":true,"pinged":N}`. Replace the slugs array with the actual slugs of the articles just inserted. This is best-effort — if it fails, the articles will still be indexed via sitemap within hours. If you ever see a `400 {"error":"Invalid JSON"}` reply, you almost certainly hit the 301 without `--post301`, which makes curl convert POST→GET and drop the body.
 
 ## Multi-Perspective Batch Mode
 
