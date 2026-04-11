@@ -103,8 +103,10 @@ Same interactive shape:
 | `/last 10` | Same with limit 10. |
 | `/assign <queue_id> <persona-slug>` | Same logic as the reassign callback, but driven by command instead of button. Validate the queue id exists and the slug is active. Reply with confirmation. |
 | `/edit <queue_id> <new topic>` | Same as the edit callback. The "new topic" is everything after the queue id. |
-| `/generate <queue_id>` | If the row is `pending`, flip it to `approved` and confirm. The writer picks it up on the next `*/20` tick. **Do not write the article inline.** That's the writer's job and it has its own throttling. |
-| `/regenerate <queue_id>` | Reset a `failed` or `published` row back to `approved`. For `published`, also delete the corresponding news_reports row first (after confirming with the user). |
+| `/generate <queue_id>` | Flip the row to `approved` if needed, then **execute `skills/article-writer-worker.md` inline in this session** for that one specific row right now (no waiting for the 30-min loop tick). Send a "✍️ Writing..." reply first so the user knows it started. The writer's own pre-flight checks still apply (kill switch, stop-slop gate, source minimum, etc) — manual triggers do not bypass quality gates. |
+| `/regenerate <queue_id>` | Reset a `failed` or `published` row back to `approved`, then run `/generate <queue_id>` flow (inline writer execution). For `published`, delete the corresponding `news_reports` row first **after confirming with the user** via reply ("Delete published article `{slug}` and regenerate? Reply 'yes regenerate' to confirm."). |
+| `/writer` | Drain the writer queue right now — execute `skills/article-writer-worker.md` inline in this session, processing up to 3 approved rows like a normal cron tick. Use this when you've just approved several cards and don't want to wait 30 minutes. |
+| `/writer <queue_id>` | Same as `/generate <queue_id>` (alias). |
 | `/cancel <queue_id>` | `UPDATE article_queue SET status='rejected' WHERE id = $1;` |
 | `/pause scout` / `/pause writer` | Flip `feature_flags.{article_scout_enabled\|article_writer_enabled}` to `false`. Confirm. |
 | `/resume scout` / `/resume writer` | Flip back to `true`. Confirm. |
