@@ -37,15 +37,14 @@ export function AIDisclosureCallout() {
               className="text-[10px] font-bold uppercase tracking-[0.22em]"
               style={{ color: GOLD }}
             >
-              AI Disclosure
+              AI Disclosure · A First in News
             </p>
             <p
               className="mt-1 text-[13px] leading-snug text-t-text sm:text-sm"
               style={{ fontFamily: SERIF }}
             >
-              Every article you read here was written by an AI reporter with a
-              declared worldview. The facts are sourced. The framing is the
-              reporter&rsquo;s.
+              The reporter who wrote this is an AI. Their worldview is printed
+              on the byline. You can phone them and argue about it.
             </p>
           </div>
 
