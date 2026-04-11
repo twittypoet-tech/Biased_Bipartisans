@@ -200,53 +200,56 @@ function AgentMarquee({ agents }: { agents: MethodologyAgent[] }) {
   return (
     <div
       ref={ref}
-      className="relative h-full w-full overflow-hidden rounded-xl border border-t-edge bg-t-surface p-5"
+      className="relative flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden rounded-xl border border-t-edge bg-t-surface p-5"
     >
       <div className="mb-4 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-t-text-3">
         <Users className="size-3" style={{ color: GOLD }} />
         {agents.length} declared reporters
       </div>
 
-      {/* Edge fade masks */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-t-surface to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-t-surface to-transparent" />
+      {/* Marquee track — strictly contained. Edge fades sit over the track. */}
+      <div className="relative w-full min-w-0 max-w-full overflow-hidden">
+        {/* Edge fade masks */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-t-surface to-transparent sm:w-12" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-t-surface to-transparent sm:w-12" />
 
-      <motion.div
-        className="flex gap-3 will-change-transform"
-        animate={inView ? { x: ['0%', '-50%'] } : {}}
-        transition={{
-          duration: agents.length * 2.4,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-      >
-        {loop.map((agent, i) => (
-          <Link
-            key={`${agent.id}-${i}`}
-            href={`/agents/${agent.slug}`}
-            className="group flex w-[150px] shrink-0 flex-col items-center gap-2 rounded-lg border border-t-edge bg-t-surface-inset p-3 transition hover:border-t-edge-strong"
-          >
-            <div
-              className="relative size-14 overflow-hidden rounded-full border-2"
-              style={{ borderColor: GOLD }}
+        <motion.div
+          className="flex w-max gap-3 will-change-transform"
+          animate={inView ? { x: ['0%', '-50%'] } : {}}
+          transition={{
+            duration: agents.length * 2.4,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        >
+          {loop.map((agent, i) => (
+            <Link
+              key={`${agent.id}-${i}`}
+              href={`/agents/${agent.slug}`}
+              className="group flex w-[110px] shrink-0 flex-col items-center gap-2 rounded-lg border border-t-edge bg-t-surface-inset p-3 transition hover:border-t-edge-strong sm:w-[140px]"
             >
-              <Image
-                src={agent.avatar_url}
-                alt={agent.name}
-                fill
-                sizes="56px"
-                className="object-cover"
-              />
-            </div>
-            <p className="line-clamp-1 text-center text-[12px] font-semibold text-t-text">
-              {agent.name}
-            </p>
-            <p className="line-clamp-1 text-center text-[9px] uppercase tracking-wider text-t-text-3">
-              {agent.archetype.replace(/_/g, ' ')}
-            </p>
-          </Link>
-        ))}
-      </motion.div>
+              <div
+                className="relative size-12 overflow-hidden rounded-full border-2 sm:size-14"
+                style={{ borderColor: GOLD }}
+              >
+                <Image
+                  src={agent.avatar_url}
+                  alt={agent.name}
+                  fill
+                  sizes="(max-width: 640px) 48px, 56px"
+                  className="object-cover"
+                />
+              </div>
+              <p className="line-clamp-1 w-full text-center text-[11px] font-semibold text-t-text sm:text-[12px]">
+                {agent.name}
+              </p>
+              <p className="line-clamp-1 w-full text-center text-[9px] uppercase tracking-wider text-t-text-3">
+                {agent.archetype.replace(/_/g, ' ')}
+              </p>
+            </Link>
+          ))}
+        </motion.div>
+      </div>
 
       <div className="mt-4 flex items-center justify-end">
         <Link
@@ -545,7 +548,7 @@ function StepBlock({
       className="grid items-stretch gap-5 md:grid-cols-12"
     >
       <div
-        className={`md:col-span-7 ${reverse ? 'md:order-2' : 'md:order-1'}`}
+        className={`min-w-0 md:col-span-7 ${reverse ? 'md:order-2' : 'md:order-1'}`}
       >
         <div className="flex h-full flex-col justify-center rounded-xl border border-t-edge bg-t-card p-6 sm:p-8">
           <p
@@ -567,9 +570,11 @@ function StepBlock({
       </div>
 
       <div
-        className={`md:col-span-5 ${reverse ? 'md:order-1' : 'md:order-2'}`}
+        className={`min-w-0 md:col-span-5 ${reverse ? 'md:order-1' : 'md:order-2'}`}
       >
-        <div className="h-full min-h-[260px]">{demo}</div>
+        <div className="h-full min-h-[260px] w-full min-w-0 overflow-hidden">
+          {demo}
+        </div>
       </div>
     </motion.div>
   )
@@ -604,7 +609,7 @@ function PartHeader({ part, title }: { part: string; title: string }) {
 
 export function MethodologyClient({ agents }: MethodologyClientProps) {
   return (
-    <div className="bg-t-bg">
+    <div className="overflow-x-hidden bg-t-bg">
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden px-4 py-20 sm:py-28">
         <div
