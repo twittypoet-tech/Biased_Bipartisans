@@ -1,70 +1,156 @@
 import Link from 'next/link'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 /**
  * AI Disclosure Callout
  *
- * Mounted under the global search bar on the home page. One compact line of
- * stop-slop copy that tells first-time visitors what Bipi News actually is,
- * and a button that hands them off to the full methodology page.
+ * Mounted under the global search bar on the home page. Bold editorial
+ * classified-ad aesthetic: solid gold panel, black stamp, hard edges, no
+ * rounded-card slop. Colors are fixed hex values so it reads the same in
+ * light and dark mode (gold panel + black ink + white accent).
  */
 
 const GOLD = '#C8A44A'
+const INK = '#0a0a0a'
 const SERIF = 'Georgia, "Times New Roman", serif'
 
 export function AIDisclosureCallout() {
   return (
     <div className="mx-auto max-w-2xl px-4">
-      <div
-        className="relative overflow-hidden rounded-xl border border-t-edge bg-t-surface p-4 shadow-t sm:p-5"
-        style={{
-          backgroundImage: `linear-gradient(135deg, rgba(200,164,74,0.06) 0%, transparent 55%)`,
-        }}
-      >
-        <div className="flex items-start gap-3 sm:gap-4">
-          <div
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg sm:size-10"
-            style={{
-              backgroundColor: `${GOLD}1a`,
-              border: `1px solid ${GOLD}40`,
-            }}
-          >
-            <Sparkles className="size-4" style={{ color: GOLD }} />
-          </div>
+      {/* Outer wrapper carries a bold offset shadow so the whole thing lifts
+          off the page like a stamped notice, with no rounded-card softness. */}
+      <div className="relative">
+        <div
+          aria-hidden
+          className="absolute inset-0 translate-x-[3px] translate-y-[3px]"
+          style={{ backgroundColor: INK }}
+        />
 
-          <div className="min-w-0 flex-1">
-            <p
-              className="text-[10px] font-bold uppercase tracking-[0.22em]"
-              style={{ color: GOLD }}
-            >
-              AI Disclosure · A First in News
-            </p>
-            <p
-              className="mt-1 text-[13px] leading-snug text-t-text sm:text-sm"
-              style={{ fontFamily: SERIF }}
-            >
-              The reporter who wrote this is an AI. Their worldview is printed
-              on the byline. You can phone them and argue about it.
-            </p>
-          </div>
-
-          <Link
-            href="/about/methodology"
-            className="group hidden shrink-0 items-center gap-1.5 self-center rounded-lg border border-t-edge bg-t-surface-inset px-3.5 py-2 text-[11px] font-semibold text-t-text transition hover:border-t-edge-strong sm:inline-flex"
-          >
-            Read Full Disclosure
-            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
-
-        {/* Mobile full-width button sits below the text row */}
-        <Link
-          href="/about/methodology"
-          className="group mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-t-edge bg-t-surface-inset px-3.5 py-2.5 text-[12px] font-semibold text-t-text transition hover:border-t-edge-strong sm:hidden"
+        <div
+          className="relative border-2"
+          style={{ backgroundColor: GOLD, borderColor: INK }}
         >
-          Read Full Disclosure
-          <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-        </Link>
+          {/* diagonal hash-stripe corner accent — a print/alert signal */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute right-0 top-0 size-24"
+            style={{
+              backgroundImage:
+                'repeating-linear-gradient(45deg, rgba(0,0,0,0.18) 0, rgba(0,0,0,0.18) 3px, transparent 3px, transparent 9px)',
+              maskImage:
+                'linear-gradient(225deg, black 0%, black 35%, transparent 65%)',
+              WebkitMaskImage:
+                'linear-gradient(225deg, black 0%, black 35%, transparent 65%)',
+            }}
+          />
+
+          {/* DESKTOP + TABLET layout (sm+): icon | text | button all in a row */}
+          <div className="relative hidden items-stretch sm:flex">
+            {/* Black "AI" stamp block */}
+            <div
+              className="flex shrink-0 items-center justify-center border-r-2 px-5"
+              style={{ borderColor: INK, backgroundColor: INK }}
+            >
+              <span
+                className="text-[28px] font-black italic leading-none"
+                style={{ color: GOLD, fontFamily: SERIF }}
+              >
+                AI
+              </span>
+            </div>
+
+            {/* Body */}
+            <div className="min-w-0 flex-1 px-5 py-4">
+              <div className="mb-1.5 flex items-center gap-2">
+                <span
+                  className="inline-block size-1.5 animate-pulse rounded-full"
+                  style={{ backgroundColor: INK }}
+                />
+                <p
+                  className="text-[10px] font-black uppercase tracking-[0.28em]"
+                  style={{ color: INK }}
+                >
+                  AI Disclosure
+                </p>
+              </div>
+              <p
+                className="text-[13.5px] font-semibold leading-snug"
+                style={{ color: INK, fontFamily: SERIF }}
+              >
+                Every article you read here was written by an AI reporter with
+                a declared worldview. The facts are sourced. The framing is
+                the reporter&rsquo;s.
+              </p>
+            </div>
+
+            {/* Button */}
+            <Link
+              href="/about/methodology"
+              className="group flex shrink-0 items-center gap-1.5 self-stretch border-l-2 px-5 text-[11px] font-black uppercase tracking-[0.12em] transition hover:opacity-80"
+              style={{
+                borderColor: INK,
+                backgroundColor: INK,
+                color: GOLD,
+              }}
+            >
+              Read
+              <br />
+              Disclosure
+              <ArrowRight className="ml-1 size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
+          {/* MOBILE layout: stacked with a bold top stamp strip */}
+          <div className="relative flex flex-col sm:hidden">
+            <div
+              className="flex items-center justify-between border-b-2 px-4 py-2"
+              style={{ backgroundColor: INK, borderColor: INK }}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block size-1.5 animate-pulse rounded-full"
+                  style={{ backgroundColor: GOLD }}
+                />
+                <p
+                  className="text-[10px] font-black uppercase tracking-[0.28em]"
+                  style={{ color: GOLD }}
+                >
+                  AI Disclosure
+                </p>
+              </div>
+              <span
+                className="text-[16px] font-black italic leading-none"
+                style={{ color: GOLD, fontFamily: SERIF }}
+              >
+                AI
+              </span>
+            </div>
+
+            <div className="px-4 py-4">
+              <p
+                className="text-[13.5px] font-semibold leading-snug"
+                style={{ color: INK, fontFamily: SERIF }}
+              >
+                Every article you read here was written by an AI reporter with
+                a declared worldview. The facts are sourced. The framing is
+                the reporter&rsquo;s.
+              </p>
+
+              <Link
+                href="/about/methodology"
+                className="mt-3 flex items-center justify-center gap-1.5 border-2 py-2.5 text-[11px] font-black uppercase tracking-[0.12em] transition hover:opacity-90"
+                style={{
+                  borderColor: INK,
+                  backgroundColor: INK,
+                  color: GOLD,
+                }}
+              >
+                Read Full Disclosure
+                <ArrowRight className="size-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
