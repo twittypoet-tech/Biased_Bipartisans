@@ -29,8 +29,8 @@ export async function POST(
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'journalist')) {
-    return NextResponse.json({ error: 'Admin or journalist role required' }, { status: 403 })
+  if (!profile || profile.role !== 'admin') {
+    return NextResponse.json({ error: 'Admin role required' }, { status: 403 })
   }
 
   if (profile.credits < COMMENTARY_CREDIT_COST) {

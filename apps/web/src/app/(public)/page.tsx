@@ -5,6 +5,7 @@ import { createServerClient, createAuthServerClient } from '@/lib/supabase/serve
 import { listPublishedReports, getFeaturedReport, listRecentBreakingReports, listTrendingReports, listPublishedReporterCalls, listAgents, listDebates, listDebateParticipants } from '@bipi/db'
 import { BreakingTicker } from '@/components/home/breaking-ticker'
 import { GlobalSearchBar } from '@/components/home/search-bar'
+import { AIDisclosureCallout } from '@/components/home/ai-disclosure-callout'
 import { AgentCarousel } from '@/components/home/agent-carousel'
 import { HeroStory } from '@/components/home/hero-story'
 import { NewsGrid } from '@/components/home/news-grid'
@@ -103,6 +104,9 @@ export default async function HomePage() {
       {/* ── Global Search ── */}
       <GlobalSearchBar />
 
+      {/* ── AI Disclosure Callout (under search) ── */}
+      <AIDisclosureCallout />
+
       {/* ── Agent Carousel ── */}
       <AgentCarousel agents={agentOptions} recentReports={publishedReports.slice(0, 8)} />
 
@@ -135,13 +139,31 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── Main content: Grid + Sidebar ── */}
-      <section className="mx-auto max-w-6xl px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <NewsGrid reports={remainingReports} reporterCalls={reporterCalls} />
+      {/* ── Main content: Grid + Sidebar ──
+           Desktop (lg+): 3-col grid. Featured cards top-left, sidebar spans
+           both rows on the right, long feed flows below featured on the left.
+           Mobile: CSS order => featured → sidebar → long feed. */}
+      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-3">
+        <div className="order-1 lg:order-1 lg:col-span-2">
+          <NewsGrid
+            reports={remainingReports}
+            reporterCalls={reporterCalls}
+            section="featured"
+          />
         </div>
-        <div className="lg:col-span-1">
-          <Sidebar trending={trendingReports} agents={agentOptions} isAuthenticated={isAuthenticated} />
+        <div className="order-2 lg:order-2 lg:col-span-1 lg:row-span-2">
+          <Sidebar
+            trending={trendingReports}
+            agents={agentOptions}
+            isAuthenticated={isAuthenticated}
+          />
+        </div>
+        <div className="order-3 lg:order-3 lg:col-span-2">
+          <NewsGrid
+            reports={remainingReports}
+            reporterCalls={reporterCalls}
+            section="long-feed"
+          />
         </div>
       </section>
     </div>
