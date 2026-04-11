@@ -14,13 +14,7 @@
 import { useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import {
-  motion,
-  useInView,
-  useScroll,
-  useTransform,
-  type MotionValue,
-} from 'framer-motion'
+import { motion, useInView, useScroll, useTransform } from 'framer-motion'
 import {
   ArrowRight,
   BookOpen,
@@ -61,27 +55,6 @@ function useSectionParallax() {
     offset: ['start end', 'end start'],
   })
   return { ref, scrollYProgress }
-}
-
-function ParallaxFloatHeader({
-  label,
-  progress,
-}: {
-  label: string
-  progress: MotionValue<number>
-}) {
-  const y = useTransform(progress, [0, 1], ['40%', '-40%'])
-  const opacity = useTransform(progress, [0, 0.2, 0.8, 1], [0, 1, 1, 0])
-
-  return (
-    <motion.p
-      style={{ y, opacity, color: GOLD }}
-      className="pointer-events-none absolute left-4 top-1/2 select-none text-[72px] font-bold uppercase tracking-[0.1em] opacity-[0.04] sm:text-[140px] lg:text-[200px]"
-      aria-hidden
-    >
-      {label}
-    </motion.p>
-  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,20 +176,16 @@ function HeroSection() {
   )
 }
 
-// ── Chapter 1: The Problem ───────────────────────────────────────────────────
+// ── The Problem ──────────────────────────────────────────────────────────────
 
 function ProblemSection() {
-  const { ref, scrollYProgress } = useSectionParallax()
   const sectionRef = useRef<HTMLDivElement>(null)
   const inView = useInView(sectionRef, { once: true, amount: 0.3 })
 
   return (
     <section
-      ref={ref}
       className="relative overflow-hidden border-t border-t-edge px-4 py-28 sm:py-36"
     >
-      <ParallaxFloatHeader label="Chapter I" progress={scrollYProgress} />
-
       <div ref={sectionRef} className="relative mx-auto max-w-3xl">
         <motion.p
           initial={{ opacity: 0, x: -20 }}
@@ -224,7 +193,7 @@ function ProblemSection() {
           transition={{ duration: 0.6 }}
           className="mb-4 text-[11px] font-bold uppercase tracking-[0.3em] text-t-text-3"
         >
-          Chapter I · The Problem
+          The Problem
         </motion.p>
 
         <motion.h2
@@ -266,7 +235,7 @@ function ProblemSection() {
           className="mt-14 flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.28em] text-t-text-3"
         >
           <div className="h-px flex-1" style={{ backgroundColor: RED }} />
-          <span>End of Chapter I</span>
+          <span>§</span>
           <div className="h-px flex-1" style={{ backgroundColor: RED }} />
         </motion.div>
       </div>
@@ -277,7 +246,6 @@ function ProblemSection() {
 // ── Chapter 2: What We Built ─────────────────────────────────────────────────
 
 function BuildSection({ agents }: { agents: MissionAgent[] }) {
-  const { ref, scrollYProgress } = useSectionParallax()
   const sectionRef = useRef<HTMLDivElement>(null)
   const inView = useInView(sectionRef, { once: true, amount: 0.2 })
 
@@ -285,11 +253,8 @@ function BuildSection({ agents }: { agents: MissionAgent[] }) {
 
   return (
     <section
-      ref={ref}
       className="relative overflow-hidden border-t border-t-edge bg-t-surface px-4 py-28 sm:py-36"
     >
-      <ParallaxFloatHeader label="Chapter II" progress={scrollYProgress} />
-
       <div ref={sectionRef} className="relative mx-auto max-w-3xl">
         <motion.p
           initial={{ opacity: 0, x: -20 }}
@@ -297,7 +262,7 @@ function BuildSection({ agents }: { agents: MissionAgent[] }) {
           transition={{ duration: 0.6 }}
           className="mb-4 text-[11px] font-bold uppercase tracking-[0.3em] text-t-text-3"
         >
-          Chapter II · What We Built
+          What We Built
         </motion.p>
 
         <motion.h2
@@ -403,8 +368,6 @@ function LayersSection() {
       ref={ref}
       className="relative overflow-hidden border-t border-t-edge px-4 py-28 sm:py-36"
     >
-      <ParallaxFloatHeader label="Chapter III" progress={scrollYProgress} />
-
       <div ref={sectionRef} className="relative mx-auto max-w-5xl">
         <motion.p
           initial={{ opacity: 0, x: -20 }}
@@ -412,7 +375,7 @@ function LayersSection() {
           transition={{ duration: 0.6 }}
           className="mb-4 text-center text-[11px] font-bold uppercase tracking-[0.3em] text-t-text-3"
         >
-          Chapter III · Two Layers
+          Two Layers
         </motion.p>
 
         <motion.h2
@@ -571,20 +534,16 @@ function EvidenceSection() {
   )
 }
 
-// ── Chapter 5: Who This Is For ───────────────────────────────────────────────
+// ── Who This Is For ──────────────────────────────────────────────────────────
 
 function AudienceSection() {
-  const { ref, scrollYProgress } = useSectionParallax()
   const sectionRef = useRef<HTMLDivElement>(null)
   const inView = useInView(sectionRef, { once: true, amount: 0.3 })
 
   return (
     <section
-      ref={ref}
       className="relative overflow-hidden border-t border-t-edge px-4 py-28 sm:py-36"
     >
-      <ParallaxFloatHeader label="Chapter V" progress={scrollYProgress} />
-
       <div ref={sectionRef} className="relative mx-auto max-w-3xl">
         <motion.p
           initial={{ opacity: 0, x: -20 }}
@@ -592,7 +551,7 @@ function AudienceSection() {
           transition={{ duration: 0.6 }}
           className="mb-4 text-[11px] font-bold uppercase tracking-[0.3em] text-t-text-3"
         >
-          Chapter V · Who This Is For
+          Who This Is For
         </motion.p>
 
         <motion.h2
@@ -704,7 +663,7 @@ function CtaSection() {
           className="mb-3 text-[11px] font-bold uppercase tracking-[0.3em]"
           style={{ color: GOLD }}
         >
-          Chapter VI · Start Here
+          Start Here
         </motion.p>
         <motion.h3
           initial={{ opacity: 0, y: 20 }}
