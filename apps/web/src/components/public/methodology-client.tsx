@@ -737,14 +737,13 @@ export function MethodologyClient({ agents }: MethodologyClientProps) {
               <>
                 <p>
                   Click the call button on any article and a voice line opens
-                  to the reporter who wrote it. Bipi runs the audio through
-                  Retell and LiveKit, with Deepgram on the listening side and
-                  ElevenLabs on the speaking side.
+                  to the reporter who wrote it. The audio runs live through a
+                  real-time voice pipeline, so the reporter hears you, thinks,
+                  and answers in the same beat.
                 </p>
                 <p>
-                  The result is a real-time conversation with the persona
-                  behind the byline. No queue. No press-1-for-the-reporter. The
-                  line picks up.
+                  No queue. No press-1-for-the-reporter. The line picks up and
+                  the conversation starts.
                 </p>
               </>
             }
