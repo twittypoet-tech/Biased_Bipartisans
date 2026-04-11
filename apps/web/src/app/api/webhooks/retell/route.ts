@@ -388,6 +388,19 @@ async function handleOnboardingCall(call: Record<string, unknown>, callId: strin
 }
 
 // ── Commentary call handler ──────────────────────────────────────────────────
+//
+// Commentary calls come from two parallel flows:
+//
+//   1. NEWS-ARTICLE flow (new): commentary_requests → agent_commentary
+//      Triggered from /api/news/[slug]/commentary-request. This is what
+//      /commentary and the article-page thread read from.
+//
+//   2. REPORTER-CALL flow (legacy): report_commentary_requests → report_commentary
+//      Triggered from /api/commentary-requests. Still in use for calls made
+//      against reporter_calls rows.
+//
+// On every call_analyzed event we check BOTH tables by retell_call_id. Whichever
+// matches wins. If neither matches, the call is from somewhere else and we skip.
 
 async function handleCommentaryCall(
   call: Record<string, unknown>,
@@ -395,50 +408,105 @@ async function handleCommentaryCall(
 ): Promise<Response | null> {
   const db = createServerClient()
 
-  // Look up by retell_call_id in commentary requests table
-  const { data: commentaryRequest } = await db
-    .from('report_commentary_requests')
-    .select('*')
-    .eq('retell_call_id', callId)
-    .single()
-
-  if (!commentaryRequest) return null // Not a commentary call
-
-  console.log('commentary webhook: processing call', callId, 'for request', commentaryRequest.id)
-
-  // Extract agent-only transcript
-  const transcriptObject = (call.transcript_object as Array<{ role: string; content: string }> | undefined) ?? []
-  const transcript = transcriptObject
-    .filter((t) => t.role === 'agent')
-    .map((t) => t.content)
-    .join(' ')
+  // Shared audio / transcript extraction
+  const transcriptObject =
+    (call.transcript_object as Array<{ role: string; content: string }> | undefined) ?? []
+  const transcript =
+    transcriptObject
+      .filter((t) => t.role === 'agent')
+      .map((t) => t.content)
+      .join(' ') || null
 
   const recordingUrl = (call.recording_url as string | undefined) ?? null
   const startTs = call.start_timestamp as number | undefined
   const endTs = call.end_timestamp as number | undefined
-  const durationSeconds = startTs && endTs ? Math.round((endTs - startTs) / 1000) : null
+  const durationSeconds =
+    startTs && endTs ? Math.round((endTs - startTs) / 1000) : null
 
-  // Insert into report_commentary (auto-publish)
+  // ── Path 1: NEWS-ARTICLE flow ────────────────────────────────────────────
+  const { data: newsRequest } = await db
+    .from('commentary_requests')
+    .select('id, report_id, agent_id')
+    .eq('retell_call_id', callId)
+    .maybeSingle()
+
+  if (newsRequest) {
+    console.log(
+      'commentary webhook: news-article call',
+      callId,
+      'request',
+      newsRequest.id,
+    )
+    try {
+      const { error: insertError } = await db.from('agent_commentary').insert({
+        report_id: newsRequest.report_id,
+        agent_id: newsRequest.agent_id,
+        audio_url: recordingUrl,
+        transcript,
+        duration_seconds: durationSeconds,
+        is_published: true,
+      })
+      if (insertError) {
+        console.error('commentary webhook: agent_commentary insert failed', insertError)
+      }
+
+      await db
+        .from('commentary_requests')
+        .update({ status: 'fulfilled' })
+        .eq('id', newsRequest.id)
+
+      console.log(
+        'commentary webhook: published news-article commentary for request',
+        newsRequest.id,
+      )
+    } catch (err) {
+      console.error('commentary webhook: news-article DB write failed', err)
+    }
+
+    return NextResponse.json({ ok: true, commentary: 'news-article' })
+  }
+
+  // ── Path 2: LEGACY reporter-call flow ────────────────────────────────────
+  const { data: legacyRequest } = await db
+    .from('report_commentary_requests')
+    .select('id, report_call_id, agent_id')
+    .eq('retell_call_id', callId)
+    .maybeSingle()
+
+  if (!legacyRequest) return null // Not a commentary call at all
+
+  console.log(
+    'commentary webhook: legacy reporter-call',
+    callId,
+    'request',
+    legacyRequest.id,
+  )
+
   try {
-    await db.from('report_commentary').insert({
-      report_call_id: commentaryRequest.report_call_id,
-      agent_id: commentaryRequest.agent_id,
+    const { error: insertError } = await db.from('report_commentary').insert({
+      report_call_id: legacyRequest.report_call_id,
+      agent_id: legacyRequest.agent_id,
       audio_url: recordingUrl,
-      transcript: transcript || null,
+      transcript,
       duration_seconds: durationSeconds,
       is_published: true,
     })
+    if (insertError) {
+      console.error('commentary webhook: report_commentary insert failed', insertError)
+    }
 
-    // Update request status to fulfilled
     await db
       .from('report_commentary_requests')
       .update({ status: 'fulfilled' })
-      .eq('id', commentaryRequest.id)
+      .eq('id', legacyRequest.id)
 
-    console.log('commentary webhook: published commentary for request', commentaryRequest.id)
+    console.log(
+      'commentary webhook: published legacy commentary for request',
+      legacyRequest.id,
+    )
   } catch (err) {
-    console.error('commentary webhook: DB write failed', err)
+    console.error('commentary webhook: legacy DB write failed', err)
   }
 
-  return NextResponse.json({ ok: true, commentary: true })
+  return NextResponse.json({ ok: true, commentary: 'legacy' })
 }

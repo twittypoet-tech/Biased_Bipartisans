@@ -163,6 +163,24 @@ export async function POST(
     }
   }
 
+  // ── Persist retell_call_id so the webhook can match the finished call
+  //    back to this request and write the result into agent_commentary.
+  //    Without this step, the webhook has no way to link a call_analyzed
+  //    event to the pending commentary_request row, and the thread stays
+  //    empty forever.
+  if (commentaryCall) {
+    const { error: updateError } = await serviceDb
+      .from('commentary_requests')
+      .update({
+        retell_call_id: commentaryCall.call_id,
+        status: 'in_progress',
+      })
+      .eq('id', commentaryRequest.id)
+    if (updateError) {
+      console.error('commentary_requests update failed:', updateError)
+    }
+  }
+
   // ── Relay: bridge Host + Commentary Agent into public LiveKit room ─────
   let publicRoomUrl: string | null = null
   let browserToken: string | null = null
