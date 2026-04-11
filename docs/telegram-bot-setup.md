@@ -103,7 +103,7 @@ Read /Users/macbot/Biased_Bipartisans/skills/ops-console.md and follow it for ev
 
 From your phone, send `hello`. The console session should at minimum react with an emoji. If it does, polling and dispatch are working.
 
-Then send `/status`. You should get a counts summary back.
+Then send `/state` (NOT `/status` — that one is reserved by the plugin and gets intercepted). You should get a counts summary back from the ops-console.
 
 ---
 
@@ -309,9 +309,11 @@ Once everything is running, your day looks like:
 
 - **Every 8 hours from session start**: scout fires (via `/loop 8h`), you get up to 10 cards on Telegram. Tap Approve / Reject / Reassign / Edit on each. Note: the schedule is "8 hours from when you started the loop", not fixed clock times — to align to clock hours like 07/15/23 UTC, restart the loop at the desired time.
 - **Every 30 minutes**: writer wakes up (via `/loop 30m`), claims up to 3 approved items, writes them via `skills/generate-article.md`, sends you a status message per article (`✍️ Writing... → ✅ Published` or `❌ Failed`).
-- **Anytime**: `/scout` to trigger an extra batch out-of-cycle, `/scout topic: <text>` to scout around a specific topic right now, `/status` to check the queue, `/last` to see what shipped, `/pause writer` if something's wrong, `/regenerate <id>` to retry a failed item, `/threads` to see active ongoing-coverage storylines.
+- **Anytime**: `/scout` to trigger an extra batch out-of-cycle, `/scout topic: <text>` to scout around a specific topic right now, `/state` to check the queue, `/last` to see what shipped, `/pause writer` if something's wrong, `/regenerate <id>` to retry a failed item, `/threads` to see active ongoing-coverage storylines.
 
-For a full command reference: send `/help` to the bot, or read `skills/ops-console.md`.
+> **Important — three slash commands are reserved by the Telegram plugin and will NOT reach the ops-console:** `/start`, `/help`, `/status`. The plugin server intercepts them and sends its own built-in replies (pairing instructions, plugin help, "Paired as" ack). The ops-console replacements are `/state` (not `/status`) and `/commands` (not `/help`). Plain English ("how many articles today?", "list the queue", "scout about ukraine") always works as a fallback for any command.
+
+For a full command reference: send `/commands` to the bot, or read `skills/ops-console.md`.
 
 ---
 

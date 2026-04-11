@@ -90,6 +90,8 @@ Same interactive shape:
 
 ### B. Slash command (`message.text` starts with `/`)
 
+> ⚠️ **Three slash commands are RESERVED by the Telegram plugin** and never reach this session: `/start`, `/help`, `/status`. Do NOT instruct users to send those — the plugin server intercepts them and sends its own built-in replies. The ops-console replacements are `/state` (status), `/commands` (help), and there is no replacement for `/start`. If the user types one of the reserved commands, you will not see it. Plain English ("how many articles today?") always works as a fallback.
+
 | Command | What to do |
 |---|---|
 | `/scout` | Read `skills/news-scout.md` and execute it inline in this same session, with `target_count = 10`. Send a "🔍 Scouting now..." reply first so the user knows you started. The scout's own Telegram messages will arrive as it runs. |
@@ -98,7 +100,7 @@ Same interactive shape:
 | `/scout category: <name>` | Run scout with `target_category = name`. Validate that name is one of the 20 valid categories first. |
 | `/topics <a, b, c>` | Save the comma-list to a small ephemeral file (`/tmp/bipi-scout-seeds.json`) that the next scheduled scout run will read. Confirm with `🌱 Seeded {n} topics for next scout tick.` |
 | `/queue` | `SELECT id, topic, status, agent_id FROM article_queue WHERE status IN ('pending','approved') ORDER BY created_at LIMIT 30;` Format as a list of one-liners with the queue id, status emoji (🟡 pending, 🟢 approved), persona name, topic. |
-| `/status` | Counts: pending / approved / generating / today's published / today's failed. Plus the two `feature_flags` (scout enabled? writer enabled?). Plus a count of `article_queue` rows in each terminal status from the last 24h. |
+| `/state` | (NOT `/status` — that's reserved by the plugin.) Counts: pending / approved / generating / today's published / today's failed. Plus the two `feature_flags` (scout enabled? writer enabled?). Plus a count of `article_queue` rows in each terminal status from the last 24h. Also accept the words `state`, `status`, `how are we doing` as plain-text equivalents. |
 | `/last` | Last 5 published news_reports rows: title, slug, persona, published_at. Include URLs (`https://www.bipinews.com/news/{slug}` — the www. is required, the bare domain 301-redirects). |
 | `/last 10` | Same with limit 10. |
 | `/assign <queue_id> <persona-slug>` | Same logic as the reassign callback, but driven by command instead of button. Validate the queue id exists and the slug is active. Reply with confirmation. |
@@ -116,16 +118,16 @@ Same interactive shape:
 | `/threads resume <slug>` | `UPDATE news_threads SET is_active = true WHERE slug = $1 RETURNING label;` Confirm. |
 | `/threads add <slug> "<label>" <kw1, kw2, ...>` | Validate slug is lowercase-with-hyphens and unique. Parse the quoted label. Parse comma-separated keywords (lowercase). INSERT into news_threads. Reply with the new thread id, label, and keyword count. |
 | `/threads rm <slug>` | TWO-STEP CONFIRMATION (destructive). First reply: `"Delete thread \`{slug}\` (\"{label}\")? It has {N} published articles linked. The articles will keep their thread_id as null. Reply 'yes delete {slug}' to confirm."` Wait for the user's next message. Only delete if it matches `yes delete {slug}` exactly. |
-| `/help` | Send the full command list (above). |
+| `/commands` | (NOT `/help` — that's reserved by the plugin.) Send the full command list above as a Telegram reply. Also accept the words `help`, `commands`, `what can i do` as plain-text equivalents. |
 
-For any unknown slash command: `react` ❓ and reply with `"Unknown command. Try /help."`.
+For any unknown slash command: `react` ❓ and reply with `"Unknown command. Try /commands for the list."`. Never tell the user to try `/help` or `/status` — those are reserved by the plugin and you will never see them.
 
 ### C. Plain text message (no slash, no callback)
 
 Treat it as a free-form request and try to be useful. Common patterns:
 
 - `"scout something about the EU AI act"` → run scout with `seed_topics = ["EU AI Act"]`.
-- `"how many articles today?"` → run the same query as `/status` and reply.
+- `"how many articles today?"` → run the same query as `/state` and reply.
 - `"why did the last batch fail?"` → check the most recent `failed` rows in `article_queue` and report their `error` strings.
 
 When in doubt, ask one short clarifying question via `reply` rather than guessing.
