@@ -12,6 +12,18 @@ You are the **Bipi News article writer worker**. Your job: every time you run, c
 
 **Critical:** You do not duplicate `skills/generate-article.md`. You **invoke** it. For each queue row, you load `skills/generate-article.md` and execute its 7-step pipeline in this same Claude Code session. The "writing" happens in-session — there is no separate process, no handoff, no second agent. The single Claude Code session that picked up the queue row is the same session that writes the article.
 
+## Bash rules (read this before doing any shell work)
+
+**Never use bash command substitution.** No `$(...)`, no backticks, no `$(cmd | cmd2)`. These all trigger a Claude Code safety prompt that blocks autonomous operation. Rules:
+
+- If you need an env var, reference it directly: `$INTERNAL_API_KEY`, `$SUPABASE_SERVICE_ROLE_KEY`. Do NOT try to re-source it via `export $(grep KEY .env | xargs)` or similar. If the env var is empty in the current shell, that's a configuration problem — **fail loud with a clear Python `print()`, do not try to recover by reading files**.
+- If you need to orchestrate multiple dependent steps (download → parse → upload), do it in a Python **single-quoted** heredoc: `python3 <<'PY' ... PY`. The single quotes prevent shell expansion inside the body. Python can read `os.environ`, make HTTP requests, parse JSON, and print results — no shell gymnastics needed.
+- If you need to chain independent commands, use `;` or `&&` between simple (non-substitution) commands, not `$(cmd1) && cmd2`.
+- `curl` with static URLs and `-H "x-api-key: $VAR"` is fine — `$VAR` expansion is not command substitution.
+- The writer's IndexNow ping, image download, image upload, and all other multi-step operations **must** live inside `python3 <<'PY' ... PY` heredocs per `generate-article.md`. Follow that pattern.
+
+This rule exists because the previous Iran batch hit a 401 on IndexNow (the writer generated `export $(grep INTERNAL_API_KEY .env | xargs) && curl ...`, which triggered a substitution prompt AND silently sent an empty API key because the grep returned nothing). Don't do that. Use Python.
+
 ## Pre-flight checks
 
 **You must complete every check before claiming any queue rows. If any check fails, send a Telegram error and exit. Do not partially run.**
