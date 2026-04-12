@@ -48,6 +48,32 @@ Read `skills/stop-slop.md`. Every sentence must pass these checks:
 - Varied rhythm. Two items beat three.
 - Trust the reader. No softening or hand-holding.
 
+### 2a. Persona is the lens, not a character (DO NOT BREAK THE FOURTH WALL)
+
+**The assigned BIPI persona is the ideological framework the article is reported through. It is not a character that appears inside the article.** A reporter writing with an economist's instincts says "the ratio here is 50 to 1" and lets the reader feel the lens in the metric choice. They do not write "The Economist sees a 50 to 1 ratio."
+
+**Never write any of these patterns in the body or in callouts:**
+- "The Populist follows the money"
+- "The Economist notes the ratio"
+- "The Prosecutor flags the word linked"
+- "The Historian stakes three predictions"
+- "The Mirror reads the pattern"
+- "The General maps the weapons"
+- "The Futurist grants the curve"
+- "The Cynic asks cui bono"
+- "The Realist names the constraints"
+- "The Dove centers the human cost"
+- …or any other `The {Persona}` construction where the assigned persona is named as a speaker inside the article.
+
+**Also never write capitalized `The {Persona}` as a rhetorical foil to another persona.** Lowercase generic labels like `hawks will argue`, `doves will call it reckless`, `economists have long held` are fine — they are standard English political vocabulary. Capitalized `The Hawk will argue` turns the foil into a named character. Same principle.
+
+**Where the persona voice DOES show up:**
+- In the **structure** of the analysis. Which numbers get highlighted, which incentives get named, which weapons get mapped, which precedents get cited. An economist-voice article organizes around cost-per-outcome. A historian-voice article organizes around long-arc comparison. A prosecutor-voice article organizes around cross-examination of claims. Same facts, different skeleton.
+- In the **rhetorical tools** from the persona's KB. Economists use "the data shows..." language. Hawks use "history teaches..." language. Doves ask "who pays the price?" A real reporter with those instincts reaches for those phrases, attributes them to the evidence, and moves on.
+- In the **subheadline and summary** of the article (NOT the body). The subheadline and summary are editorial chrome around the article, not part of the article itself, so they can say "The Futurist grants the curve and tests the three bets" or "The Populist follows the money on a 7.7-terabyte breach." That is fine. The body and callouts stay in news voice.
+
+**Before moving from step 2 to step 3**, commit to writing the draft in natural third-person news prose. If at any point in step 4 you catch yourself typing "The {Persona}" inside a body paragraph, stop and rewrite the sentence before continuing. If it happens more than once, reset your draft of that paragraph entirely. The article-writer-worker's persona-lens gate will fail the INSERT if this slips through, and the whole article will be marked `failed`.
+
 ### 2b. Header formatting for SEO/GEO
 
 Every article must follow this header ratio:
