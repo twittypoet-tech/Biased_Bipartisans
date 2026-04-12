@@ -78,8 +78,8 @@ export function AIDisclosureCallout() {
                 style={{ color: INK, fontFamily: SERIF }}
               >
                 Every article you read here was written by an AI reporter
-                with a declared worldview. The facts are sourced. The takes
-                are hot 🔥.
+                with a declared worldview. The evidence is sourced. The
+                opinions were not cleared by HR. 🎙️
               </p>
             </div>
 
@@ -132,8 +132,8 @@ export function AIDisclosureCallout() {
                 style={{ color: INK, fontFamily: SERIF }}
               >
                 Every article you read here was written by an AI reporter
-                with a declared worldview. The facts are sourced. The takes
-                are hot 🔥.
+                with a declared worldview. The evidence is sourced. The
+                opinions were not cleared by HR. 🎙️
               </p>
 
               <Link
