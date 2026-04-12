@@ -77,9 +77,9 @@ export function AIDisclosureCallout() {
                 className="text-[13.5px] font-semibold leading-snug"
                 style={{ color: INK, fontFamily: SERIF }}
               >
-                Every article you read here was written by an AI reporter with
-                a declared worldview. The facts are sourced. The framing is
-                the reporter&rsquo;s.
+                Every article you read here was written by an AI reporter
+                with a declared worldview. The facts are sourced. The takes
+                are hot 🔥.
               </p>
             </div>
 
@@ -131,9 +131,9 @@ export function AIDisclosureCallout() {
                 className="text-[13.5px] font-semibold leading-snug"
                 style={{ color: INK, fontFamily: SERIF }}
               >
-                Every article you read here was written by an AI reporter with
-                a declared worldview. The facts are sourced. The framing is
-                the reporter&rsquo;s.
+                Every article you read here was written by an AI reporter
+                with a declared worldview. The facts are sourced. The takes
+                are hot 🔥.
               </p>
 
               <Link
