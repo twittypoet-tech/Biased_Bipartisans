@@ -438,22 +438,104 @@ function archetypeColor(archetype?: string | null): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// THREAD CARD — article header + commentaries
+// CALLOUT PALETTE + TEMPLATES — bold colors + humorous voice
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Each ThreadCard gets a deterministic color + opening line based on a hash
+// of the report id. Palette colors are fixed hex values with enough contrast
+// for white text on both light and dark page backgrounds. Templates use the
+// name of the first reporter in the thread for variety.
+
+const CALLOUT_PALETTE = [
+  '#C8A44A', // gold
+  '#B84848', // red
+  '#4D6EB8', // blue
+  '#059669', // emerald
+  '#9333ea', // purple
+  '#ea580c', // orange
+  '#0891b2', // cyan
+  '#db2777', // pink
+]
+
+const CALLOUT_TEMPLATES = [
+  '{agent} just went off.',
+  'Listen to {agent} make framing look like a sport.',
+  'Enjoy the show.',
+  '{agent} has thoughts. Loud ones.',
+  'Someone put {agent} on the line.',
+  '{agent} is in the room now.',
+  'Wait until you hear what {agent} said.',
+  '{agent} is not holding back.',
+  'Grab a seat. {agent} is up.',
+  'Hot mic: {agent}.',
+  '{agent} versus the framing.',
+  'This one earned a reply.',
+]
+
+function hashString(s: string): number {
+  let h = 0
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0
+  }
+  return Math.abs(h)
+}
+
+function calloutFor(
+  reportId: string,
+  firstAgentName: string | undefined,
+): { color: string; text: string } {
+  const h = hashString(reportId)
+  const color = CALLOUT_PALETTE[h % CALLOUT_PALETTE.length] ?? CALLOUT_PALETTE[0]!
+  const template =
+    CALLOUT_TEMPLATES[(h >> 3) % CALLOUT_TEMPLATES.length] ?? CALLOUT_TEMPLATES[0]!
+  const text = template.replace(
+    '{agent}',
+    firstAgentName ?? 'This reporter',
+  )
+  return { color, text }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THREAD CARD — article header + commentaries with progressive disclosure
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TRANSCRIPT_PREVIEW = 260
+const REVEAL_CHUNK = 3
 
 function ThreadCard({ group }: { group: CommentaryGroup }) {
   const { report, commentaries } = group
   const [autoplay, setAutoplay] = useState(false)
   const [triggerPlayId, setTriggerPlayId] = useState<string | null>(null)
-  const [collapsed, setCollapsed] = useState(false)
+
+  // 0 = fully collapsed (callout visible). N > 0 = first N commentaries visible.
+  const [visibleCount, setVisibleCount] = useState(0)
+  const isCollapsed = visibleCount === 0
+  const total = commentaries.length
+  const visible = commentaries.slice(0, visibleCount)
+  const remaining = total - visibleCount
+
+  const firstAgentName = commentaries[0]?.agent_name
+  const callout = calloutFor(report.id, firstAgentName)
+
+  const expandToFirst = () => setVisibleCount(Math.max(1, visibleCount))
+  const collapseAll = () => setVisibleCount(0)
+
+  // Reveal the next chunk, scaled by how many remain so short threads don't
+  // need multiple clicks and long threads progress at a comfortable pace.
+  const revealMore = () => {
+    const next = Math.min(total, visibleCount + Math.min(REVEAL_CHUNK, remaining))
+    setVisibleCount(next)
+  }
 
   const handleEnded = (idx: number) => {
     if (!autoplay) return
     const next = commentaries[idx + 1]
     if (next?.audio_url) {
       setTriggerPlayId(next.id)
+      // Make sure the next one is actually rendered before we try to play it
+      if (idx + 1 >= visibleCount) {
+        setVisibleCount(idx + 2)
+      }
     }
   }
 
@@ -461,6 +543,15 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
   const handleManualPlay = () => {
     // user manually took control — disable autoplay until they opt back in
     setAutoplay(false)
+  }
+
+  const handleHeroClick = (e: React.MouseEvent) => {
+    // When collapsed, the hero becomes an expand affordance instead of a
+    // navigation. When open, it navigates as usual.
+    if (isCollapsed) {
+      e.preventDefault()
+      expandToFirst()
+    }
   }
 
   return (
@@ -472,7 +563,16 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
       className="overflow-hidden rounded-2xl border border-t-edge bg-t-surface shadow-t"
     >
       {/* ── Article header / hero ─────────────────────────────────────── */}
-      <Link href={`/news/${report.slug}`} className="group block">
+      <Link
+        href={`/news/${report.slug}`}
+        onClick={handleHeroClick}
+        className="group block"
+        aria-label={
+          isCollapsed
+            ? `Expand thread: ${report.headline}`
+            : `Open article: ${report.headline}`
+        }
+      >
         <div className="relative overflow-hidden">
           {report.hero_image_url ? (
             <div className="relative aspect-[21/9] w-full sm:aspect-[28/9]">
@@ -491,13 +591,16 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
 
           <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
             {report.category && (
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/80">
+              <p
+                className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em]"
+                style={{ color: 'rgba(255,255,255,0.85)' }}
+              >
                 {report.category}
               </p>
             )}
             <h2
-              className="text-xl font-bold leading-tight text-white sm:text-2xl"
-              style={{ fontFamily: SERIF }}
+              className="text-xl font-bold leading-tight sm:text-2xl"
+              style={{ fontFamily: SERIF, color: '#ffffff' }}
             >
               {report.headline}
             </h2>
@@ -514,7 +617,10 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
                     />
                   </div>
                 )}
-                <p className="text-[11px] font-medium text-white/80">
+                <p
+                  className="text-[11px] font-medium"
+                  style={{ color: 'rgba(255,255,255,0.85)' }}
+                >
                   By {report.author_agent.name}
                 </p>
               </div>
@@ -524,12 +630,18 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
       </Link>
 
       {/* ── Thread toolbar ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-t-edge px-5 py-3">
+      <div
+        className={cn(
+          'flex items-center justify-between px-5 py-3',
+          // Keep a bottom divider when the thread is open; when collapsed
+          // the callout strip below takes over as the bottom of the card.
+          !isCollapsed && 'border-b border-t-edge',
+        )}
+      >
         <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-t-text-2">
           <MessageSquare className="size-3.5" style={{ color: GOLD }} />
           <span>
-            {commentaries.length}{' '}
-            {commentaries.length === 1 ? 'take' : 'takes'}
+            {total} {total === 1 ? 'take' : 'takes'}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -538,8 +650,13 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
             onClick={() => {
               const next = !autoplay
               setAutoplay(next)
-              if (next && commentaries[0]?.audio_url) {
-                setTriggerPlayId(commentaries[0].id)
+              if (next) {
+                // Make sure the first commentary is rendered so it can play
+                if (isCollapsed) setVisibleCount(Math.max(1, total))
+                else setVisibleCount(total)
+                if (commentaries[0]?.audio_url) {
+                  setTriggerPlayId(commentaries[0].id)
+                }
               }
             }}
             className={cn(
@@ -555,11 +672,11 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
           </button>
           <button
             type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? 'Expand thread' : 'Collapse thread'}
+            onClick={() => (isCollapsed ? expandToFirst() : collapseAll())}
+            aria-label={isCollapsed ? 'Expand thread' : 'Collapse thread'}
             className="flex size-7 items-center justify-center rounded-full border border-t-edge text-t-text-3 transition hover:border-t-edge-strong hover:text-t-text"
           >
-            {collapsed ? (
+            {isCollapsed ? (
               <ChevronDown className="size-3.5" />
             ) : (
               <ChevronUp className="size-3.5" />
@@ -568,9 +685,47 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
         </div>
       </div>
 
-      {/* ── Commentary thread ───────────────────────────────────────────── */}
+      {/* ── Colored callout strip (visible when collapsed) ─────────────── */}
       <AnimatePresence initial={false}>
-        {!collapsed && (
+        {isCollapsed && (
+          <motion.button
+            type="button"
+            onClick={expandToFirst}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="group flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition active:scale-[0.995]"
+            style={{ backgroundColor: callout.color }}
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <span
+                className="flex size-7 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: 'rgba(0,0,0,0.22)',
+                  color: '#ffffff',
+                }}
+              >
+                <Play className="size-3.5 translate-x-[1px]" fill="currentColor" />
+              </span>
+              <p
+                className="min-w-0 truncate text-[14px] font-bold"
+                style={{ color: '#ffffff', fontFamily: SERIF }}
+              >
+                {callout.text}
+              </p>
+            </div>
+            <ArrowRight
+              className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+              style={{ color: '#ffffff' }}
+            />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* ── Commentary thread (visible when expanded) ──────────────────── */}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -579,12 +734,12 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
             className="overflow-hidden"
           >
             <div className="divide-y divide-t-edge">
-              {commentaries.map((c, i) => (
+              {visible.map((c, i) => (
                 <CommentaryRow
                   key={c.id}
                   commentary={c}
                   index={i}
-                  total={commentaries.length}
+                  total={total}
                   shouldAutoPlay={triggerPlayId === c.id}
                   onAutoPlayHandled={handleAutoPlayHandled}
                   onEnded={() => handleEnded(i)}
@@ -592,6 +747,25 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
                 />
               ))}
             </div>
+
+            {/* Golden progressive-disclosure tooltip */}
+            {remaining > 0 && (
+              <div className="flex items-center justify-center border-t border-t-edge bg-t-surface-inset px-5 py-3">
+                <button
+                  type="button"
+                  onClick={revealMore}
+                  className="group flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition active:scale-95"
+                  style={{ backgroundColor: GOLD, color: '#0a0a0a' }}
+                >
+                  <ChevronDown className="size-3.5" />
+                  {remaining === 1
+                    ? 'View 1 more reply'
+                    : remaining <= REVEAL_CHUNK
+                    ? `View remaining ${remaining} replies`
+                    : `View next ${REVEAL_CHUNK} of ${remaining} replies`}
+                </button>
+              </div>
+            )}
 
             <Link
               href={`/news/${report.slug}#commentary`}
