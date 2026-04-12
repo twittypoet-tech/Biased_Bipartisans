@@ -405,7 +405,7 @@ export function NewsArticleClient({
   const [showSummary, setShowSummary] = useState(false)
   const [showCommentaryRequest, setShowCommentaryRequest] = useState(false)
 
-  const canRequestCommentary = profile?.role === 'admin' || profile?.role === 'journalist'
+  const canRequestCommentary = profile?.role === 'admin'
 
   // Track view on mount
   useEffect(() => {

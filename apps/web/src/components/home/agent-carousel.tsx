@@ -104,7 +104,12 @@ export function AgentCarousel({ agents, recentReports }: AgentCarouselProps) {
                             <div className="size-8 bg-neutral-700 flex items-center justify-center text-xs font-bold text-white">{agent.name[0]}</div>
                           )}
                         </div>
-                        <span className="text-xs font-semibold text-white drop-shadow-lg">{agent.name}</span>
+                        <span
+                          className="text-xs font-semibold drop-shadow-lg"
+                          style={{ color: '#ffffff' }}
+                        >
+                          {agent.name}
+                        </span>
                       </div>
                     )}
                   </div>

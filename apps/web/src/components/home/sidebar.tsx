@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { TrendingUp, Phone } from 'lucide-react'
 import type { NewsReport } from '@bipi/shared'
 import { CATEGORY_COLORS, formatAge } from '@/lib/categories'
+import { SignInLink } from '@/components/sign-in-link'
 
 interface AgentOption {
   id: string
@@ -112,13 +113,12 @@ export function Sidebar({ trending, agents, isAuthenticated }: SidebarProps) {
             <p className="text-xs text-t-text-2 leading-relaxed mb-4">
               Get 10 free credits. Call any agent. Read transcripts. Shape the debate.
             </p>
-            <Link
-              href="/auth"
+            <SignInLink
               className="inline-flex rounded-lg px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90"
               style={{ backgroundColor: '#C8A44A' }}
             >
               Sign Up Free
-            </Link>
+            </SignInLink>
           </div>
         </motion.div>
       )}

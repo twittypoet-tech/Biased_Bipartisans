@@ -29,8 +29,8 @@ export async function POST(
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'journalist')) {
-    return NextResponse.json({ error: 'Admin or journalist role required' }, { status: 403 })
+  if (!profile || profile.role !== 'admin') {
+    return NextResponse.json({ error: 'Admin role required' }, { status: 403 })
   }
 
   if (profile.credits < COMMENTARY_CREDIT_COST) {
@@ -160,6 +160,24 @@ export async function POST(
       } catch (err) {
         console.warn('Retell create-web-call failed (Commentary Host):', err)
       }
+    }
+  }
+
+  // ── Persist retell_call_id so the webhook can match the finished call
+  //    back to this request and write the result into agent_commentary.
+  //    Without this step, the webhook has no way to link a call_analyzed
+  //    event to the pending commentary_request row, and the thread stays
+  //    empty forever.
+  if (commentaryCall) {
+    const { error: updateError } = await serviceDb
+      .from('commentary_requests')
+      .update({
+        retell_call_id: commentaryCall.call_id,
+        status: 'in_progress',
+      })
+      .eq('id', commentaryRequest.id)
+    if (updateError) {
+      console.error('commentary_requests update failed:', updateError)
     }
   }
 
