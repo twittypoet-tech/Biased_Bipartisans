@@ -1,9 +1,9 @@
 'use client'
 
-import { Suspense, useState, useRef, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useState, useRef, useEffect, useTransition } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { sendOtpAction, verifyOtpAction } from './actions'
 import { cn } from '@/lib/utils'
 
 type Step = 'email' | 'code' | 'success'
@@ -16,121 +16,51 @@ export default function AuthPage() {
   )
 }
 
-// Only allow same-origin relative paths. Anything else (absolute URL,
-// protocol-relative //evil.com, data: URL) falls back to /my. Closes an
-// open-redirect hole where ?redirect=https://evil.com would bounce users
-// offsite right after a successful login.
-function safeRedirect(raw: string | null): string {
-  if (!raw) return '/my'
-  if (!raw.startsWith('/')) return '/my'
-  if (raw.startsWith('//')) return '/my'
-  if (raw.startsWith('/\\')) return '/my'
-  return raw
-}
-
-// Hard navigation that bypasses Next.js's client router cache. Needed after
-// auth because router.push races with @supabase/ssr cookie writes and
-// middleware may read an empty session, redirecting back to /auth and
-// leaving the UI stuck on "Redirecting...". A full page load guarantees
-// the server sees the fresh cookies on a clean request.
-function hardNavigate(url: string) {
-  if (typeof window === 'undefined') return
-  window.location.assign(url)
-}
-
 function AuthPageInner() {
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const codeRefs = useRef<(HTMLInputElement | null)[]>([])
-  const hasNavigated = useRef(false)
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = safeRedirect(searchParams.get('redirect'))
-
-  const supabase = getSupabaseBrowserClient()
-
-  // ── Bulletproof post-login navigation ────────────────────────────────────
-  //
-  // Instead of guessing at a timeout after verifyOtp, listen for the
-  // SIGNED_IN auth event. Supabase fires this only AFTER the session is
-  // fully committed (cookies written, storage synced). That's the exact
-  // moment it's safe for the server middleware to read the session on the
-  // next request. Hard-navigating here eliminates the cookie-commit race
-  // that left users bouncing back to /auth.
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (event !== 'SIGNED_IN') return
-        if (hasNavigated.current) return
-        hasNavigated.current = true
-        // Invalidate any RSC cache the router still holds from before login
-        try {
-          router.refresh()
-        } catch {}
-        // Hard nav so the middleware reads cookies on a fresh request
-        if (typeof window !== 'undefined') {
-          window.location.assign(redirect)
-        }
-      },
-    )
-    return () => subscription.unsubscribe()
-  }, [redirect, router, supabase])
+  const redirectParam = searchParams.get('redirect')
 
   async function handleSendCode(e: React.FormEvent) {
     e.preventDefault()
     if (!email.trim()) return
-    setLoading(true)
     setError('')
 
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: true },
+    startTransition(async () => {
+      const result = await sendOtpAction(email)
+      if (result.ok) {
+        setStep('code')
+      } else {
+        setError(result.error ?? 'Something went wrong.')
+      }
     })
-
-    setLoading(false)
-    if (err) {
-      setError(err.message)
-    } else {
-      setStep('code')
-    }
   }
 
-  async function handleVerifyCode() {
+  function handleVerifyCode() {
     const token = code.join('')
     if (token.length !== 6) return
-    setLoading(true)
     setError('')
 
-    const { error: err } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email',
-    })
-
-    setLoading(false)
-    if (err) {
-      setError(err.message)
-      setCode(['', '', '', '', '', ''])
-      codeRefs.current[0]?.focus()
-      return
-    }
-
-    setStep('success')
-
-    // The onAuthStateChange listener above will catch the SIGNED_IN event
-    // and fire the hard navigation once cookies are committed. If for any
-    // reason that event never arrives (rare: blocked storage, extension
-    // interference), fall back to a time-based navigation after 2.5s so
-    // the user is not left stranded on the success screen.
-    setTimeout(() => {
-      if (!hasNavigated.current) {
-        hasNavigated.current = true
-        hardNavigate(redirect)
+    startTransition(async () => {
+      const result = await verifyOtpAction(email, token, redirectParam)
+      // verifyOtpAction calls redirect() on success and the server throws a
+      // redirect — control never returns here on the happy path. If we do
+      // get back a result, it's an error.
+      if (result && !result.ok) {
+        setError(result.error ?? 'Invalid code.')
+        setCode(['', '', '', '', '', ''])
+        codeRefs.current[0]?.focus()
+      } else {
+        // redirect() threw successfully. Show the success state briefly in
+        // case the browser's redirect is slow.
+        setStep('success')
       }
-    }, 2500)
+    })
   }
 
   function handleCodeChange(index: number, value: string) {
@@ -139,13 +69,11 @@ function AuthPageInner() {
     newCode[index] = value.slice(-1)
     setCode(newCode)
 
-    // Auto-advance to next input
     if (value && index < 5) {
       codeRefs.current[index + 1]?.focus()
     }
 
-    // Auto-submit when all 6 digits entered
-    if (value && index === 5 && newCode.every(d => d)) {
+    if (value && index === 5 && newCode.every((d) => d)) {
       setTimeout(() => handleVerifyCode(), 100)
     }
   }
@@ -162,17 +90,15 @@ function AuthPageInner() {
     if (pasted.length === 6) {
       setCode(pasted.split(''))
       codeRefs.current[5]?.focus()
-      setTimeout(() => {
-        const token = pasted
-        if (token.length === 6) handleVerifyCode()
-      }, 100)
+      setTimeout(() => handleVerifyCode(), 100)
     }
   }
 
-  // Auto-focus first code input
   useEffect(() => {
     if (step === 'code') codeRefs.current[0]?.focus()
   }, [step])
+
+  const loading = isPending
 
   return (
     <div className="min-h-screen bg-t-bg flex flex-col">
@@ -272,10 +198,10 @@ function AuthPageInner() {
 
               <button
                 onClick={handleVerifyCode}
-                disabled={loading || code.some(d => !d)}
+                disabled={loading || code.some((d) => !d)}
                 className={cn(
                   'w-full rounded-xl py-3 text-sm font-semibold transition',
-                  loading || code.some(d => !d)
+                  loading || code.some((d) => !d)
                     ? 'bg-t-surface-el text-t-text-4 cursor-not-allowed'
                     : 'bg-t-accent text-white hover:opacity-90 active:scale-[0.98]',
                 )}
@@ -291,7 +217,7 @@ function AuthPageInner() {
                   Change email
                 </button>
                 <button
-                  onClick={handleSendCode as any}
+                  onClick={(e) => handleSendCode(e)}
                   className="text-t-accent-text hover:underline"
                 >
                   Resend code
@@ -300,7 +226,7 @@ function AuthPageInner() {
             </>
           )}
 
-          {/* ── Success step ── */}
+          {/* ── Success step (brief flash while the 303 redirect travels) ── */}
           {step === 'success' && (
             <div className="text-center">
               <div className="size-16 rounded-full bg-green-950/40 border border-green-800/60 flex items-center justify-center mx-auto mb-4">
@@ -310,15 +236,6 @@ function AuthPageInner() {
               </div>
               <h1 className="text-2xl font-bold text-t-text mb-2">You&apos;re in</h1>
               <p className="text-sm text-t-text-2">Redirecting...</p>
-              {/* Fallback link in case the hard navigate is blocked by a
-                  service worker, extension, or slow device. Also kicks off
-                  the navigation again if the user lingers. */}
-              <a
-                href={redirect}
-                className="mt-4 inline-block text-xs font-medium text-t-accent-text underline decoration-dotted underline-offset-4 hover:text-t-text transition"
-              >
-                Tap here if you aren&rsquo;t redirected
-              </a>
             </div>
           )}
         </div>
