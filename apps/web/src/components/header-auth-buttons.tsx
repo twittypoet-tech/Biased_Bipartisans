@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from './auth-provider'
+import { SignInLink } from './sign-in-link'
 import { Coins } from 'lucide-react'
 
 export function HeaderAuthButtons() {
@@ -31,12 +32,9 @@ export function HeaderAuthButtons() {
 
   return (
     <div className="flex items-center gap-2">
-      <Link
-        href="/auth"
-        className="rounded-md px-3 py-1.5 text-sm font-medium text-t-text-2 hover:bg-t-hover hover:text-t-text transition"
-      >
+      <SignInLink className="rounded-md px-3 py-1.5 text-sm font-medium text-t-text-2 hover:bg-t-hover hover:text-t-text transition">
         Sign In
-      </Link>
+      </SignInLink>
       <Link
         href="/subscribe"
         className="rounded-md bg-t-accent px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 transition"

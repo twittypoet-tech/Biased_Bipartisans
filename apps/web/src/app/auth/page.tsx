@@ -45,11 +45,39 @@ function AuthPageInner() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const codeRefs = useRef<(HTMLInputElement | null)[]>([])
+  const hasNavigated = useRef(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = safeRedirect(searchParams.get('redirect'))
 
   const supabase = getSupabaseBrowserClient()
+
+  // ── Bulletproof post-login navigation ────────────────────────────────────
+  //
+  // Instead of guessing at a timeout after verifyOtp, listen for the
+  // SIGNED_IN auth event. Supabase fires this only AFTER the session is
+  // fully committed (cookies written, storage synced). That's the exact
+  // moment it's safe for the server middleware to read the session on the
+  // next request. Hard-navigating here eliminates the cookie-commit race
+  // that left users bouncing back to /auth.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event) => {
+        if (event !== 'SIGNED_IN') return
+        if (hasNavigated.current) return
+        hasNavigated.current = true
+        // Invalidate any RSC cache the router still holds from before login
+        try {
+          router.refresh()
+        } catch {}
+        // Hard nav so the middleware reads cookies on a fresh request
+        if (typeof window !== 'undefined') {
+          window.location.assign(redirect)
+        }
+      },
+    )
+    return () => subscription.unsubscribe()
+  }, [redirect, router, supabase])
 
   async function handleSendCode(e: React.FormEvent) {
     e.preventDefault()
@@ -92,16 +120,17 @@ function AuthPageInner() {
 
     setStep('success')
 
-    // Invalidate the RSC cache so any parallel soft-nav sees the new session.
-    try {
-      router.refresh()
-    } catch {}
-
-    // Hard navigate after a short beat so the user sees the "You're in"
-    // confirmation. window.location.assign guarantees the server middleware
-    // reads the freshly-set cookies on a clean request, instead of racing
-    // them against Next.js's soft nav.
-    setTimeout(() => hardNavigate(redirect), 400)
+    // The onAuthStateChange listener above will catch the SIGNED_IN event
+    // and fire the hard navigation once cookies are committed. If for any
+    // reason that event never arrives (rare: blocked storage, extension
+    // interference), fall back to a time-based navigation after 2.5s so
+    // the user is not left stranded on the success screen.
+    setTimeout(() => {
+      if (!hasNavigated.current) {
+        hasNavigated.current = true
+        hardNavigate(redirect)
+      }
+    }, 2500)
   }
 
   function handleCodeChange(index: number, value: string) {

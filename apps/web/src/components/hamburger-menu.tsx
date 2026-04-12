@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, X, ChevronRight, Mail, HelpCircle, Target, Shield, Newspaper, Building2, Coins, Home, MessageSquare, Swords, Trophy, Users } from 'lucide-react'
 import { useAuth } from './auth-provider'
+import { SignInLink } from './sign-in-link'
 
 const menuGroups = [
   {
@@ -128,13 +129,12 @@ export function HamburgerMenu() {
                 </div>
               ) : (
                 <>
-                  <Link
-                    href="/auth"
+                  <SignInLink
                     onClick={() => setIsOpen(false)}
                     className="flex-1 rounded-lg border border-t-edge-strong bg-t-surface-el px-4 py-3 text-sm font-semibold text-t-text text-center hover:bg-t-hover transition"
                   >
                     Sign In
-                  </Link>
+                  </SignInLink>
                   <Link
                     href="/subscribe"
                     onClick={() => setIsOpen(false)}

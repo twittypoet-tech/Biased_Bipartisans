@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
+import { SignInLink } from '@/components/sign-in-link'
 import { Plus, X, Search, Phone, Globe, Zap, LogIn, Coins } from 'lucide-react'
 import { LANGUAGES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -466,12 +467,9 @@ export function CallHero({ presets, agents, userPresets = [] }: CallHeroProps) {
                     <Phone className="size-4" />
                   </button>
                 ) : (
-                  <Link
-                    href="/auth"
-                    className="flex items-center gap-1.5 rounded-full bg-t-accent px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition"
-                  >
+                  <SignInLink className="flex items-center gap-1.5 rounded-full bg-t-accent px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition">
                     <LogIn className="size-3.5" /> Sign in
-                  </Link>
+                  </SignInLink>
                 )}
               </div>
             </div>
