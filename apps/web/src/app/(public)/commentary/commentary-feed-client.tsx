@@ -45,6 +45,7 @@ import {
 } from 'lucide-react'
 import type { AgentCommentary } from '@bipi/shared'
 import { cn } from '@/lib/utils'
+import { calloutFor, REVEAL_CHUNK } from '@/lib/commentary-callout'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -438,69 +439,10 @@ function archetypeColor(archetype?: string | null): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CALLOUT PALETTE + TEMPLATES — bold colors + humorous voice
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// Each ThreadCard gets a deterministic color + opening line based on a hash
-// of the report id. Palette colors are fixed hex values with enough contrast
-// for white text on both light and dark page backgrounds. Templates use the
-// name of the first reporter in the thread for variety.
-
-const CALLOUT_PALETTE = [
-  '#C8A44A', // gold
-  '#B84848', // red
-  '#4D6EB8', // blue
-  '#059669', // emerald
-  '#9333ea', // purple
-  '#ea580c', // orange
-  '#0891b2', // cyan
-  '#db2777', // pink
-]
-
-const CALLOUT_TEMPLATES = [
-  '{agent} just went off.',
-  'Listen to {agent} make framing look like a sport.',
-  'Enjoy the show.',
-  '{agent} has thoughts. Loud ones.',
-  'Someone put {agent} on the line.',
-  '{agent} is in the room now.',
-  'Wait until you hear what {agent} said.',
-  '{agent} is not holding back.',
-  'Grab a seat. {agent} is up.',
-  'Hot mic: {agent}.',
-  '{agent} versus the framing.',
-  'This one earned a reply.',
-]
-
-function hashString(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) {
-    h = ((h << 5) - h + s.charCodeAt(i)) | 0
-  }
-  return Math.abs(h)
-}
-
-function calloutFor(
-  reportId: string,
-  firstAgentName: string | undefined,
-): { color: string; text: string } {
-  const h = hashString(reportId)
-  const color = CALLOUT_PALETTE[h % CALLOUT_PALETTE.length] ?? CALLOUT_PALETTE[0]!
-  const template =
-    CALLOUT_TEMPLATES[(h >> 3) % CALLOUT_TEMPLATES.length] ?? CALLOUT_TEMPLATES[0]!
-  const text = template.replace(
-    '{agent}',
-    firstAgentName ?? 'This reporter',
-  )
-  return { color, text }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // THREAD CARD — article header + commentaries with progressive disclosure
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TRANSCRIPT_PREVIEW = 260
-const REVEAL_CHUNK = 3
 
 function ThreadCard({ group }: { group: CommentaryGroup }) {
   const { report, commentaries } = group
@@ -748,9 +690,9 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
               ))}
             </div>
 
-            {/* Golden progressive-disclosure tooltip */}
-            {remaining > 0 && (
-              <div className="flex items-center justify-center border-t border-t-edge bg-t-surface-inset px-5 py-3">
+            {/* Golden progressive-disclosure tooltip (reveal OR collapse) */}
+            <div className="flex items-center justify-center border-t border-t-edge bg-t-surface-inset px-5 py-3">
+              {remaining > 0 ? (
                 <button
                   type="button"
                   onClick={revealMore}
@@ -764,8 +706,22 @@ function ThreadCard({ group }: { group: CommentaryGroup }) {
                     ? `View remaining ${remaining} replies`
                     : `View next ${REVEAL_CHUNK} of ${remaining} replies`}
                 </button>
-              </div>
-            )}
+              ) : (
+                <button
+                  type="button"
+                  onClick={collapseAll}
+                  className="group flex items-center gap-2 rounded-full border-2 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition active:scale-95"
+                  style={{
+                    borderColor: GOLD,
+                    color: GOLD,
+                    backgroundColor: 'transparent',
+                  }}
+                >
+                  <ChevronUp className="size-3.5" />
+                  Collapse thread
+                </button>
+              )}
+            </div>
 
             <Link
               href={`/news/${report.slug}#commentary`}

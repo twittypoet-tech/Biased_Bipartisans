@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Eye, Share2, Sparkles, ChevronRight, ExternalLink, ArrowUp, ArrowDown, Trash2, AlignLeft } from 'lucide-react'
+import { Eye, Share2, Sparkles, ChevronRight, ExternalLink, ArrowUp, ArrowDown, Trash2, AlignLeft, MessageSquare, Play, ChevronDown, ChevronUp, ArrowRight as ArrowRightIcon } from 'lucide-react'
+import { calloutFor, REVEAL_CHUNK } from '@/lib/commentary-callout'
 import type { NewsReport, ReportImage, AgentCommentary, ContentBlock, Callout } from '@bipi/shared'
 import type { RelatedPerspective } from '@bipi/db'
 import { FALLBACK_IMAGE_URL } from '@/lib/categories'
@@ -94,6 +95,8 @@ interface NewsArticleClientProps {
   relatedPerspectives?: RelatedPerspective[]
   relatedByAgent?: NewsReport[]
   relatedByEntities?: NewsReport[]
+  /** Server-computed admin flag. Bypasses client-side profile race. */
+  canRequestCommentary?: boolean
 }
 
 // ── Utilities ───────────────────────────────────────────────────────────────
@@ -386,6 +389,161 @@ function CommentaryCard({ commentary: c, onDelete, isOwner = false }: { commenta
   )
 }
 
+// ── Article Commentary Thread (progressive disclosure wrapper) ──────────────
+//
+// Mirrors the UX of the /commentary ThreadCard but uses the in-article
+// CommentaryCard for each row (which has voting + self-contained audio).
+// Collapsed by default, shows a colored callout strip the user can tap to
+// reveal the first commentary, then a golden pill progressively reveals
+// more in chunks of REVEAL_CHUNK. A matching "Collapse thread" pill lives
+// at the bottom once everything is visible so the reader never has to
+// scroll back to the toolbar.
+
+interface ArticleCommentaryThreadProps {
+  reportId: string
+  commentaries: AgentCommentary[]
+  onDeleteCommentary: (id: string) => void
+}
+
+function ArticleCommentaryThread({
+  reportId,
+  commentaries,
+  onDeleteCommentary,
+}: ArticleCommentaryThreadProps) {
+  const [visibleCount, setVisibleCount] = useState(0)
+  const isCollapsed = visibleCount === 0
+  const total = commentaries.length
+  const visible = commentaries.slice(0, visibleCount)
+  const remaining = total - visibleCount
+
+  const firstAgentName = commentaries[0]?.agent_name
+  const callout = calloutFor(reportId, firstAgentName)
+
+  const expandToFirst = () => setVisibleCount(Math.max(1, visibleCount))
+  const collapseAll = () => setVisibleCount(0)
+  const revealMore = () => {
+    const next = Math.min(total, visibleCount + Math.min(REVEAL_CHUNK, remaining))
+    setVisibleCount(next)
+  }
+
+  if (total === 0) return null
+
+  return (
+    <div className="mb-8 overflow-hidden rounded-2xl border border-t-edge bg-t-surface shadow-t">
+      {/* Thread toolbar */}
+      <div
+        className={cn(
+          'flex items-center justify-between px-5 py-3',
+          !isCollapsed && 'border-b border-t-edge',
+        )}
+      >
+        <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-t-text-2">
+          <MessageSquare className="size-3.5" style={{ color: '#C8A44A' }} />
+          <span>
+            {total} {total === 1 ? 'take' : 'takes'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => (isCollapsed ? expandToFirst() : collapseAll())}
+          aria-label={isCollapsed ? 'Expand thread' : 'Collapse thread'}
+          className="flex size-7 items-center justify-center rounded-full border border-t-edge text-t-text-3 transition hover:border-t-edge-strong hover:text-t-text"
+        >
+          {isCollapsed ? (
+            <ChevronDown className="size-3.5" />
+          ) : (
+            <ChevronUp className="size-3.5" />
+          )}
+        </button>
+      </div>
+
+      {/* Collapsed callout strip */}
+      {isCollapsed && (
+        <button
+          type="button"
+          onClick={expandToFirst}
+          className="group flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition active:scale-[0.995]"
+          style={{ backgroundColor: callout.color }}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className="flex size-7 shrink-0 items-center justify-center rounded-full"
+              style={{
+                backgroundColor: 'rgba(0,0,0,0.22)',
+                color: '#ffffff',
+              }}
+            >
+              <Play className="size-3.5 translate-x-[1px]" fill="currentColor" />
+            </span>
+            <p
+              className="min-w-0 truncate text-[14px] font-bold"
+              style={{
+                color: '#ffffff',
+                fontFamily: 'Georgia, "Times New Roman", serif',
+              }}
+            >
+              {callout.text}
+            </p>
+          </div>
+          <ArrowRightIcon
+            className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+            style={{ color: '#ffffff' }}
+          />
+        </button>
+      )}
+
+      {/* Expanded commentary rows */}
+      {!isCollapsed && (
+        <div>
+          <div className="space-y-4 p-5">
+            {visible.map((c) => (
+              <CommentaryCard
+                key={c.id}
+                commentary={c}
+                isOwner={false}
+                onDelete={() => onDeleteCommentary(c.id)}
+              />
+            ))}
+          </div>
+
+          {/* Golden pill — reveal more OR collapse */}
+          <div className="flex items-center justify-center border-t border-t-edge bg-t-surface-inset px-5 py-3">
+            {remaining > 0 ? (
+              <button
+                type="button"
+                onClick={revealMore}
+                className="group flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition active:scale-95"
+                style={{ backgroundColor: '#C8A44A', color: '#0a0a0a' }}
+              >
+                <ChevronDown className="size-3.5" />
+                {remaining === 1
+                  ? 'View 1 more reply'
+                  : remaining <= REVEAL_CHUNK
+                  ? `View remaining ${remaining} replies`
+                  : `View next ${REVEAL_CHUNK} of ${remaining} replies`}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="group flex items-center gap-2 rounded-full border-2 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition active:scale-95"
+                style={{
+                  borderColor: '#C8A44A',
+                  color: '#C8A44A',
+                  backgroundColor: 'transparent',
+                }}
+              >
+                <ChevronUp className="size-3.5" />
+                Collapse thread
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export function NewsArticleClient({
@@ -397,6 +555,7 @@ export function NewsArticleClient({
   relatedPerspectives,
   relatedByAgent,
   relatedByEntities,
+  canRequestCommentary: serverCanRequestCommentary,
 }: NewsArticleClientProps) {
   const { user, profile, refreshProfile } = useAuth()
   const [commentary, setCommentary] = useState(initialCommentary)
@@ -405,7 +564,11 @@ export function NewsArticleClient({
   const [showSummary, setShowSummary] = useState(false)
   const [showCommentaryRequest, setShowCommentaryRequest] = useState(false)
 
-  const canRequestCommentary = profile?.role === 'admin'
+  // Prefer the server-computed admin flag (bulletproof on mobile). Fall back
+  // to the client-side profile check so the button still appears after a
+  // fresh client-side login without a server re-render.
+  const canRequestCommentary =
+    serverCanRequestCommentary === true || profile?.role === 'admin'
 
   // Track view on mount
   useEffect(() => {
@@ -579,48 +742,6 @@ export function NewsArticleClient({
           {bodyNodes}
         </article>
 
-        {/* ── Sources & Key Entities Card ── */}
-        <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
-          {report.key_entities && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Key Entities</p>
-              <div className="flex flex-wrap gap-1.5">
-                {report.key_entities.split(',').map((entity, i) => (
-                  <span key={i} className="inline-block rounded-full border border-t-edge bg-t-surface-el px-2.5 py-0.5 text-xs text-t-text-2">
-                    {entity.trim()}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {report.sources.length > 0 && (
-            <div className={report.key_entities ? 'mt-4 pt-4 border-t border-t-edge-muted' : ''}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-3">Sources Cited</p>
-              <ol className="space-y-2">
-                {report.sources.map((src, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="shrink-0 text-xs font-bold text-t-text-3 mt-0.5 w-5 text-right">{i + 1}.</span>
-                    <div className="min-w-0">
-                      {src.url ? (
-                        <a href={src.url} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-1.5">
-                          <span className="text-sm font-medium text-t-accent-text group-hover:underline">{src.label}</span>
-                          <ExternalLink className="size-3 shrink-0 text-t-text-4 mt-1 group-hover:text-t-accent-text transition" />
-                        </a>
-                      ) : (
-                        <span className="text-sm text-t-text-2">{src.label}</span>
-                      )}
-                      {src.url && (
-                        <p className="text-[11px] text-t-text-4 truncate max-w-xs">{new URL(src.url).hostname}</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
-        </div>
-
         {/* ── Call This Reporter CTA ── */}
         {authorAgent && authorAgent.retell_call_agent_id && (
           <CallReporterCta agent={authorAgent} reportSlug={report.slug} />
@@ -656,7 +777,7 @@ export function NewsArticleClient({
           </div>
         )}
 
-        {/* ── Agent Commentary Section (always visible) ── */}
+        {/* ── Agent Commentary Section ── */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-t-edge" />
@@ -664,11 +785,11 @@ export function NewsArticleClient({
             <div className="flex-1 h-px bg-t-edge" />
           </div>
           {commentary.length > 0 ? (
-            <div className="space-y-4">
-              {commentary.map((c) => (
-                <CommentaryCard key={c.id} commentary={c} isOwner={false} onDelete={() => handleDeleteCommentary(c.id)} />
-              ))}
-            </div>
+            <ArticleCommentaryThread
+              reportId={report.id}
+              commentaries={commentary}
+              onDeleteCommentary={handleDeleteCommentary}
+            />
           ) : (
             <div className="rounded-xl border border-t-edge bg-t-surface py-10 text-center px-6">
               <p className="text-sm font-medium text-t-text-2">No agents have weighed in yet.</p>
@@ -783,6 +904,50 @@ export function NewsArticleClient({
             </div>
           )
         })()}
+
+        {/* ── Sources & Key Entities Card (last on the page) ── */}
+        {(report.key_entities || report.sources.length > 0) && (
+          <div className="mb-8 rounded-xl border border-t-edge bg-t-surface p-4 shadow-t">
+            {report.key_entities && (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-2">Key Entities</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {report.key_entities.split(',').map((entity, i) => (
+                    <span key={i} className="inline-block rounded-full border border-t-edge bg-t-surface-el px-2.5 py-0.5 text-xs text-t-text-2">
+                      {entity.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {report.sources.length > 0 && (
+              <div className={report.key_entities ? 'mt-4 pt-4 border-t border-t-edge-muted' : ''}>
+                <p className="text-xs font-semibold uppercase tracking-wider text-t-text-3 mb-3">Sources Cited</p>
+                <ol className="space-y-2">
+                  {report.sources.map((src, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="shrink-0 text-xs font-bold text-t-text-3 mt-0.5 w-5 text-right">{i + 1}.</span>
+                      <div className="min-w-0">
+                        {src.url ? (
+                          <a href={src.url} target="_blank" rel="noopener noreferrer" className="group flex items-start gap-1.5">
+                            <span className="text-sm font-medium text-t-accent-text group-hover:underline">{src.label}</span>
+                            <ExternalLink className="size-3 shrink-0 text-t-text-4 mt-1 group-hover:text-t-accent-text transition" />
+                          </a>
+                        ) : (
+                          <span className="text-sm text-t-text-2">{src.label}</span>
+                        )}
+                        {src.url && (
+                          <p className="text-[11px] text-t-text-4 truncate max-w-xs">{new URL(src.url).hostname}</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Newsletter Signup Popup ── */}

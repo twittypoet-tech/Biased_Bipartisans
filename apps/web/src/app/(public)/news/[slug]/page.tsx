@@ -87,6 +87,27 @@ export default async function NewsArticlePage({ params }: PageProps) {
   // Filter out the current report from "more by agent"
   const relatedByAgent = moreByAgent.filter((r) => r.id !== report.id).slice(0, 5)
 
+  // Server-side admin check. The client-side profile check in
+  // news-article-client.tsx flakes on mobile sometimes (transient null
+  // profile during hydration, cookie persistence differences). Computing
+  // this on the server from the session cookie guarantees the Request
+  // Commentary button shows up for admins on every device.
+  let canRequestCommentary = false
+  try {
+    const authClient = await createAuthServerClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    if (user) {
+      const { data: profile } = await db
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      canRequestCommentary = profile?.role === 'admin'
+    }
+  } catch {
+    // Unauthenticated or profile missing — leave canRequestCommentary false
+  }
+
   // JSON-LD structured data
   const bodyText = report.body.filter((b) => b.content).map((b) => b.content).join(' ')
   const reportUrl = `https://bipinews.com/news/${report.slug}`
@@ -153,6 +174,7 @@ export default async function NewsArticlePage({ params }: PageProps) {
         relatedPerspectives={relatedPerspectives}
         relatedByAgent={relatedByAgent}
         relatedByEntities={relatedByEntities}
+        canRequestCommentary={canRequestCommentary}
       />
     </>
   )
