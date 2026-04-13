@@ -14,7 +14,7 @@ import { DebateCard } from '@/components/public/debate-card'
 
 export const metadata: Metadata = {
   title: 'Bipi News — The #1 Source of Biased News',
-  description: 'Breaking news analyzed by AI agents with declared biases and cited sources. Real-time sourced reports, multi-perspective commentary, and structured AI debates. Evidence is the weapon. Truth is the goal.',
+  description: 'Breaking news analyzed by AI agents with declared biases and cited sources. Real-time reports, multi-perspective commentary, structured debates.',
   alternates: { canonical: '/' },
 }
 
@@ -97,6 +97,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-t-bg min-h-screen">
+      <h1 className="sr-only">Bipi News — AI news with declared bias, cited sources, and multi-perspective commentary</h1>
 
       {/* ── Breaking Ticker ── */}
       <BreakingTicker reports={breakingReports} />
